@@ -1,0 +1,23 @@
+FROM php:8.3-cli-alpine
+
+# System dependencies
+RUN apk add --no-cache curl
+
+# Install Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /app
+
+# Install PHP dependencies first (layer caching)
+COPY composer.json composer.lock* ./
+RUN composer install --no-dev --optimize-autoloader --no-interaction
+
+# Copy application code
+COPY . .
+
+# Ensure logs directory exists and is writable
+RUN mkdir -p /app/logs && chmod 777 /app/logs
+
+EXPOSE 9000
+
+CMD ["php", "-S", "0.0.0.0:9000", "-t", "public"]

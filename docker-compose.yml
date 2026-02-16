@@ -1,0 +1,36 @@
+services:
+  frontend:
+    image: nginx:1-alpine
+    ports:
+      - "${APP_PORT:-8080}:80"
+    volumes:
+      - ./index.html:/usr/share/nginx/html/index.html:ro
+      - ./preview.html:/usr/share/nginx/html/preview.html:ro
+      - ./forms:/usr/share/nginx/html/forms:ro
+      - ./css:/usr/share/nginx/html/css:ro
+      - ./js:/usr/share/nginx/html/js:ro
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ../docker/Dockerfile.backend
+    volumes:
+      - ./backend/config/config.yaml:/app/config/config.yaml:ro
+      - backend-logs:/app/logs
+    environment:
+      - PHP_OPCACHE_ENABLE=${PHP_OPCACHE_ENABLE:-1}
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:9000/api/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped
+
+volumes:
+  backend-logs:
