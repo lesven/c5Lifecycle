@@ -1,0 +1,36 @@
+# C5 Evidence Tool – Konfiguration
+# Kopieren als config.yaml und anpassen.
+
+smtp:
+  host: "smtp.company.de"
+  port: 587
+  encryption: "tls"            # tls | ssl | "" (none)
+  username: "c5-evidence@company.de"
+  password: "CHANGE_ME"
+  from_address: "c5-evidence@company.de"
+  from_name: "C5 Evidence Tool"
+
+evidence:
+  rz_assets:
+    to: "rz-evidence@company.de"
+    cc: []
+  admin_devices:
+    to: "privileged-evidence@company.de"
+    cc:
+      - "it-security@company.de"
+
+jira:
+  enabled: false
+  base_url: "https://jira.company.de"
+  project_key: "ITOPS"
+  issue_type: "Task"
+  api_token: "CHANGE_ME"
+
+jira_rules:
+  rz_provision: "none"
+  rz_retire: "optional"
+  rz_owner_confirm: "none"
+  admin_provision: "none"
+  admin_user_commitment: "none"
+  admin_return: "required"
+  admin_access_cleanup: "required"

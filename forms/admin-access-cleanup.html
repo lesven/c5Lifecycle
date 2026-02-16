@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privileged Access Cleanup – C5 Evidence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<nav class="topbar">
+  <a class="topbar-logo" href="../index.html">C5 <span>Evidence</span></a>
+  <span class="topbar-sep">|</span>
+  <span class="topbar-subtitle">Asset Lifecycle Management</span>
+</nav>
+
+<main class="page-wrapper track-b">
+  <a class="back-link" href="../index.html">← Zurück zur Übersicht</a>
+
+  <div class="form-header">
+    <span class="form-icon">🔒</span>
+    <div class="form-header-text">
+      <span class="form-badge badge-b">Track B – Admin-Endgeräte</span>
+      <h1>Privileged Access Cleanup (IAM)</h1>
+      <p class="form-subtitle">C5 Evidence · ADM · Access Cleanup</p>
+    </div>
+  </div>
+
+  <form id="evidence-form" data-event="admin_access_cleanup" novalidate>
+    <fieldset class="form-section">
+      <legend>Zuordnung</legend>
+      <div class="field-group">
+        <label for="asset_id">Asset-ID <span class="required-marker">*</span></label>
+        <input type="text" id="asset_id" name="asset_id" required>
+      </div>
+      <div class="field-group">
+        <label for="admin_user">Admin-User (Name/ID) <span class="required-marker">*</span></label>
+        <input type="text" id="admin_user" name="admin_user" required>
+      </div>
+      <div class="field-group">
+        <label for="cleanup_date">Datum <span class="required-marker">*</span></label>
+        <input type="date" id="cleanup_date" name="cleanup_date" required>
+      </div>
+    </fieldset>
+
+    <fieldset class="form-section">
+      <legend>Durchgeführte Maßnahmen</legend>
+      <div class="field-checkbox">
+        <label class="checkbox-label">
+          <input type="checkbox" name="account_removed" value="1" required>
+          <span>Admin-Account entfernt/angepasst</span>
+          <span class="required-marker">*</span>
+        </label>
+      </div>
+      <div class="field-checkbox">
+        <label class="checkbox-label">
+          <input type="checkbox" name="keys_revoked" value="1" required>
+          <span>Keys/Zertifikate revoked</span>
+          <span class="required-marker">*</span>
+        </label>
+      </div>
+      <div class="field-checkbox">
+        <label class="checkbox-label">
+          <input type="checkbox" name="device_wiped" value="1">
+          <span>Gerät wiped oder reprovisioniert</span>
+        </label>
+      </div>
+    </fieldset>
+
+    <fieldset class="form-section">
+      <legend>Nachverfolgung</legend>
+      <div class="field-group">
+        <label for="ticket_ref">Ticket-Referenz <span class="required-marker">*</span></label>
+        <input type="text" id="ticket_ref" name="ticket_ref" data-conditional-required="device_wiped:unchecked" placeholder="Pflicht wenn Wipe nicht abgeschlossen">
+      </div>
+    </fieldset>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-submit">Evidence senden</button>
+    </div>
+    <div id="form-status" class="submit-status hidden"></div>
+  </form>
+</main>
+
+<script src="../js/app.js"></script>
+</body>
+</html>

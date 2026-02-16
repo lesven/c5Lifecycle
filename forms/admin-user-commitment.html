@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verpflichtung Admin-User – C5 Evidence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<nav class="topbar">
+  <a class="topbar-logo" href="../index.html">C5 <span>Evidence</span></a>
+  <span class="topbar-sep">|</span>
+  <span class="topbar-subtitle">Asset Lifecycle Management</span>
+</nav>
+
+<main class="page-wrapper track-b">
+  <a class="back-link" href="../index.html">← Zurück zur Übersicht</a>
+
+  <div class="form-header">
+    <span class="form-icon">📝</span>
+    <div class="form-header-text">
+      <span class="form-badge badge-b">Track B – Admin-Endgeräte</span>
+      <h1>Verpflichtung Admin-User</h1>
+      <p class="form-subtitle">C5 Evidence · ADM · Verpflichtung</p>
+    </div>
+  </div>
+
+  <form id="evidence-form" data-event="admin_user_commitment" novalidate>
+    <fieldset class="form-section">
+      <legend>Admin-User & Asset</legend>
+      <div class="field-group">
+        <label for="asset_id">Asset-ID <span class="required-marker">*</span></label>
+        <input type="text" id="asset_id" name="asset_id" required>
+      </div>
+      <div class="field-group">
+        <label for="admin_user">Admin-User (Name + Mail/ID) <span class="required-marker">*</span></label>
+        <input type="text" id="admin_user" name="admin_user" required>
+      </div>
+      <div class="field-group">
+        <label for="commitment_date">Datum <span class="required-marker">*</span></label>
+        <input type="date" id="commitment_date" name="commitment_date" required>
+      </div>
+    </fieldset>
+
+    <fieldset class="form-section">
+      <legend>Verpflichtungen</legend>
+      <div class="field-checkbox">
+        <label class="checkbox-label">
+          <input type="checkbox" name="admin_tasks_only" value="1" required>
+          <span>Nur Admin-Tätigkeiten</span>
+          <span class="required-marker">*</span>
+        </label>
+      </div>
+      <div class="field-checkbox">
+        <label class="checkbox-label">
+          <input type="checkbox" name="no_mail_office" value="1" required>
+          <span>Kein Mail/Office/Surfing</span>
+          <span class="required-marker">*</span>
+        </label>
+      </div>
+      <div class="field-checkbox">
+        <label class="checkbox-label">
+          <input type="checkbox" name="no_credential_sharing" value="1" required>
+          <span>Keine Weitergabe von Credentials</span>
+          <span class="required-marker">*</span>
+        </label>
+      </div>
+      <div class="field-checkbox">
+        <label class="checkbox-label">
+          <input type="checkbox" name="report_loss" value="1" required>
+          <span>Verlust sofort melden</span>
+          <span class="required-marker">*</span>
+        </label>
+      </div>
+      <div class="field-checkbox">
+        <label class="checkbox-label">
+          <input type="checkbox" name="return_on_change" value="1" required>
+          <span>Rückgabe bei Rollenwechsel/Austritt</span>
+          <span class="required-marker">*</span>
+        </label>
+      </div>
+    </fieldset>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-submit">Evidence senden</button>
+    </div>
+    <div id="form-status" class="submit-status hidden"></div>
+  </form>
+</main>
+
+<script src="../js/app.js"></script>
+</body>
+</html>
