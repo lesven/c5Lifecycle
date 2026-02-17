@@ -126,4 +126,46 @@ class RouterTest extends TestCase
         $this->assertArrayHasKey('error', $data);
         $this->assertStringContainsString('Route nicht gefunden', $data['error']);
     }
+
+    public function testAssetLookupRouteDispatches(): void
+    {
+        $_GET['asset_id'] = 'SRV-001';
+        $router = new Router($this->config);
+        ob_start();
+        $router->dispatch('GET', '/api/asset-lookup');
+        $output = ob_get_clean();
+
+        $data = json_decode($output, true);
+        // NetBox is not enabled in test config, so should return netbox_disabled
+        $this->assertFalse($data['found']);
+        $this->assertEquals('netbox_disabled', $data['reason']);
+
+        unset($_GET['asset_id']);
+    }
+
+    public function testAssetLookupRouteWithQueryString(): void
+    {
+        $_GET['asset_id'] = 'SRV-001';
+        $router = new Router($this->config);
+        ob_start();
+        $router->dispatch('GET', '/api/asset-lookup?asset_id=SRV-001');
+        $output = ob_get_clean();
+
+        $data = json_decode($output, true);
+        $this->assertFalse($data['found']);
+
+        unset($_GET['asset_id']);
+    }
+
+    public function testPostAssetLookupReturns404(): void
+    {
+        $router = new Router($this->config);
+        ob_start();
+        $router->dispatch('POST', '/api/asset-lookup');
+        $output = ob_get_clean();
+
+        $data = json_decode($output, true);
+        $this->assertArrayHasKey('error', $data);
+        $this->assertStringContainsString('Route nicht gefunden', $data['error']);
+    }
 }
