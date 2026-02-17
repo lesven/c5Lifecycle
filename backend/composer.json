@@ -8,9 +8,21 @@
     "symfony/yaml": "^6.4|^7.0",
     "ramsey/uuid": "^4.7"
   },
+  "require-dev": {
+    "phpunit/phpunit": "^10.5"
+  },
   "autoload": {
     "psr-4": {
       "C5\\": "src/"
     }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "C5\\Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "test": "phpunit --colors=always",
+    "test-coverage": "phpunit --colors=always --coverage-text"
   }
 }

@@ -1,0 +1,24 @@
+FROM php:8.3-cli-alpine
+
+# System dependencies
+RUN apk add --no-cache curl curl-dev
+
+# Install PHP curl extension (needed by JiraClient)
+RUN docker-php-ext-install curl
+
+# Install Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /app
+
+# Install PHP dependencies including dev (PHPUnit)
+COPY composer.json composer.lock* ./
+RUN composer install --optimize-autoloader --no-interaction
+
+# Copy application code
+COPY . .
+
+# Ensure logs directory exists and is writable
+RUN mkdir -p /app/logs && chmod 777 /app/logs
+
+CMD ["vendor/bin/phpunit", "--colors=always"]
