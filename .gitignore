@@ -1,0 +1,4 @@
+backend/vendor/
+backend/.phpunit.cache/
+backend/logs/*.log
+backend/config/config.yaml
