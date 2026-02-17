@@ -19,7 +19,7 @@ config: ## Config aus Template erzeugen (überschreibt nicht)
 build: ## Docker-Images bauen
 	$(COMPOSE) build
 
-up: ## Container starten
+up: config ## Container starten
 	$(COMPOSE) up -d
 	@echo ""
 	@echo "C5 Evidence Tool läuft unter http://localhost:$${APP_PORT:-8080}"
