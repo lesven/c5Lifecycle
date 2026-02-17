@@ -32,5 +32,15 @@ services:
       start_period: 5s
     restart: unless-stopped
 
+  test:
+    build:
+      context: ./backend
+      dockerfile: ../docker/Dockerfile.test
+    profiles:
+      - test
+    volumes:
+      - ./backend/src:/app/src:ro
+      - ./backend/tests:/app/tests:ro
+
 volumes:
   backend-logs:

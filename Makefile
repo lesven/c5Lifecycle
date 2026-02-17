@@ -1,4 +1,4 @@
-.PHONY: help setup build up down restart logs logs-backend status clean config
+.PHONY: help setup build up down restart logs logs-backend status clean config test test-build
 
 COMPOSE = docker compose
 
@@ -39,6 +39,12 @@ logs-backend: ## Nur Backend-Logs (live)
 status: ## Container-Status anzeigen
 	$(COMPOSE) ps
 
+test-build: ## Test-Image bauen
+	$(COMPOSE) --profile test build test
+
+test: test-build ## PHPUnit-Tests im Docker-Container ausführen
+	$(COMPOSE) --profile test run --rm test
+
 clean: ## Container, Images und Volumes entfernen
-	$(COMPOSE) down -v --rmi local
+	$(COMPOSE) --profile test down -v --rmi local
 	@echo "Aufgeräumt."
