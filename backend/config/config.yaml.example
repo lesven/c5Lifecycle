@@ -34,3 +34,30 @@ jira_rules:
   admin_user_commitment: "none"
   admin_return: "required"
   admin_access_cleanup: "required"
+
+# NetBox DCIM/IPAM Integration (optional)
+# Ermoeglicht Asset-Lookup und Status-Synchronisation mit NetBox
+netbox:
+  enabled: false                          # Feature-Toggle: true | false
+  base_url: "https://netbox.company.de"   # NetBox-URL
+  api_token: "CHANGE_ME"                  # API-Token fuer Authentifizierung
+  timeout: 10                             # Timeout in Sekunden
+  verify_ssl: true                        # SSL-Zertifikatspruefung
+
+  # Fehlerbehandlung bei NetBox-Problemen:
+  # "warn"  = Submit laeuft weiter, Warnung wird geloggt (Default)
+  # "fail"  = Submit wird abgebrochen (nach Mail-Versand)
+  on_error: "warn"
+
+  # Sync-Regeln pro Event-Typ:
+  # "update_status" = Status-Update + Journal Entry
+  # "journal_only"  = Nur Journal Entry (kein Status-Update)
+  # "none"          = Kein NetBox-Sync
+  sync_rules:
+    rz_provision: "update_status"
+    rz_retire: "update_status"
+    rz_owner_confirm: "journal_only"
+    admin_provision: "update_status"
+    admin_user_commitment: "journal_only"
+    admin_return: "update_status"
+    admin_access_cleanup: "journal_only"

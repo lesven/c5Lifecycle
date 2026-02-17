@@ -57,6 +57,90 @@
     ticket_ref: 'Ticket-Referenz',
   };
 
+  // ── NetBox Asset Lookup ──
+  var NETBOX_FIELD_MAP = {
+    serial_number: '#serial_number',
+    manufacturer: '#manufacturer',
+    model: '#model',
+    device_type: '#device_type',
+    location: '#location',
+  };
+  var NETBOX_CUSTOM_FIELD_MAP = {
+    asset_owner: '#asset_owner',
+    service: '#service',
+    criticality: '#criticality',
+    admin_user: '#admin_user',
+    security_owner: '#security_owner',
+  };
+
+  function performAssetLookup(assetId, form) {
+    if (!assetId || assetId.trim() === '') return;
+
+    // Remove existing badge
+    var existingBadge = form.querySelector('.netbox-badge');
+    if (existingBadge) existingBadge.remove();
+
+    fetch(API_BASE + '/asset-lookup?asset_id=' + encodeURIComponent(assetId))
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (!data.found) return;
+
+        // Prefill only empty fields
+        Object.keys(NETBOX_FIELD_MAP).forEach(function (key) {
+          var el = form.querySelector(NETBOX_FIELD_MAP[key]);
+          if (el && !el.value && data[key]) {
+            if (el.tagName === 'SELECT') {
+              setSelectValue(el, data[key]);
+            } else {
+              el.value = data[key];
+            }
+          }
+        });
+
+        // Prefill custom fields
+        if (data.custom_fields) {
+          Object.keys(NETBOX_CUSTOM_FIELD_MAP).forEach(function (key) {
+            var el = form.querySelector(NETBOX_CUSTOM_FIELD_MAP[key]);
+            if (el && !el.value && data.custom_fields[key]) {
+              if (el.tagName === 'SELECT') {
+                setSelectValue(el, data.custom_fields[key]);
+              } else {
+                el.value = data.custom_fields[key];
+              }
+            }
+          });
+        }
+
+        // Show NetBox badge
+        showNetBoxBadge(form, data.status);
+      })
+      .catch(function () {
+        // Silently ignore lookup errors
+      });
+  }
+
+  function setSelectValue(selectEl, value) {
+    var options = selectEl.options;
+    for (var i = 0; i < options.length; i++) {
+      if (options[i].value === value || options[i].text === value) {
+        selectEl.selectedIndex = i;
+        return;
+      }
+    }
+  }
+
+  function showNetBoxBadge(form, status) {
+    var assetField = form.querySelector('[name="asset_id"]');
+    if (!assetField) return;
+    var group = assetField.closest('.field-group');
+    if (!group) return;
+
+    var badge = document.createElement('span');
+    badge.className = 'netbox-badge';
+    badge.textContent = 'NetBox: ' + (status || 'gefunden');
+    group.appendChild(badge);
+  }
+
   // ── Backend API base URL ──
   const API_BASE = getApiBase();
 
@@ -256,9 +340,24 @@
     if (result.jira_ticket) {
       text += ' · Jira-Ticket: ' + result.jira_ticket;
     }
+    if (result.netbox_synced && result.netbox_status) {
+      if (result.netbox_status === 'journal_created') {
+        text += ' · NetBox: Journal Entry erstellt';
+      } else {
+        text += ' · NetBox-Status aktualisiert: ' + result.netbox_status;
+      }
+    }
     text += ' · Request-ID: ' + result.request_id;
     el.textContent = text;
     el.classList.remove('hidden');
+
+    // Show NetBox warning if sync failed
+    if (result.netbox_error) {
+      var warning = document.createElement('div');
+      warning.className = 'submit-status warning';
+      warning.textContent = 'NetBox-Synchronisation fehlgeschlagen. Evidence-Mail wurde trotzdem versendet.';
+      el.parentNode.insertBefore(warning, el.nextSibling);
+    }
   }
 
   function showError(el, message, requestId) {
@@ -290,6 +389,16 @@
     info.style.cssText = 'font-size:.8125rem;color:#5f6672;margin-bottom:1rem;';
     info.textContent = 'Request-ID: ' + result.request_id;
     if (result.jira_ticket) info.textContent += ' · Jira: ' + result.jira_ticket;
+    if (result.netbox_synced && result.netbox_status) {
+      if (result.netbox_status === 'journal_created') {
+        info.textContent += ' · NetBox: Journal Entry erstellt';
+      } else {
+        info.textContent += ' · NetBox: ' + result.netbox_status;
+      }
+    }
+    if (result.netbox_error) {
+      info.textContent += ' · NetBox-Sync fehlgeschlagen';
+    }
     panel.appendChild(info);
 
     // Table of all submitted fields
@@ -371,6 +480,14 @@
 
     // Initial evaluation
     evaluateConditionalRequired(form);
+
+    // NetBox asset lookup on asset_id blur
+    var assetIdField = form.querySelector('[name="asset_id"]');
+    if (assetIdField) {
+      assetIdField.addEventListener('blur', function () {
+        performAssetLookup(assetIdField.value, form);
+      });
+    }
 
     // Handle submit
     form.addEventListener('submit', function (e) {

@@ -408,3 +408,23 @@ input:focus, select:focus, textarea:focus {
 .btn-secondary:hover { background: var(--c-border-light); }
 
 .hidden { display: none !important; }
+
+/* NetBox badge */
+.netbox-badge {
+  display: inline-block;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--c-success);
+  background: var(--c-success-bg);
+  border: 1px solid var(--c-success-border);
+  padding: 2px 8px;
+  border-radius: 3px;
+  margin-top: var(--s-xs);
+}
+
+/* Warning status (e.g., NetBox sync failed) */
+.submit-status.warning {
+  background: #fff8e6;
+  color: #8a6d00;
+  border: 1px solid #e6c619;
+}

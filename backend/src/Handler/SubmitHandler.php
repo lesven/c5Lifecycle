@@ -9,6 +9,10 @@ use C5\Mail\MailBuilder;
 use C5\Mail\MailSender;
 use C5\Jira\JiraClient;
 use C5\Log\Logger;
+use C5\NetBox\NetBoxClient;
+use C5\NetBox\StatusMapper;
+use C5\NetBox\JournalBuilder;
+use C5\NetBox\CustomFieldMapper;
 use Ramsey\Uuid\Uuid;
 
 class SubmitHandler
@@ -102,15 +106,104 @@ class SubmitHandler
             }
         }
 
-        // 6. Success response
-        $this->respond(200, [
+        // 6. Optional NetBox sync
+        $netboxSynced = false;
+        $netboxError = null;
+        $netboxStatus = null;
+        $syncRule = $this->config->getNetBoxSyncRule($eventType);
+
+        if ($syncRule !== 'none') {
+            try {
+                $netboxResult = $this->syncNetBox($eventType, $event, $data, $recipients['to'], $requestId, $syncRule);
+                $netboxSynced = true;
+                $netboxStatus = $netboxResult['status'] ?? null;
+                Logger::info("NetBox sync completed", ['request_id' => $requestId, 'sync_rule' => $syncRule]);
+            } catch (\Throwable $e) {
+                $netboxError = $e->getMessage();
+                Logger::error("NetBox sync failed", ['request_id' => $requestId, 'error' => $netboxError]);
+                if ($this->config->getNetBoxOnError() === 'fail') {
+                    $this->respond(502, [
+                        'error' => 'NetBox-Update fehlgeschlagen',
+                        'mail_sent' => true,
+                        'request_id' => $requestId,
+                    ]);
+                    return;
+                }
+            }
+        }
+
+        // 7. Success response
+        $response = [
             'success' => true,
             'request_id' => $requestId,
             'mail_sent' => true,
             'event_type' => $eventType,
             'asset_id' => $assetId,
             'jira_ticket' => $jiraTicket,
-        ]);
+            'netbox_synced' => $netboxSynced,
+        ];
+
+        if ($netboxStatus !== null) {
+            $response['netbox_status'] = $netboxStatus;
+        }
+        if ($netboxError !== null) {
+            $response['netbox_error'] = $netboxError;
+        }
+
+        $this->respond(200, $response);
+    }
+
+    private function syncNetBox(string $eventType, array $event, array $data, string $evidenceTo, string $requestId, string $syncRule): array
+    {
+        $client = new NetBoxClient($this->config);
+        $assetId = $data['asset_id'] ?? '';
+        $result = ['status' => null];
+
+        // Find the device in NetBox
+        $device = $client->findDeviceByAssetTag($assetId, $requestId);
+        if ($device === null) {
+            throw new \RuntimeException('Asset nicht in NetBox gefunden');
+        }
+
+        $deviceId = (int) $device['id'];
+
+        // Status update + custom fields (only for update_status rule)
+        if ($syncRule === 'update_status') {
+            $targetStatus = StatusMapper::getTargetStatus($eventType);
+            $patchData = [];
+
+            if ($targetStatus !== null) {
+                $patchData['status'] = $targetStatus;
+                $result['status'] = $targetStatus;
+            }
+
+            // Custom fields
+            $customFields = CustomFieldMapper::map($eventType, $data);
+            if (!empty($customFields)) {
+                $patchData['custom_fields'] = $customFields;
+            }
+
+            if (!empty($patchData)) {
+                $client->updateDevice($deviceId, $patchData, $requestId);
+            }
+        }
+
+        // Journal entry (for both update_status and journal_only)
+        $kind = StatusMapper::getJournalKind($eventType);
+        $comments = JournalBuilder::build($eventType, $event, $data, $requestId, $evidenceTo);
+
+        $client->createJournalEntry([
+            'assigned_object_type' => 'dcim.device',
+            'assigned_object_id' => $deviceId,
+            'kind' => $kind,
+            'comments' => $comments,
+        ], $requestId);
+
+        if ($result['status'] === null && $syncRule === 'journal_only') {
+            $result['status'] = 'journal_created';
+        }
+
+        return $result;
     }
 
     private function validate(string $eventType, array $event, array $data): array

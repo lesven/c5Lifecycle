@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace C5;
 
 use C5\Handler\SubmitHandler;
+use C5\Handler\AssetLookupHandler;
 
 class Router
 {
@@ -30,6 +31,13 @@ class Router
         // Health check
         if ($method === 'GET' && ($path === '/api/health' || $path === '/health')) {
             echo json_encode(['status' => 'ok']);
+            return;
+        }
+
+        // Asset lookup: GET /api/asset-lookup?asset_id={id}
+        if ($method === 'GET' && $path === '/api/asset-lookup') {
+            $handler = new AssetLookupHandler($this->config);
+            $handler->handle();
             return;
         }
 

@@ -60,4 +60,25 @@ class Config
         }
         return $this->get("jira_rules.{$eventType}", 'none');
     }
+
+    /** Check if NetBox integration is enabled */
+    public function isNetBoxEnabled(): bool
+    {
+        return (bool) $this->get('netbox.enabled', false);
+    }
+
+    /** Get NetBox sync rule for an event type: 'update_status', 'journal_only', 'none' */
+    public function getNetBoxSyncRule(string $eventType): string
+    {
+        if (!$this->isNetBoxEnabled()) {
+            return 'none';
+        }
+        return $this->get("netbox.sync_rules.{$eventType}", 'none');
+    }
+
+    /** Get NetBox error handling mode: 'warn' or 'fail' */
+    public function getNetBoxOnError(): string
+    {
+        return $this->get('netbox.on_error', 'warn');
+    }
 }
