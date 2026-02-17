@@ -72,7 +72,7 @@ class SubmitHandler
         } catch (\Throwable $e) {
             Logger::error("Mail failed", ['request_id' => $requestId, 'error' => $e->getMessage()]);
             $this->respond(502, [
-                'error' => 'Evidence-Mail konnte nicht versendet werden',
+                'error' => 'Evidence-Mail konnte nicht versendet werden: !!!'. $e->getMessage(),
                 'detail' => $e->getMessage(),
                 'request_id' => $requestId,
             ]);

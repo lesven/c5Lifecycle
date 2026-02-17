@@ -39,7 +39,8 @@ class Logger
         $timestamp = date('Y-m-d H:i:s');
         $contextStr = $context ? ' ' . json_encode($context, JSON_UNESCAPED_UNICODE) : '';
         $line = "[{$timestamp}] [{$level}] {$message}{$contextStr}\n";
-
+        // Send to PHP error log (keeps HTTP responses clean) and write to file
+        error_log($line);
         file_put_contents($logFile, $line, FILE_APPEND | LOCK_EX);
     }
 }

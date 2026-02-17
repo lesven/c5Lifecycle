@@ -222,8 +222,13 @@
       body: JSON.stringify(data),
     })
       .then(function (res) {
-        return res.json().then(function (body) {
-          return { status: res.status, body: body };
+        return res.text().then(function (text) {
+          try {
+            var body = JSON.parse(text);
+            return { status: res.status, body: body };
+          } catch (e) {
+            throw new Error('Ungültige Server-Antwort (HTTP ' + res.status + ')');
+          }
         });
       })
       .then(function (result) {
