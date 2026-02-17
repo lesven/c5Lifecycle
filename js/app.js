@@ -346,6 +346,15 @@
     var form = document.getElementById('evidence-form');
     if (!form) return;
 
+    // Set today's date as default for all date inputs
+    var today = new Date().toISOString().split('T')[0];
+    var dateInputs = form.querySelectorAll('input[type="date"]');
+    dateInputs.forEach(function (input) {
+      if (!input.value) {
+        input.value = today;
+      }
+    });
+
     // Update conditional required on change
     form.addEventListener('change', function () {
       evaluateConditionalRequired(form);
