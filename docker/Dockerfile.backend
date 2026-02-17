@@ -1,10 +1,10 @@
 FROM php:8.3-cli-alpine
 
-# System dependencies
-RUN apk add --no-cache curl
+# System dependencies (curl for Composer installer, git for Composer source downloads, PHP curl extension already included)
+RUN apk add --no-cache curl git
 
 # Install Composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer
 
 WORKDIR /app
 
