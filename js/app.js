@@ -351,11 +351,17 @@
     el.textContent = text;
     el.classList.remove('hidden');
 
-    // Show NetBox warning if sync failed
+    // Show NetBox warning if sync failed (include error message / optional trace)
     if (result.netbox_error) {
       var warning = document.createElement('div');
       warning.className = 'submit-status warning';
-      warning.textContent = 'NetBox-Synchronisation fehlgeschlagen. Evidence-Mail wurde trotzdem versendet.';
+      warning.innerHTML = '<strong>NetBox-Synchronisation fehlgeschlagen:</strong> ' + escapeHtml(result.netbox_error);
+      if (result.netbox_error_trace) {
+        var pre = document.createElement('pre');
+        pre.className = 'netbox-trace';
+        pre.textContent = result.netbox_error_trace;
+        warning.appendChild(pre);
+      }
       el.parentNode.insertBefore(warning, el.nextSibling);
     }
   }
@@ -398,6 +404,17 @@
     }
     if (result.netbox_error) {
       info.textContent += ' · NetBox-Sync fehlgeschlagen';
+      // Append human-readable error details to the summary
+      var errDiv = document.createElement('div');
+      errDiv.className = 'summary-netbox-error';
+      errDiv.textContent = result.netbox_error;
+      panel.insertBefore(errDiv, table);
+      if (result.netbox_error_trace) {
+        var tracePre = document.createElement('pre');
+        tracePre.className = 'summary-netbox-trace';
+        tracePre.textContent = result.netbox_error_trace;
+        panel.insertBefore(tracePre, table);
+      }
     }
     panel.appendChild(info);
 
@@ -453,6 +470,16 @@
     overlay.addEventListener('click', function (e) {
       if (e.target === overlay) overlay.remove();
     });
+  }
+
+  // small helper to escape HTML when inserting server-provided text
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   // ── Init ──

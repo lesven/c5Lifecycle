@@ -61,3 +61,14 @@ netbox:
     admin_user_commitment: "journal_only"
     admin_return: "update_status"
     admin_access_cleanup: "journal_only"
+
+  # Device automatisch anlegen wenn bei Inbetriebnahme nicht in NetBox vorhanden
+  # Gilt nur fuer rz_provision und admin_provision
+  create_on_provision: false
+
+  # Fallback-IDs fuer automatische Device-Anlage (benoetigt wenn create_on_provision: true)
+  # Device-Type wird zuerst per Hersteller+Modell gesucht; device_type_id nur als Fallback
+  provision_defaults:
+    device_type_id: 0   # NetBox Device-Type ID
+    site_id: 0          # NetBox Site ID
+    role_id: 0          # NetBox Device Role ID

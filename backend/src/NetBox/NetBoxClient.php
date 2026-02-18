@@ -46,6 +46,34 @@ class NetBoxClient
     }
 
     /**
+     * Search for a device type by manufacturer name and model.
+     * Returns the first matching device type or null if not found.
+     */
+    public function findDeviceTypeByModel(string $manufacturer, string $model, string $requestId): ?array
+    {
+        $params = ['model' => $model];
+        if ($manufacturer !== '') {
+            $params['manufacturer__name'] = $manufacturer;
+        }
+        $response = $this->get('/api/dcim/device-types/', $params, $requestId);
+        $results = $response['results'] ?? [];
+        return count($results) > 0 ? $results[0] : null;
+    }
+
+    /**
+     * Create a new device in NetBox via POST.
+     * Throws RuntimeException if NetBox returns no result.
+     */
+    public function createDevice(array $data, string $requestId): array
+    {
+        $result = $this->post('/api/dcim/devices/', $data, $requestId);
+        if ($result === null) {
+            throw new \RuntimeException('NetBox Device-Erstellung lieferte kein Ergebnis');
+        }
+        return $result;
+    }
+
+    /**
      * Execute a GET request against NetBox API.
      */
     public function get(string $path, array $params, string $requestId): ?array
