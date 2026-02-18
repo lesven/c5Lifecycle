@@ -115,7 +115,7 @@ class SubmitHandler
 
         if ($syncRule !== 'none') {
             try {
-                $netboxResult = $this->syncNetBox($eventType, $event, $data, $recipients['to'], $requestId, $syncRule);
+                $netboxResult = $this->syncNetBox($eventType, $event, $data, $body, $recipients['to'], $requestId, $syncRule);
                 $netboxSynced = true;
                 $netboxStatus = $netboxResult['status'] ?? null;
                 Logger::info("NetBox sync completed", ['request_id' => $requestId, 'sync_rule' => $syncRule]);
@@ -175,7 +175,7 @@ class SubmitHandler
         $this->respond(200, $response);
     }
 
-    private function syncNetBox(string $eventType, array $event, array $data, string $evidenceTo, string $requestId, string $syncRule): array
+    private function syncNetBox(string $eventType, array $event, array $data, string $emailBody, string $evidenceTo, string $requestId, string $syncRule): array
     {
         $client = new NetBoxClient($this->config);
         $assetId = $data['asset_id'] ?? '';
@@ -194,10 +194,12 @@ class SubmitHandler
 
         $deviceId = (int) $device['id'];
 
+        // Build patch data: always include email body as comments
+        $patchData = ['comments' => $emailBody];
+
         // Status update + custom fields (only for update_status rule)
         if ($syncRule === 'update_status') {
             $targetStatus = StatusMapper::getTargetStatus($eventType);
-            $patchData = [];
 
             if ($targetStatus !== null) {
                 $patchData['status'] = $targetStatus;
@@ -209,11 +211,9 @@ class SubmitHandler
             if (!empty($customFields)) {
                 $patchData['custom_fields'] = $customFields;
             }
-
-            if (!empty($patchData)) {
-                $client->updateDevice($deviceId, $patchData, $requestId);
-            }
         }
+
+        $client->updateDevice($deviceId, $patchData, $requestId);
 
         // Journal entry (for both update_status and journal_only)
         $kind = StatusMapper::getJournalKind($eventType);
