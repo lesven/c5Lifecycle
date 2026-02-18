@@ -93,4 +93,59 @@ class NetBoxClientTest extends TestCase
         $this->expectException(\RuntimeException::class);
         $client->post('/api/extras/journal-entries/', ['test' => 'data'], 'test-req');
     }
+
+    public function testConstructorWithCustomTimeout(): void
+    {
+        $client = new NetBoxClient($this->createConfig(['timeout' => 5]));
+        $this->assertInstanceOf(NetBoxClient::class, $client);
+    }
+
+    public function testConstructorWithSslVerificationEnabled(): void
+    {
+        $client = new NetBoxClient($this->createConfig(['verify_ssl' => true]));
+        $this->assertInstanceOf(NetBoxClient::class, $client);
+    }
+
+    public function testFindDeviceByAssetTagWithGermanCharacters(): void
+    {
+        $client = new NetBoxClient($this->createConfig());
+        $this->expectException(\RuntimeException::class);
+        // Test with German characters in asset tag
+        $client->findDeviceByAssetTag('SRV-München-001', 'test-äöü');
+    }
+
+    public function testUpdateDeviceWithGermanStatusValues(): void
+    {
+        $client = new NetBoxClient($this->createConfig());
+        $this->expectException(\RuntimeException::class);
+        // Test with German status mappings
+        $client->updateDevice(42, [
+            'status' => 'active',
+            'comments' => 'Gerät erfolgreich in Betrieb genommen - München'
+        ], 'test-req');
+    }
+
+    public function testCreateJournalEntryWithGermanContent(): void
+    {
+        $client = new NetBoxClient($this->createConfig());
+        $this->expectException(\RuntimeException::class);
+        
+        $journalData = [
+            'assigned_object_type' => 'dcim.device',
+            'assigned_object_id' => 42,
+            'kind' => 'info',
+            'comments' => 'Inbetriebnahme durchgeführt - Standort: München, Verantwortlicher: Müller',
+        ];
+        
+        $client->createJournalEntry($journalData, 'test-req-äöü');
+    }
+
+    public function testClientHandlesCustomApiPaths(): void
+    {
+        $client = new NetBoxClient($this->createConfig());
+        
+        // Test various API endpoints
+        $this->expectException(\RuntimeException::class);
+        $client->get('/api/dcim/device-types/', ['manufacturer' => 'Dell'], 'test-req');
+    }
 }

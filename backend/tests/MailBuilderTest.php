@@ -150,4 +150,82 @@ class MailBuilderTest extends TestCase
         $this->assertStringContainsString('Kategorie:   ADM', $body);
         $this->assertStringContainsString('Rückgabe Admin-Endgerät', $body);
     }
+
+    public function testBuildWithGermanUmlautsAndSpecialCharacters(): void
+    {
+        $retireEvent = [
+            'track' => 'rz_assets',
+            'label' => 'Außerbetriebnahme RZ-Asset',
+            'category' => 'RZ',
+            'subject_type' => 'Außerbetriebnahme',
+            'required_fields' => ['asset_id', 'data_handling'],
+        ];
+        
+        $data = [
+            'asset_id' => 'SRV-äöü-001',
+            'data_handling' => 'Löschung gemäß Richtlinie durchgeführt',
+            'asset_owner' => 'Müller, Jürgen (IT-Abteilung)',
+            'location' => 'Rechenzentrum München - Schrank A1',
+        ];
+        
+        $body = MailBuilder::build($retireEvent, $data, 'req-äöü-123');
+        
+        $this->assertStringContainsString('SRV-äöü-001', $body);
+        $this->assertStringContainsString('Löschung gemäß Richtlinie durchgeführt', $body);
+        $this->assertStringContainsString('Müller, Jürgen', $body);
+        $this->assertStringContainsString('München', $body);
+        $this->assertStringContainsString('req-äöü-123', $body);
+    }
+
+    public function testBuildHandlesEmptyStringValues(): void
+    {
+        $data = [
+            'asset_id' => 'SRV-001',
+            'empty_field' => '',
+            'null_field' => null,
+            'whitespace_field' => '   ',
+        ];
+        
+        $body = MailBuilder::build($this->sampleEvent, $data, 'req-123');
+        
+        $this->assertStringContainsString('SRV-001', $body);
+        // Empty values should not break the email format
+        $this->assertStringContainsString('ERFASSTE DATEN', $body);
+    }
+
+    public function testBuildHandlesSpecialBooleanFieldNames(): void
+    {
+        $data = [
+            'asset_id' => 'SRV-001',
+            'monitoring_active' => true,
+            'patch_process' => false,
+            'backup_configured' => true,
+            'device_wiped' => false,
+        ];
+        
+        $body = MailBuilder::build($this->sampleEvent, $data, 'req-123');
+        
+        // Should contain German boolean representations
+        $this->assertStringContainsString('Ja', $body); // for true values
+        $this->assertStringContainsString('Nein', $body); // for false values
+    }
+
+    public function testBuildWithLongTextFields(): void
+    {
+        $longText = 'Dies ist ein sehr langer Text mit deutschen Sonderzeichen wie ÄÖÜäöüß. ' .
+                   'Er enthält auch Zeilenumbrüche und verschiedene Interpunktionszeichen: ' .
+                   '!@#$%^&*()_+{}[]|\\:";\'<>?,./ - und sollte korrekt im E-Mail-Body erscheinen.';
+        
+        $data = [
+            'asset_id' => 'SRV-001',
+            'description' => $longText,
+            'notes' => "Erste Zeile\nZweite Zeile\nDritte Zeile mit Umlauten: äöüÄÖÜß",
+        ];
+        
+        $body = MailBuilder::build($this->sampleEvent, $data, 'req-123');
+        
+        $this->assertStringContainsString($longText, $body);
+        $this->assertStringContainsString('Erste Zeile', $body);
+        $this->assertStringContainsString('äöüÄÖÜß', $body);
+    }
 }

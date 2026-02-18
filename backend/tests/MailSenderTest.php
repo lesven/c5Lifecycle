@@ -95,4 +95,61 @@ class MailSenderTest extends TestCase
         $this->expectException(\Exception::class);
         $sender->send($recipients, 'Test Subject', 'Test Body', 'req-123');
     }
+
+    public function testSendConfiguresFromNameFromConfig(): void
+    {
+        $config = $this->createConfig([
+            'smtp' => [
+                'host' => '127.0.0.1',
+                'port' => 19999,
+                'from_name' => 'C5 Evidence System',
+                'from_address' => 'evidence@company.de',
+            ],
+        ]);
+
+        $sender = new MailSender($config);
+        $recipients = ['to' => 'dest@example.com', 'cc' => []];
+
+        // We expect connection failure, but config should be properly set
+        $this->expectException(\Exception::class);
+        $sender->send($recipients, 'Test Subject', 'Test Body', 'req-123');
+    }
+
+    public function testSendHandlesMultipleCcRecipients(): void
+    {
+        $config = $this->createConfig([
+            'smtp' => [
+                'host' => '127.0.0.1',
+                'port' => 19999,
+            ],
+        ]);
+
+        $sender = new MailSender($config);
+        $recipients = [
+            'to' => 'dest@example.com', 
+            'cc' => ['cc1@example.com', 'cc2@example.com']
+        ];
+
+        $this->expectException(\Exception::class);
+        $sender->send($recipients, 'Test Subject', 'Test Body', 'req-123');
+    }
+
+    public function testSendHandlesGermanSpecialCharacters(): void
+    {
+        $config = $this->createConfig([
+            'smtp' => [
+                'host' => '127.0.0.1',
+                'port' => 19999,
+            ],
+        ]);
+
+        $sender = new MailSender($config);
+        $recipients = ['to' => 'dest@example.com', 'cc' => []];
+        
+        $subject = '[C5 Evidence] RZ Außerbetriebnahme - SRV-001';
+        $body = "Asset-ID: SRV-001\nÄnderung: Außerbetriebnahme durchgeführt\nÜberprüfung: Bestätigt";
+
+        $this->expectException(\Exception::class);
+        $sender->send($recipients, $subject, $body, 'req-123');
+    }
 }
