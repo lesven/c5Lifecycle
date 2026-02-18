@@ -458,6 +458,22 @@ UI bleibt rein HTML/CSS/JS.
 
 ---
 
+### US-N09 Mandanten-Auswahl aus NetBox
+
+**Als** Infrastruktur-Mitarbeiter **möchte ich** beim Ausfüllen eines RZ-Formulars den zugehörigen Mandanten aus einer NetBox-Dropdown-Liste auswählen können, **damit** Assets korrekt einem Mandanten zugeordnet werden und diese Zuordnung sowohl in der Evidence-Mail als auch in NetBox gespeichert ist.
+
+**Akzeptanzkriterien:**
+- In den Formularen `rz_provision`, `rz_retire` und `rz_owner_confirm` erscheint ein optionales Dropdown-Feld „Mandant".
+- Die Dropdown-Liste wird beim Laden der Seite automatisch über `GET /api/tenants` aus NetBox befüllt.
+- Wird ein Asset per Asset-ID-Lookup aus NetBox vorbelegt, wird der zugehörige Mandant im Dropdown vorausgewählt (sofern vorhanden).
+- In der Evidence-Mail erscheint der ausgewählte Mandant als lesbarer Name unter dem Label „Mandant"; die rohe `tenant_id` wird nicht angezeigt.
+- Bei Submit wird die `tenant_id` per PATCH an das NetBox-Gerät gesetzt (Synchronisation).
+- Bei automatischer Device-Anlage (`create_on_provision: true`) wird der Mandant ebenfalls beim POST mitgeliefert.
+- Das Feld ist optional – fehlt eine Auswahl, wird kein Mandant gesetzt.
+- Die Funktion ist nur aktiv, wenn `netbox.enabled: true` in der Konfiguration gesetzt ist.
+
+---
+
 ## 11. User Stories – Technische Infrastruktur
 
 ### US-T01 Health-Endpoint für Container-Monitoring
