@@ -55,6 +55,7 @@
     keys_revoked: 'Keys/Zertifikate revoked',
     device_wiped: 'Gerät wiped oder reprovisioniert',
     ticket_ref: 'Ticket-Referenz',
+    tenant_name: 'Mandant',
   };
 
   // ── NetBox Asset Lookup ──
@@ -64,6 +65,7 @@
     model: '#model',
     device_type: '#device_type',
     location: '#location',
+    tenant_id: '#tenant_id',
   };
   var NETBOX_CUSTOM_FIELD_MAP = {
     asset_owner: '#asset_owner',
@@ -72,6 +74,35 @@
     admin_user: '#admin_user',
     security_owner: '#security_owner',
   };
+
+  function loadTenants(form) {
+    var sel = form.querySelector('#tenant_id');
+    if (!sel) return;
+    fetch(API_BASE + '/tenants')
+      .then(function (r) { return r.json(); })
+      .then(function (list) {
+        sel.innerHTML = '<option value="">– Bitte wählen –</option>';
+        list.forEach(function (t) {
+          var o = document.createElement('option');
+          o.value = String(t.id);
+          o.textContent = t.name;
+          sel.appendChild(o);
+        });
+        // Re-sync name after options loaded (in case asset lookup already ran)
+        syncTenantName(form);
+      })
+      .catch(function () {
+        sel.innerHTML = '<option value="">– Nicht verfügbar –</option>';
+      });
+  }
+
+  function syncTenantName(form) {
+    var sel = form.querySelector('#tenant_id');
+    var inp = form.querySelector('#tenant_name');
+    if (!sel || !inp) return;
+    var opt = sel.options[sel.selectedIndex];
+    inp.value = (opt && opt.value) ? opt.text : '';
+  }
 
   function performAssetLookup(assetId, form) {
     if (!assetId || assetId.trim() === '') return;
@@ -96,6 +127,9 @@
             }
           }
         });
+
+        // Sync tenant name from selected option
+        syncTenantName(form);
 
         // Prefill custom fields
         if (data.custom_fields) {
@@ -507,6 +541,17 @@
 
     // Initial evaluation
     evaluateConditionalRequired(form);
+
+    // Load tenants dropdown if present
+    loadTenants(form);
+
+    // Sync tenant_name hidden field when dropdown changes
+    var tenantSel = form.querySelector('#tenant_id');
+    if (tenantSel) {
+      tenantSel.addEventListener('change', function () {
+        syncTenantName(form);
+      });
+    }
 
     // NetBox asset lookup on asset_id blur
     var assetIdField = form.querySelector('[name="asset_id"]');

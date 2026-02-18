@@ -5,6 +5,7 @@ namespace C5;
 
 use C5\Handler\SubmitHandler;
 use C5\Handler\AssetLookupHandler;
+use C5\Handler\TenantsHandler;
 
 class Router
 {
@@ -37,6 +38,13 @@ class Router
         // Asset lookup: GET /api/asset-lookup?asset_id={id}
         if ($method === 'GET' && $path === '/api/asset-lookup') {
             $handler = new AssetLookupHandler($this->config);
+            $handler->handle();
+            return;
+        }
+
+        // Tenants list: GET /api/tenants
+        if ($method === 'GET' && $path === '/api/tenants') {
+            $handler = new TenantsHandler($this->config);
             $handler->handle();
             return;
         }

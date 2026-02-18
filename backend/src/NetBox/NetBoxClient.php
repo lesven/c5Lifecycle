@@ -74,6 +74,16 @@ class NetBoxClient
     }
 
     /**
+     * Fetch all tenants ordered by name.
+     * Returns array of tenant objects or empty array on error.
+     */
+    public function getTenants(string $requestId): array
+    {
+        $response = $this->get('/api/tenancy/tenants/', ['ordering' => 'name', 'limit' => 1000], $requestId);
+        return $response['results'] ?? [];
+    }
+
+    /**
      * Execute a GET request against NetBox API.
      */
     public function get(string $path, array $params, string $requestId): ?array

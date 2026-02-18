@@ -197,6 +197,13 @@ class SubmitHandler
         // Build patch data: always include email body as comments
         $patchData = ['comments' => $emailBody];
 
+        // Tenant sync (standard NetBox field, not custom_field)
+        $tenantId = isset($data['tenant_id']) && $data['tenant_id'] !== ''
+            ? (int) $data['tenant_id'] : 0;
+        if ($tenantId > 0) {
+            $patchData['tenant'] = $tenantId;
+        }
+
         // Status update + custom fields (only for update_status rule)
         if ($syncRule === 'update_status') {
             $targetStatus = StatusMapper::getTargetStatus($eventType);
@@ -273,6 +280,12 @@ class SubmitHandler
 
         if ($serialNumber !== '') {
             $postData['serial'] = $serialNumber;
+        }
+
+        $tenantId = isset($data['tenant_id']) && $data['tenant_id'] !== ''
+            ? (int) $data['tenant_id'] : 0;
+        if ($tenantId > 0) {
+            $postData['tenant'] = $tenantId;
         }
 
         $customFields = CustomFieldMapper::map($eventType, $data);

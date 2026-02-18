@@ -23,6 +23,8 @@ class DeviceTransformer
             'device_type' => self::extractDisplay($device['device_role'] ?? null),
             'location' => $location,
             'status' => self::extractValue($device['status'] ?? null),
+            'tenant_id' => isset($device['tenant']['id']) ? (string) $device['tenant']['id'] : '',
+            'tenant_name' => $device['tenant']['name'] ?? '',
             'custom_fields' => [
                 'asset_owner' => $customFields['cf_asset_owner'] ?? $customFields['asset_owner'] ?? '',
                 'service' => $customFields['cf_service'] ?? $customFields['service'] ?? '',
