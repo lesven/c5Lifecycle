@@ -485,6 +485,7 @@ UI bleibt rein HTML/CSS/JS.
 - Wird ein Asset per Asset-ID-Lookup aus NetBox vorbelegt, wird der zugehörige Asset Owner im Dropdown vorausgewählt (sofern Name identisch).
 - Ist NetBox nicht erreichbar, zeigt das Dropdown „– Nicht verfügbar –"; das Pflichtfeld blockiert den Submit.
 - Die Funktion ist nur aktiv, wenn `netbox.enabled: true` in der Konfiguration gesetzt ist.
+- wenn ein Asset gespeichert wird, soll der gewählte Contact dem Gerät als Netbox Contact zugeordnet werden
 ---
 
 ## 11. User Stories – Technische Infrastruktur
