@@ -84,6 +84,16 @@ class NetBoxClient
     }
 
     /**
+     * Fetch all contacts ordered by name.
+     * Returns array of contact objects or empty array on error.
+     */
+    public function getContacts(string $requestId): array
+    {
+        $response = $this->get('/api/tenancy/contacts/', ['ordering' => 'name', 'limit' => 1000], $requestId);
+        return $response['results'] ?? [];
+    }
+
+    /**
      * Execute a GET request against NetBox API.
      */
     public function get(string $path, array $params, string $requestId): ?array

@@ -472,6 +472,19 @@ UI bleibt rein HTML/CSS/JS.
 - Das Feld ist optional – fehlt eine Auswahl, wird kein Mandant gesetzt.
 - Die Funktion ist nur aktiv, wenn `netbox.enabled: true` in der Konfiguration gesetzt ist.
 
+
+
+### US-N10 Asset Owner Auswahl aus NetBox
+
+**Als** Infrastruktur-Mitarbeiter **möchte ich** beim Ausfüllen eines RZ-Formulars den Asset Owner aus einer NetBox-Kontaktliste auswählen können, **damit** Ownership-Informationen konsistent aus dem CMDB übernommen werden.
+
+**Akzeptanzkriterien:**
+- In den Formularen `rz_provision` (`asset_owner`), `rz_retire` (`owner_approval`) und `rz_owner_confirm` (`owner`) erscheint ein Dropdown-Feld.
+- Die Dropdown-Liste wird beim Laden der Seite automatisch über `GET /api/contacts` aus NetBox befüllt.
+- Als Option-Value wird der **Name** des Kontakts gespeichert (kein ID-Mapping, da `cf_asset_owner` ein Textfeld in NetBox ist).
+- Wird ein Asset per Asset-ID-Lookup aus NetBox vorbelegt, wird der zugehörige Asset Owner im Dropdown vorausgewählt (sofern Name identisch).
+- Ist NetBox nicht erreichbar, zeigt das Dropdown „– Nicht verfügbar –"; das Pflichtfeld blockiert den Submit.
+- Die Funktion ist nur aktiv, wenn `netbox.enabled: true` in der Konfiguration gesetzt ist.
 ---
 
 ## 11. User Stories – Technische Infrastruktur

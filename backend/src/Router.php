@@ -6,6 +6,7 @@ namespace C5;
 use C5\Handler\SubmitHandler;
 use C5\Handler\AssetLookupHandler;
 use C5\Handler\TenantsHandler;
+use C5\Handler\ContactsHandler;
 
 class Router
 {
@@ -45,6 +46,13 @@ class Router
         // Tenants list: GET /api/tenants
         if ($method === 'GET' && $path === '/api/tenants') {
             $handler = new TenantsHandler($this->config);
+            $handler->handle();
+            return;
+        }
+
+        // Contacts list: GET /api/contacts
+        if ($method === 'GET' && $path === '/api/contacts') {
+            $handler = new ContactsHandler($this->config);
             $handler->handle();
             return;
         }

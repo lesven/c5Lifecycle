@@ -96,6 +96,25 @@
       });
   }
 
+  function loadContacts(form) {
+    var sel = form.querySelector('#asset_owner, #owner_approval, #owner');
+    if (!sel) return;
+    fetch(API_BASE + '/contacts')
+      .then(function (r) { return r.json(); })
+      .then(function (list) {
+        sel.innerHTML = '<option value="">– Bitte wählen –</option>';
+        list.forEach(function (c) {
+          var o = document.createElement('option');
+          o.value = c.name;
+          o.textContent = c.name;
+          sel.appendChild(o);
+        });
+      })
+      .catch(function () {
+        sel.innerHTML = '<option value="">– Nicht verfügbar –</option>';
+      });
+  }
+
   function syncTenantName(form) {
     var sel = form.querySelector('#tenant_id');
     var inp = form.querySelector('#tenant_name');
@@ -544,6 +563,9 @@
 
     // Load tenants dropdown if present
     loadTenants(form);
+
+    // Load contacts dropdown if present
+    loadContacts(form);
 
     // Sync tenant_name hidden field when dropdown changes
     var tenantSel = form.querySelector('#tenant_id');
