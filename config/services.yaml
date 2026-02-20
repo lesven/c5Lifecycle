@@ -7,7 +7,7 @@ services:
         autoconfigure: true
 
     App\:
-        resource: '../src/'
+        resource: '../src/*'
         exclude:
             - '../src/DependencyInjection/'
             - '../src/Domain/ValueObject/'
@@ -21,6 +21,13 @@ services:
         factory: ['App\Infrastructure\Config\EvidenceConfig', 'fromYamlFile']
         arguments:
             $path: '%c5.config_path%'
+
+# Explicitly register FormController if auto-loading fails
+    App\Controller\FormController:
+        autowire: true
+        autoconfigure: true
+        public: true
+        tags: ['controller.service_arguments']
 
     App\Domain\Repository\SubmissionLogRepositoryInterface:
         alias: App\Infrastructure\Persistence\DoctrineSubmissionLogRepository
