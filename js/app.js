@@ -102,17 +102,28 @@
     fetch(API_BASE + '/contacts')
       .then(function (r) { return r.json(); })
       .then(function (list) {
-        sel.innerHTML = '<option value="">– Bitte wählen –</option>';
+        sel.innerHTML = '<option value="" data-contact-id="">– Bitte wählen –</option>';
         list.forEach(function (c) {
           var o = document.createElement('option');
           o.value = c.name;
           o.textContent = c.name;
+          o.setAttribute('data-contact-id', String(c.id));
           sel.appendChild(o);
         });
+        // Sync contact_id if a value is already selected (e.g. from asset lookup)
+        syncContactId(form);
       })
       .catch(function () {
         sel.innerHTML = '<option value="">– Nicht verfügbar –</option>';
       });
+  }
+
+  function syncContactId(form) {
+    var sel = form.querySelector('#asset_owner, #owner_approval, #owner');
+    var inp = form.querySelector('#contact_id');
+    if (!sel || !inp) return;
+    var opt = sel.options[sel.selectedIndex];
+    inp.value = (opt && opt.getAttribute('data-contact-id')) || '';
   }
 
   function syncTenantName(form) {
@@ -572,6 +583,14 @@
     if (tenantSel) {
       tenantSel.addEventListener('change', function () {
         syncTenantName(form);
+      });
+    }
+
+    // Sync contact_id hidden field when contact dropdown changes
+    var contactSel = form.querySelector('#asset_owner, #owner_approval, #owner');
+    if (contactSel) {
+      contactSel.addEventListener('change', function () {
+        syncContactId(form);
       });
     }
 

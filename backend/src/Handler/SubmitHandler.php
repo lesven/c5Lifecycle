@@ -222,6 +222,20 @@ class SubmitHandler
 
         $client->updateDevice($deviceId, $patchData, $requestId);
 
+        // Contact assignment (if contact_id provided)
+        $contactId = isset($data['contact_id']) && $data['contact_id'] !== ''
+            ? (int) $data['contact_id'] : 0;
+        if ($contactId > 0) {
+            $contactRoleId = $this->resolveContactRoleId();
+            $client->createContactAssignment($deviceId, $contactId, $contactRoleId, $requestId);
+            Logger::info("NetBox contact assignment created", [
+                'request_id' => $requestId,
+                'device_id' => $deviceId,
+                'contact_id' => $contactId,
+                'role_id' => $contactRoleId,
+            ]);
+        }
+
         // Journal entry (for both update_status and journal_only)
         $kind = StatusMapper::getJournalKind($eventType);
         $comments = JournalBuilder::build($eventType, $event, $data, $requestId, $evidenceTo);
@@ -334,6 +348,23 @@ class SubmitHandler
         }
 
         return $errors;
+    }
+
+    private function resolveContactRoleId(): int
+    {
+        $raw = trim((string) $this->config->get('netbox.contact_role_owner', ''));
+        if ($raw === '') {
+            return 0;
+        }
+        // If it's a plain integer, use directly
+        if (ctype_digit($raw)) {
+            return (int) $raw;
+        }
+        // If it's a URL path like "tenancy/contact-roles/1/", extract the ID
+        if (preg_match('/(\d+)\/?$/', $raw, $m)) {
+            return (int) $m[1];
+        }
+        return 0;
     }
 
     private function respond(int $status, array $data): void

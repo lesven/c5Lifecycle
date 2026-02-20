@@ -94,6 +94,22 @@ class NetBoxClient
     }
 
     /**
+     * Create a contact assignment for a device.
+     */
+    public function createContactAssignment(int $deviceId, int $contactId, int $roleId, string $requestId): ?array
+    {
+        $data = [
+            'object_type' => 'dcim.device',
+            'object_id' => $deviceId,
+            'contact' => $contactId,
+        ];
+        if ($roleId > 0) {
+            $data['role'] = $roleId;
+        }
+        return $this->post('/api/tenancy/contact-assignments/', $data, $requestId);
+    }
+
+    /**
      * Execute a GET request against NetBox API.
      */
     public function get(string $path, array $params, string $requestId): ?array
