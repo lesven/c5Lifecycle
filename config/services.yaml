@@ -31,3 +31,14 @@ services:
 
     App\Domain\Repository\SubmissionLogRepositoryInterface:
         alias: App\Infrastructure\Persistence\DoctrineSubmissionLogRepository
+
+    # NetBox HTTP client from YAML config (not env vars)
+    netbox.yaml_client:
+        class: Symfony\Contracts\HttpClient\HttpClientInterface
+        factory: ['App\Infrastructure\NetBox\NetBoxHttpClientFactory', 'create']
+        arguments:
+            $config: '@App\Infrastructure\Config\EvidenceConfig'
+
+    App\Infrastructure\NetBox\NetBoxClient:
+        arguments:
+            $netboxClient: '@netbox.yaml_client'
