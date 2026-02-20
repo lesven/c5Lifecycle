@@ -22,6 +22,11 @@ up: ## Container starten
 	@echo ""
 	@echo "C5 Evidence Tool laeuft unter http://localhost:$${APP_PORT:-8080}"
 
+up-dev: ## Container starten
+	$(COMPOSE) --profile dev up -d
+	@echo ""
+	@echo "C5 Evidence Tool laeuft unter http://localhost:$${APP_PORT:-8080}"
+
 down: ## Container stoppen
 	$(COMPOSE) down
 
