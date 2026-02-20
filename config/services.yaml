@@ -1,0 +1,26 @@
+parameters:
+    c5.config_path: '%kernel.project_dir%/config/c5_evidence.yaml'
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Domain/ValueObject/'
+            - '../src/Domain/Repository/'
+            - '../src/Application/DTO/'
+            - '../src/Application/Message/'
+            - '../src/Infrastructure/Persistence/Entity/'
+            - '../src/Kernel.php'
+
+    App\Infrastructure\Config\EvidenceConfig:
+        factory: ['App\Infrastructure\Config\EvidenceConfig', 'fromYamlFile']
+        arguments:
+            $path: '%c5.config_path%'
+
+    App\Domain\Repository\SubmissionLogRepositoryInterface:
+        alias: App\Infrastructure\Persistence\DoctrineSubmissionLogRepository

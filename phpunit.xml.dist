@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+         testdox="true"
+         cacheDirectory=".phpunit.cache">
+    <php>
+        <env name="KERNEL_CLASS" value="App\Kernel"/>
+        <env name="APP_ENV" value="test" force="true"/>
+        <env name="APP_SECRET" value="test_secret_not_for_production"/>
+        <env name="DATABASE_URL" value="sqlite:///:memory:"/>
+        <env name="MESSENGER_TRANSPORT_DSN" value="in-memory://"/>
+        <env name="MAILER_DSN" value="null://null"/>
+        <env name="NETBOX_URL" value="https://netbox.test"/>
+        <env name="NETBOX_TOKEN" value="test-token"/>
+        <env name="NETBOX_TIMEOUT" value="5"/>
+        <env name="NETBOX_VERIFY_SSL" value="false"/>
+        <env name="JIRA_BASE_URL" value="https://jira.test"/>
+        <env name="JIRA_API_TOKEN" value="test-token"/>
+        <env name="CORS_ALLOW_ORIGIN" value="^https?://localhost(:[0-9]+)?$"/>
+    </php>
+    <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Integration">
+            <directory>tests/Integration</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>src</directory>
+        </include>
+    </source>
+</phpunit>

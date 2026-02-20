@@ -1,0 +1,33 @@
+FROM composer:2 AS dependencies
+
+WORKDIR /app
+
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
+FROM php:8.4-fpm-alpine
+
+RUN apk add --no-cache postgresql-dev icu-dev \
+    && docker-php-ext-install pdo_pgsql intl opcache
+
+WORKDIR /app
+
+COPY --from=dependencies /app/vendor ./vendor
+
+COPY bin ./bin
+COPY config ./config
+COPY migrations ./migrations
+COPY public ./public
+COPY src ./src
+COPY templates ./templates
+COPY .env ./
+
+RUN mkdir -p var/cache var/log && chown -R www-data:www-data var
+
+RUN php bin/console cache:warmup --env=prod --no-debug
+
+EXPOSE 9000
+
+USER www-data
+
+CMD ["php-fpm"]
