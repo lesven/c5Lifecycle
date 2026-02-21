@@ -71,7 +71,10 @@
       </div>
       <div class="field-group">
         <label for="asset_owner">Asset Owner (Name/Rolle) <span class="required-marker">*</span></label>
-        <input type="text" id="asset_owner" name="asset_owner" required>
+        <select id="asset_owner" name="asset_owner" required>
+          <option value="">– Wird geladen … –</option>
+        </select>
+        <input type="hidden" id="contact_id" name="contact_id">
       </div>
       <div class="field-group">
         <label for="service">Zugehöriger Service/Plattform <span class="required-marker">*</span></label>
@@ -89,6 +92,13 @@
       <div class="field-group">
         <label for="change_ref">Change-/Ticket-Referenz <span class="required-marker">*</span></label>
         <input type="text" id="change_ref" name="change_ref" required>
+      </div>
+      <div class="field-group">
+        <label for="tenant_id">Mandant</label>
+        <select id="tenant_id" name="tenant_id">
+          <option value="">– Wird geladen … –</option>
+        </select>
+        <input type="hidden" id="tenant_name" name="tenant_name">
       </div>
     </fieldset>
 

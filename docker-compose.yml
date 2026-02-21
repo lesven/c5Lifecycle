@@ -16,6 +16,7 @@ services:
     restart: unless-stopped
 
   backend:
+
     build:
       context: ./backend
       dockerfile: ../docker/Dockerfile.backend
@@ -30,6 +31,12 @@ services:
       timeout: 3s
       retries: 3
       start_period: 5s
+    restart: unless-stopped
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "${MAILPIT_UI_PORT:-18025}:8025"
     restart: unless-stopped
 
   test:

@@ -55,7 +55,155 @@
     keys_revoked: 'Keys/Zertifikate revoked',
     device_wiped: 'Gerät wiped oder reprovisioniert',
     ticket_ref: 'Ticket-Referenz',
+    tenant_name: 'Mandant',
   };
+
+  // ── NetBox Asset Lookup ──
+  var NETBOX_FIELD_MAP = {
+    serial_number: '#serial_number',
+    manufacturer: '#manufacturer',
+    model: '#model',
+    device_type: '#device_type',
+    location: '#location',
+    tenant_id: '#tenant_id',
+  };
+  var NETBOX_CUSTOM_FIELD_MAP = {
+    asset_owner: '#asset_owner',
+    service: '#service',
+    criticality: '#criticality',
+    admin_user: '#admin_user',
+    security_owner: '#security_owner',
+  };
+
+  function loadTenants(form) {
+    var sel = form.querySelector('#tenant_id');
+    if (!sel) return;
+    fetch(API_BASE + '/tenants')
+      .then(function (r) { return r.json(); })
+      .then(function (list) {
+        sel.innerHTML = '<option value="">– Bitte wählen –</option>';
+        list.forEach(function (t) {
+          var o = document.createElement('option');
+          o.value = String(t.id);
+          o.textContent = t.name;
+          sel.appendChild(o);
+        });
+        // Re-sync name after options loaded (in case asset lookup already ran)
+        syncTenantName(form);
+      })
+      .catch(function () {
+        sel.innerHTML = '<option value="">– Nicht verfügbar –</option>';
+      });
+  }
+
+  function loadContacts(form) {
+    var sel = form.querySelector('#asset_owner, #owner_approval, #owner');
+    if (!sel) return;
+    fetch(API_BASE + '/contacts')
+      .then(function (r) { return r.json(); })
+      .then(function (list) {
+        sel.innerHTML = '<option value="" data-contact-id="">– Bitte wählen –</option>';
+        list.forEach(function (c) {
+          var o = document.createElement('option');
+          o.value = c.name;
+          o.textContent = c.name;
+          o.setAttribute('data-contact-id', String(c.id));
+          sel.appendChild(o);
+        });
+        // Sync contact_id if a value is already selected (e.g. from asset lookup)
+        syncContactId(form);
+      })
+      .catch(function () {
+        sel.innerHTML = '<option value="">– Nicht verfügbar –</option>';
+      });
+  }
+
+  function syncContactId(form) {
+    var sel = form.querySelector('#asset_owner, #owner_approval, #owner');
+    var inp = form.querySelector('#contact_id');
+    if (!sel || !inp) return;
+    var opt = sel.options[sel.selectedIndex];
+    inp.value = (opt && opt.getAttribute('data-contact-id')) || '';
+  }
+
+  function syncTenantName(form) {
+    var sel = form.querySelector('#tenant_id');
+    var inp = form.querySelector('#tenant_name');
+    if (!sel || !inp) return;
+    var opt = sel.options[sel.selectedIndex];
+    inp.value = (opt && opt.value) ? opt.text : '';
+  }
+
+  function performAssetLookup(assetId, form) {
+    if (!assetId || assetId.trim() === '') return;
+
+    // Remove existing badge
+    var existingBadge = form.querySelector('.netbox-badge');
+    if (existingBadge) existingBadge.remove();
+
+    fetch(API_BASE + '/asset-lookup?asset_id=' + encodeURIComponent(assetId))
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (!data.found) return;
+
+        // Prefill only empty fields
+        Object.keys(NETBOX_FIELD_MAP).forEach(function (key) {
+          var el = form.querySelector(NETBOX_FIELD_MAP[key]);
+          if (el && !el.value && data[key]) {
+            if (el.tagName === 'SELECT') {
+              setSelectValue(el, data[key]);
+            } else {
+              el.value = data[key];
+            }
+          }
+        });
+
+        // Sync tenant name from selected option
+        syncTenantName(form);
+
+        // Prefill custom fields
+        if (data.custom_fields) {
+          Object.keys(NETBOX_CUSTOM_FIELD_MAP).forEach(function (key) {
+            var el = form.querySelector(NETBOX_CUSTOM_FIELD_MAP[key]);
+            if (el && !el.value && data.custom_fields[key]) {
+              if (el.tagName === 'SELECT') {
+                setSelectValue(el, data.custom_fields[key]);
+              } else {
+                el.value = data.custom_fields[key];
+              }
+            }
+          });
+        }
+
+        // Show NetBox badge
+        showNetBoxBadge(form, data.status);
+      })
+      .catch(function () {
+        // Silently ignore lookup errors
+      });
+  }
+
+  function setSelectValue(selectEl, value) {
+    var options = selectEl.options;
+    for (var i = 0; i < options.length; i++) {
+      if (options[i].value === value || options[i].text === value) {
+        selectEl.selectedIndex = i;
+        return;
+      }
+    }
+  }
+
+  function showNetBoxBadge(form, status) {
+    var assetField = form.querySelector('[name="asset_id"]');
+    if (!assetField) return;
+    var group = assetField.closest('.field-group');
+    if (!group) return;
+
+    var badge = document.createElement('span');
+    badge.className = 'netbox-badge';
+    badge.textContent = 'NetBox: ' + (status || 'gefunden');
+    group.appendChild(badge);
+  }
 
   // ── Backend API base URL ──
   const API_BASE = getApiBase();
@@ -222,8 +370,13 @@
       body: JSON.stringify(data),
     })
       .then(function (res) {
-        return res.json().then(function (body) {
-          return { status: res.status, body: body };
+        return res.text().then(function (text) {
+          try {
+            var body = JSON.parse(text);
+            return { status: res.status, body: body };
+          } catch (e) {
+            throw new Error('Ungültige Server-Antwort (HTTP ' + res.status + ')');
+          }
         });
       })
       .then(function (result) {
@@ -251,9 +404,30 @@
     if (result.jira_ticket) {
       text += ' · Jira-Ticket: ' + result.jira_ticket;
     }
+    if (result.netbox_synced && result.netbox_status) {
+      if (result.netbox_status === 'journal_created') {
+        text += ' · NetBox: Journal Entry erstellt';
+      } else {
+        text += ' · NetBox-Status aktualisiert: ' + result.netbox_status;
+      }
+    }
     text += ' · Request-ID: ' + result.request_id;
     el.textContent = text;
     el.classList.remove('hidden');
+
+    // Show NetBox warning if sync failed (include error message / optional trace)
+    if (result.netbox_error) {
+      var warning = document.createElement('div');
+      warning.className = 'submit-status warning';
+      warning.innerHTML = '<strong>NetBox-Synchronisation fehlgeschlagen:</strong> ' + escapeHtml(result.netbox_error);
+      if (result.netbox_error_trace) {
+        var pre = document.createElement('pre');
+        pre.className = 'netbox-trace';
+        pre.textContent = result.netbox_error_trace;
+        warning.appendChild(pre);
+      }
+      el.parentNode.insertBefore(warning, el.nextSibling);
+    }
   }
 
   function showError(el, message, requestId) {
@@ -285,6 +459,27 @@
     info.style.cssText = 'font-size:.8125rem;color:#5f6672;margin-bottom:1rem;';
     info.textContent = 'Request-ID: ' + result.request_id;
     if (result.jira_ticket) info.textContent += ' · Jira: ' + result.jira_ticket;
+    if (result.netbox_synced && result.netbox_status) {
+      if (result.netbox_status === 'journal_created') {
+        info.textContent += ' · NetBox: Journal Entry erstellt';
+      } else {
+        info.textContent += ' · NetBox: ' + result.netbox_status;
+      }
+    }
+    if (result.netbox_error) {
+      info.textContent += ' · NetBox-Sync fehlgeschlagen';
+      // Append human-readable error details to the summary
+      var errDiv = document.createElement('div');
+      errDiv.className = 'summary-netbox-error';
+      errDiv.textContent = result.netbox_error;
+      panel.insertBefore(errDiv, table);
+      if (result.netbox_error_trace) {
+        var tracePre = document.createElement('pre');
+        tracePre.className = 'summary-netbox-trace';
+        tracePre.textContent = result.netbox_error_trace;
+        panel.insertBefore(tracePre, table);
+      }
+    }
     panel.appendChild(info);
 
     // Table of all submitted fields
@@ -341,10 +536,33 @@
     });
   }
 
+  // small helper to escape HTML when inserting server-provided text
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   // ── Init ──
   document.addEventListener('DOMContentLoaded', function () {
     var form = document.getElementById('evidence-form');
     if (!form) return;
+
+    // Set today's date as default for all date inputs
+    var today = new Date();
+    var year = today.getFullYear();
+    var month = String(today.getMonth() + 1).padStart(2, '0');
+    var day = String(today.getDate()).padStart(2, '0');
+    var todayStr = year + '-' + month + '-' + day;
+    var dateInputs = form.querySelectorAll('input[type="date"]');
+    dateInputs.forEach(function (input) {
+      if (!input.value) {
+        input.value = todayStr;
+      }
+    });
 
     // Update conditional required on change
     form.addEventListener('change', function () {
@@ -353,6 +571,36 @@
 
     // Initial evaluation
     evaluateConditionalRequired(form);
+
+    // Load tenants dropdown if present
+    loadTenants(form);
+
+    // Load contacts dropdown if present
+    loadContacts(form);
+
+    // Sync tenant_name hidden field when dropdown changes
+    var tenantSel = form.querySelector('#tenant_id');
+    if (tenantSel) {
+      tenantSel.addEventListener('change', function () {
+        syncTenantName(form);
+      });
+    }
+
+    // Sync contact_id hidden field when contact dropdown changes
+    var contactSel = form.querySelector('#asset_owner, #owner_approval, #owner');
+    if (contactSel) {
+      contactSel.addEventListener('change', function () {
+        syncContactId(form);
+      });
+    }
+
+    // NetBox asset lookup on asset_id blur
+    var assetIdField = form.querySelector('[name="asset_id"]');
+    if (assetIdField) {
+      assetIdField.addEventListener('blur', function () {
+        performAssetLookup(assetIdField.value, form);
+      });
+    }
 
     // Handle submit
     form.addEventListener('submit', function (e) {

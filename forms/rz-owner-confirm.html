@@ -37,11 +37,21 @@
       </div>
       <div class="field-group">
         <label for="owner">Owner (Name/Rolle) <span class="required-marker">*</span></label>
-        <input type="text" id="owner" name="owner" required>
+        <select id="owner" name="owner" required>
+          <option value="">– Wird geladen … –</option>
+        </select>
+        <input type="hidden" id="contact_id" name="contact_id">
       </div>
       <div class="field-group">
         <label for="confirm_date">Datum <span class="required-marker">*</span></label>
         <input type="date" id="confirm_date" name="confirm_date" required>
+      </div>
+      <div class="field-group">
+        <label for="tenant_id">Mandant</label>
+        <select id="tenant_id" name="tenant_id">
+          <option value="">– Wird geladen … –</option>
+        </select>
+        <input type="hidden" id="tenant_name" name="tenant_name">
       </div>
     </fieldset>
 

@@ -55,7 +55,11 @@ class MailBuilder
         'keys_revoked' => 'Keys/Zertifikate revoked',
         'device_wiped' => 'Gerät wiped oder reprovisioniert',
         'ticket_ref' => 'Ticket-Referenz',
+        'tenant_name' => 'Mandant',
     ];
+
+    /** Fields to skip in the email body (raw IDs, not human-readable) */
+    private static array $skipFields = ['tenant_id'];
 
     public static function build(array $event, array $data, string $requestId): string
     {
@@ -75,6 +79,9 @@ class MailBuilder
         $lines[] = '';
 
         foreach ($data as $key => $value) {
+            if (in_array($key, self::$skipFields, true)) {
+                continue;
+            }
             $label = self::$labels[$key] ?? $key;
             if (is_bool($value)) {
                 $display = $value ? 'Ja' : 'Nein';

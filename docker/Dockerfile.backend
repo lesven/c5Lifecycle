@@ -1,4 +1,6 @@
-FROM php:8.3-cli-alpine
+FROM composer:2 AS dependencies
+
+WORKDIR /app
 
 # System dependencies (curl for Composer installer, git for Composer source downloads, PHP curl extension already included)
 RUN apk add --no-cache curl git
@@ -8,9 +10,8 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin -
 
 WORKDIR /app
 
-# Install PHP dependencies first (layer caching)
-COPY composer.json composer.lock* ./
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+# Copy installed dependencies from composer stage
+COPY --from=dependencies /app/vendor ./vendor
 
 # Copy application code
 COPY . .

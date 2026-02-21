@@ -51,7 +51,10 @@
       </div>
       <div class="field-group">
         <label for="owner_approval">Freigabe durch Owner <span class="required-marker">*</span></label>
-        <input type="text" id="owner_approval" name="owner_approval" required>
+        <select id="owner_approval" name="owner_approval" required>
+          <option value="">– Wird geladen … –</option>
+        </select>
+        <input type="hidden" id="contact_id" name="contact_id">
       </div>
       <div class="field-group">
         <label for="followup">Folgeweg <span class="required-marker">*</span></label>
@@ -61,6 +64,13 @@
           <option>Leasing-Rückgabe</option>
           <option>Ersatzteilspender</option>
         </select>
+      </div>
+      <div class="field-group">
+        <label for="tenant_id">Mandant</label>
+        <select id="tenant_id" name="tenant_id">
+          <option value="">– Wird geladen … –</option>
+        </select>
+        <input type="hidden" id="tenant_name" name="tenant_name">
       </div>
     </fieldset>
 

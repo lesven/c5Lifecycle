@@ -169,4 +169,72 @@ class ConfigTest extends TestCase
         $config = $this->createConfig(['smtp' => []]);
         $this->assertEquals('none', $config->getJiraRule('rz_provision'));
     }
+
+    // --- NetBox Config Tests ---
+
+    public function testIsNetBoxEnabledReturnsFalseByDefault(): void
+    {
+        $config = $this->createConfig(['smtp' => []]);
+        $this->assertFalse($config->isNetBoxEnabled());
+    }
+
+    public function testIsNetBoxEnabledReturnsTrueWhenEnabled(): void
+    {
+        $config = $this->createConfig(['netbox' => ['enabled' => true]]);
+        $this->assertTrue($config->isNetBoxEnabled());
+    }
+
+    public function testIsNetBoxEnabledReturnsFalseWhenDisabled(): void
+    {
+        $config = $this->createConfig(['netbox' => ['enabled' => false]]);
+        $this->assertFalse($config->isNetBoxEnabled());
+    }
+
+    public function testGetNetBoxSyncRuleReturnsNoneWhenDisabled(): void
+    {
+        $config = $this->createConfig([
+            'netbox' => [
+                'enabled' => false,
+                'sync_rules' => ['rz_provision' => 'update_status'],
+            ],
+        ]);
+        $this->assertEquals('none', $config->getNetBoxSyncRule('rz_provision'));
+    }
+
+    public function testGetNetBoxSyncRuleReturnsConfiguredValue(): void
+    {
+        $config = $this->createConfig([
+            'netbox' => [
+                'enabled' => true,
+                'sync_rules' => [
+                    'rz_provision' => 'update_status',
+                    'rz_owner_confirm' => 'journal_only',
+                    'admin_access_cleanup' => 'none',
+                ],
+            ],
+        ]);
+        $this->assertEquals('update_status', $config->getNetBoxSyncRule('rz_provision'));
+        $this->assertEquals('journal_only', $config->getNetBoxSyncRule('rz_owner_confirm'));
+        $this->assertEquals('none', $config->getNetBoxSyncRule('admin_access_cleanup'));
+    }
+
+    public function testGetNetBoxSyncRuleDefaultsToNoneForUnknownEvent(): void
+    {
+        $config = $this->createConfig([
+            'netbox' => ['enabled' => true, 'sync_rules' => []],
+        ]);
+        $this->assertEquals('none', $config->getNetBoxSyncRule('unknown_event'));
+    }
+
+    public function testGetNetBoxOnErrorDefaultsToWarn(): void
+    {
+        $config = $this->createConfig(['smtp' => []]);
+        $this->assertEquals('warn', $config->getNetBoxOnError());
+    }
+
+    public function testGetNetBoxOnErrorReturnsConfiguredValue(): void
+    {
+        $config = $this->createConfig(['netbox' => ['on_error' => 'fail']]);
+        $this->assertEquals('fail', $config->getNetBoxOnError());
+    }
 }

@@ -27,8 +27,15 @@ class MailSender
         $mail->isSMTP();
         $mail->Host       = $this->config->get('smtp.host', 'localhost');
         $mail->Port       = (int) $this->config->get('smtp.port', 587);
-        $mail->SMTPSecure = $this->config->get('smtp.encryption', 'tls');
         $mail->CharSet    = 'UTF-8';
+
+        $encryption = $this->config->get('smtp.encryption', 'tls');
+        if ($encryption === 'none' || $encryption === '') {
+            $mail->SMTPSecure = false;
+            $mail->SMTPAutoTLS = false;
+        } else {
+            $mail->SMTPSecure = $encryption;
+        }
 
         $username = $this->config->get('smtp.username');
         if ($username) {

@@ -9,6 +9,10 @@ use C5\Mail\MailBuilder;
 use C5\Mail\MailSender;
 use C5\Jira\JiraClient;
 use C5\Log\Logger;
+use C5\NetBox\NetBoxClient;
+use C5\NetBox\StatusMapper;
+use C5\NetBox\JournalBuilder;
+use C5\NetBox\CustomFieldMapper;
 use Ramsey\Uuid\Uuid;
 
 class SubmitHandler
@@ -72,7 +76,7 @@ class SubmitHandler
         } catch (\Throwable $e) {
             Logger::error("Mail failed", ['request_id' => $requestId, 'error' => $e->getMessage()]);
             $this->respond(502, [
-                'error' => 'Evidence-Mail konnte nicht versendet werden',
+                'error' => 'Evidence-Mail konnte nicht versendet werden: !!!'. $e->getMessage(),
                 'detail' => $e->getMessage(),
                 'request_id' => $requestId,
             ]);
@@ -102,15 +106,214 @@ class SubmitHandler
             }
         }
 
-        // 6. Success response
-        $this->respond(200, [
+        // 6. Optional NetBox sync
+        $netboxSynced = false;
+        $netboxError = null;
+        $netboxErrorTrace = null;
+        $netboxStatus = null;
+        $syncRule = $this->config->getNetBoxSyncRule($eventType);
+
+        if ($syncRule !== 'none') {
+            try {
+                $netboxResult = $this->syncNetBox($eventType, $event, $data, $body, $recipients['to'], $requestId, $syncRule);
+                $netboxSynced = true;
+                $netboxStatus = $netboxResult['status'] ?? null;
+                Logger::info("NetBox sync completed", ['request_id' => $requestId, 'sync_rule' => $syncRule]);
+            } catch (\Throwable $e) {
+                // Provide more verbose error information for debugging
+                $netboxError = sprintf('%s: %s', get_class($e), $e->getMessage());
+                // Always log full exception details (class, message, code, trace)
+                Logger::error("NetBox sync failed", [
+                    'request_id' => $requestId,
+                    'exception' => get_class($e),
+                    'message' => $e->getMessage(),
+                    'code' => $e->getCode(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+
+                // Include trace in API response only when explicit debug flag is enabled
+                if ($this->config->get('netbox.debug', false)) {
+                    $netboxErrorTrace = $e->getTraceAsString();
+                }
+
+                if ($this->config->getNetBoxOnError() === 'fail') {
+                    $payload = [
+                        'error' => 'NetBox-Update fehlgeschlagen',
+                        'mail_sent' => true,
+                        'request_id' => $requestId,
+                    ];
+                    if ($netboxErrorTrace !== null) {
+                        $payload['netbox_error_trace'] = $netboxErrorTrace;
+                    }
+                    $this->respond(502, $payload);
+                    return;
+                }
+            }
+        }
+
+        // 7. Success response
+        $response = [
             'success' => true,
             'request_id' => $requestId,
             'mail_sent' => true,
             'event_type' => $eventType,
             'asset_id' => $assetId,
             'jira_ticket' => $jiraTicket,
+            'netbox_synced' => $netboxSynced,
+        ];
+
+        if ($netboxStatus !== null) {
+            $response['netbox_status'] = $netboxStatus;
+        }
+        if ($netboxError !== null) {
+            $response['netbox_error'] = $netboxError;
+        }
+        if ($netboxErrorTrace !== null) {
+            $response['netbox_error_trace'] = $netboxErrorTrace;
+        }
+
+        $this->respond(200, $response);
+    }
+
+    private function syncNetBox(string $eventType, array $event, array $data, string $emailBody, string $evidenceTo, string $requestId, string $syncRule): array
+    {
+        $client = new NetBoxClient($this->config);
+        $assetId = $data['asset_id'] ?? '';
+        $result = ['status' => null];
+
+        // Find the device in NetBox
+        $device = $client->findDeviceByAssetTag($assetId, $requestId);
+        if ($device === null) {
+            $provisionEvents = ['rz_provision', 'admin_provision'];
+            if (in_array($eventType, $provisionEvents, true) && $this->config->get('netbox.create_on_provision', false)) {
+                $device = $this->createNetBoxDevice($client, $eventType, $data, $requestId);
+            } else {
+                throw new \RuntimeException('Asset nicht in NetBox gefunden');
+            }
+        }
+
+        $deviceId = (int) $device['id'];
+
+        // Build patch data: always include email body as comments
+        $patchData = ['comments' => $emailBody];
+
+        // Tenant sync (standard NetBox field, not custom_field)
+        $tenantId = isset($data['tenant_id']) && $data['tenant_id'] !== ''
+            ? (int) $data['tenant_id'] : 0;
+        if ($tenantId > 0) {
+            $patchData['tenant'] = $tenantId;
+        }
+
+        // Status update + custom fields (only for update_status rule)
+        if ($syncRule === 'update_status') {
+            $targetStatus = StatusMapper::getTargetStatus($eventType);
+
+            if ($targetStatus !== null) {
+                $patchData['status'] = $targetStatus;
+                $result['status'] = $targetStatus;
+            }
+
+            // Custom fields
+            $customFields = CustomFieldMapper::map($eventType, $data);
+            if (!empty($customFields)) {
+                $patchData['custom_fields'] = $customFields;
+            }
+        }
+
+        $client->updateDevice($deviceId, $patchData, $requestId);
+
+        // Contact assignment (if contact_id provided)
+        $contactId = isset($data['contact_id']) && $data['contact_id'] !== ''
+            ? (int) $data['contact_id'] : 0;
+        if ($contactId > 0) {
+            $contactRoleId = $this->resolveContactRoleId();
+            $client->createContactAssignment($deviceId, $contactId, $contactRoleId, $requestId);
+            Logger::info("NetBox contact assignment created", [
+                'request_id' => $requestId,
+                'device_id' => $deviceId,
+                'contact_id' => $contactId,
+                'role_id' => $contactRoleId,
+            ]);
+        }
+
+        // Journal entry (for both update_status and journal_only)
+        $kind = StatusMapper::getJournalKind($eventType);
+        $comments = JournalBuilder::build($eventType, $event, $data, $requestId, $evidenceTo);
+
+        $client->createJournalEntry([
+            'assigned_object_type' => 'dcim.device',
+            'assigned_object_id' => $deviceId,
+            'kind' => $kind,
+            'comments' => $comments,
+        ], $requestId);
+
+        if ($result['status'] === null && $syncRule === 'journal_only') {
+            $result['status'] = 'journal_created';
+        }
+
+        return $result;
+    }
+
+    private function createNetBoxDevice(NetBoxClient $client, string $eventType, array $data, string $requestId): array
+    {
+        $manufacturer = trim((string) ($data['manufacturer'] ?? ''));
+        $model = trim((string) ($data['model'] ?? ''));
+        $serialNumber = trim((string) ($data['serial_number'] ?? ''));
+        $assetTag = trim((string) ($data['asset_id'] ?? ''));
+
+        // Determine device type: search by model, fallback to configured ID
+        $deviceTypeId = 0;
+        if ($model !== '') {
+            $deviceType = $client->findDeviceTypeByModel($manufacturer, $model, $requestId);
+            if ($deviceType !== null) {
+                $deviceTypeId = (int) $deviceType['id'];
+            }
+        }
+        if ($deviceTypeId === 0) {
+            $deviceTypeId = (int) $this->config->get('netbox.provision_defaults.device_type_id', 0);
+        }
+
+        $siteId = (int) $this->config->get('netbox.provision_defaults.site_id', 0);
+        $roleId = (int) $this->config->get('netbox.provision_defaults.role_id', 0);
+
+        if ($deviceTypeId === 0 || $siteId === 0 || $roleId === 0) {
+            throw new \RuntimeException(
+                'NetBox Device-Anlage fehlgeschlagen: Pflicht-IDs fehlen in netbox.provision_defaults ' .
+                "(device_type_id={$deviceTypeId}, site_id={$siteId}, role_id={$roleId})"
+            );
+        }
+
+        $postData = [
+            'name'        => $assetTag,
+            'device_type' => $deviceTypeId,
+            'role'        => $roleId,
+            'site'        => $siteId,
+            'status'      => StatusMapper::getTargetStatus($eventType) ?? 'active',
+            'asset_tag'   => $assetTag,
+        ];
+
+        if ($serialNumber !== '') {
+            $postData['serial'] = $serialNumber;
+        }
+
+        $tenantId = isset($data['tenant_id']) && $data['tenant_id'] !== ''
+            ? (int) $data['tenant_id'] : 0;
+        if ($tenantId > 0) {
+            $postData['tenant'] = $tenantId;
+        }
+
+        $customFields = CustomFieldMapper::map($eventType, $data);
+        if (!empty($customFields)) {
+            $postData['custom_fields'] = $customFields;
+        }
+
+        Logger::info("NetBox Device-Anlage", [
+            'request_id' => $requestId,
+            'asset_tag'  => $assetTag,
+            'event_type' => $eventType,
         ]);
+
+        return $client->createDevice($postData, $requestId);
     }
 
     private function validate(string $eventType, array $event, array $data): array
@@ -145,6 +348,23 @@ class SubmitHandler
         }
 
         return $errors;
+    }
+
+    private function resolveContactRoleId(): int
+    {
+        $raw = trim((string) $this->config->get('netbox.contact_role_owner', ''));
+        if ($raw === '') {
+            return 0;
+        }
+        // If it's a plain integer, use directly
+        if (ctype_digit($raw)) {
+            return (int) $raw;
+        }
+        // If it's a URL path like "tenancy/contact-roles/1/", extract the ID
+        if (preg_match('/(\d+)\/?$/', $raw, $m)) {
+            return (int) $m[1];
+        }
+        return 0;
     }
 
     private function respond(int $status, array $data): void

@@ -4,67 +4,114 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-C5 Asset Management Evidence Tool (MVP) — a compliance evidence management system for C5 certification. It captures structured data via web forms for asset lifecycle events and sends evidence emails to an archive mailbox. Optional Jira ticket creation per event.
+C5 Asset Management Evidence Tool (MVP) — a compliance evidence management system for C5 certification. It captures structured data via web forms for asset lifecycle events and sends evidence emails to an archive mailbox with optional Jira ticket creation. Includes NetBox integration for asset data lookup.
 
 All documentation and UI text is in **German**.
 
-## Architecture
-
-### Two Tracks, Seven Forms
-
-- **Track A — RZ-Hardware** (datacenter: Server/Storage/Switch/Firewall):
-  `/rz/provision`, `/rz/retire`, `/rz/owner-confirm`
-- **Track B — Admin-Endgeräte** (privileged workstations, jump hosts, break-glass):
-  `/admin/provision`, `/admin/user-commitment`, `/admin/return`, `/admin/access-cleanup`
-
-### Evidence-First Design
-
-- Primary proof: Email archive via SMTP relay to configured mailbox
-- Secondary (optional): Jira tickets, configurable per event (`none` | `optional` | `required`)
-- Stateless MVP — no persistent data storage in the application
-
-### Frontend / Backend Split
-
-- **Frontend**: Static HTML + CSS + Vanilla JavaScript. **No frameworks** (no React/Vue/Angular), **no build toolchain** (NFR-01)
-- **Backend**: PHP relay service (`backend/`) for SMTP mail sending via PHPMailer, optional Jira REST calls, and YAML config
-- Configuration file (`backend/config/config.yaml`) controls SMTP, email recipients per track, and Jira rules per event. Tool refuses startup without valid config.
-
-## Key Files
-
-- `README.md` — Complete requirements specification (German), the source of truth for all form fields, validation rules, and acceptance criteria
-- `preview.html` — Original UI prototype (kept for reference)
-- `index.html` — Production overview page linking to all 7 forms
-- `forms/*.html` — Seven form pages (static HTML)
-- `css/style.css` — Shared stylesheet (extracted from preview.html design system)
-- `js/app.js` — Shared form logic: validation, conditional required, submit, summary overlay
-- `backend/src/` — PHP backend: Router, SubmitHandler, MailBuilder, MailSender, JiraClient, Logger
-- `backend/config/config.yaml.example` — Config template
-
-## Build & Run
+## Common Commands
 
 ```bash
-# 1. Install PHP dependencies
-cd backend && composer install
+# Docker-based development (recommended)
+make setup              # Initial setup: config, build, start
+make up                 # Start all containers
+make down               # Stop all containers
+make test               # Run PHPUnit tests in Docker
+make logs-backend       # View backend logs (live)
 
-# 2. Create config from template
-cp config/config.yaml.example config/config.yaml
-# Edit config.yaml with real SMTP + Jira settings
+# Local development (PHP 8.1+ required)
+cd backend && composer install        # Install PHP dependencies
+composer test                         # Run PHPUnit tests locally
+php -S localhost:8080 -t backend/public/  # Start backend API server
 
-# 3. Start PHP dev server (serves API at /api/*)
-php -S localhost:8080 -t public/
-
-# 4. Serve frontend (separate server or same via reverse proxy)
-# For development, open index.html directly or use:
-# python3 -m http.server 3000  (from project root)
+# NetBox setup (requires NETBOX_URL and NETBOX_TOKEN env vars)
+./scripts/netbox-setup.sh            # Configure NetBox custom fields
 ```
 
-API endpoint: `POST /api/submit/{event-type}` (JSON body)
+## Architecture
 
-## Design Constraints
+### Three-Layer Design
 
-- All form fields and validation rules are defined in README.md sections 5 (Datenanforderungen) and 4 (FR-02)
-- Email subject must contain: `[C5 Evidence]`, category (`RZ`/`ADM`), event type, Asset-ID (FR-03)
-- Submit is only successful if the evidence email was sent (NFR-05). For events with `jira_rules: required`, Jira ticket creation is also mandatory (FR-05)
-- No silent failures — all errors must be visible to the user (NFR-05)
-- Formulare and templates must be maintainable without copy-paste JS duplication (NFR-06)
-- Request-ID per submission for logging (NFR-04)
+1. **Frontend Layer** — Static HTML/CSS/JS, no build process required (NFR-01)
+   - Entry: `index.html` → 7 form pages in `forms/`
+   - Shared logic: `js/app.js` handles validation, conditional fields, API calls
+   - Styling: `css/style.css` (design system from `preview.html`)
+
+2. **Backend Layer** — PHP 8.1+ API service
+   - Router pattern: `src/Router.php` dispatches to handlers
+   - Main handlers: `SubmitHandler` (form processing), `AssetLookupHandler` (NetBox)
+   - Email: `MailBuilder` → `MailSender` (PHPMailer)
+   - External APIs: `JiraClient`, `NetBoxClient`
+   - Config-driven: YAML config controls all integrations
+
+3. **Integration Layer** — External systems
+   - NetBox: Asset data source (device lookup, custom fields)
+   - Jira: Optional ticket creation per event
+   - SMTP: Evidence email delivery
+
+### Event Flow
+
+1. User fills form → `js/app.js` validates → POST to `/api/submit/{event-type}`
+2. `Router` → `SubmitHandler` → validates against `EventRegistry`
+3. Builds evidence email → sends via SMTP (mandatory)
+4. Creates Jira ticket if configured (optional/required per event)
+5. Returns success/error to frontend
+
+### NetBox Integration
+
+- **Asset Lookup**: `/api/asset-lookup?asset_id={id}` fetches device data
+- **Custom Fields**: Maps NetBox fields to form fields (see `CustomFieldMapper`)
+- **Device Transform**: `DeviceTransformer` converts NetBox API response
+- **Status Mapping**: `StatusMapper` translates NetBox status to German
+
+## Key Design Patterns
+
+### Configuration-Driven Behavior
+
+All integration settings live in `backend/config/config.yaml`:
+- SMTP settings, per-track email recipients
+- Jira rules per event type (`none`/`optional`/`required`)
+- NetBox API endpoint and credentials
+- Feature flags for integrations
+
+### Event Registry Pattern
+
+`EventRegistry::getDefinition()` defines all 7 events with:
+- Required/optional fields
+- Validation rules
+- Email template data
+- Jira ticket mapping
+
+### Stateless Design
+
+No database, no sessions. Each request is independent:
+- Evidence = email in archive mailbox
+- Tracking = Request-ID in logs
+- State = external systems (Jira, NetBox)
+
+## Testing Strategy
+
+```bash
+# Run all tests
+make test                    # Docker environment
+cd backend && composer test  # Local environment
+
+# Run specific test
+vendor/bin/phpunit tests/ConfigTest.php
+vendor/bin/phpunit --filter testNetBoxEnabled
+```
+
+Test coverage includes:
+- Config validation and feature flags
+- Event registry definitions
+- NetBox transformers and mappers
+- Jira client behavior
+- Bootstrap and routing
+
+## Important Constraints
+
+- **No JavaScript frameworks** — vanilla JS only (NFR-01)
+- **No build process** — direct file serving (NFR-01)
+- **German UI/docs** — all user-facing text in German
+- **Evidence-first** — email delivery is mandatory, never optional
+- **Request tracking** — UUID per submission for audit trail (NFR-04)
+- **No silent failures** — all errors must be user-visible (NFR-05)
