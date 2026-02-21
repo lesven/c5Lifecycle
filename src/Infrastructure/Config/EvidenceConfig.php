@@ -56,7 +56,10 @@ final readonly class EvidenceConfig
         return true;
     }
 
-    /** Get evidence email recipients for a track ('rz_assets' or 'admin_devices') */
+    /** Get evidence email recipients for a track ('rz_assets' or 'admin_devices')
+     *
+     * @return array{to: string, cc: string[]}
+     */
     public function getEvidenceRecipients(string $track): array
     {
         return [
