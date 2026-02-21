@@ -39,6 +39,15 @@ final class SubmitEvidenceUseCase
         }
 
         $event = $this->eventRegistry->get($eventType);
+        // defensive: EventRegistry::get() can return null, static analysers
+        // (phpstan) verstehen die vorherige exists() check nicht immer.
+        if ($event === null) {
+            $this->evidenceLogger->error('Event metadata missing', ['request_id' => $requestId, 'event' => $eventType]);
+            $result->error = "Interner Fehler: Event-Metadaten nicht gefunden";
+            $result->httpStatus = 500;
+            return $result;
+        }
+
         $result->assetId = $data['asset_id'] ?? 'UNKNOWN';
 
         // 2. Validate data
