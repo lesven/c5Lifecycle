@@ -66,6 +66,21 @@ final class NetBoxClient
         return $response['results'] ?? [];
     }
 
+    public function findContactAssignment(int $deviceId, int $contactId, int $roleId, string $requestId): ?array
+    {
+        $params = [
+            'object_type' => 'dcim.device',
+            'object_id' => (string) $deviceId,
+            'contact_id' => (string) $contactId,
+        ];
+        if ($roleId > 0) {
+            $params['role_id'] = (string) $roleId;
+        }
+        $response = $this->get('/api/tenancy/contact-assignments/', $params, $requestId);
+        $results = $response['results'] ?? [];
+        return count($results) > 0 ? $results[0] : null;
+    }
+
     public function createContactAssignment(int $deviceId, int $contactId, int $roleId, string $requestId): ?array
     {
         $data = [

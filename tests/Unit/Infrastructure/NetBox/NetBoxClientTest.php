@@ -149,6 +149,28 @@ class NetBoxClientTest extends TestCase
         $this->assertEquals(1, $result['id']);
     }
 
+    public function testFindContactAssignmentReturnsExistingEntry(): void
+    {
+        $assignment = ['id' => 7, 'object_id' => 42, 'contact' => ['id' => 5], 'role' => ['id' => 1]];
+        $client = $this->createClient([
+            new MockResponse(json_encode(['results' => [$assignment]]), ['http_code' => 200]),
+        ]);
+
+        $result = $client->findContactAssignment(42, 5, 1, 'req-123');
+        $this->assertNotNull($result);
+        $this->assertEquals(7, $result['id']);
+    }
+
+    public function testFindContactAssignmentReturnsNullWhenNotFound(): void
+    {
+        $client = $this->createClient([
+            new MockResponse(json_encode(['results' => []]), ['http_code' => 200]),
+        ]);
+
+        $result = $client->findContactAssignment(42, 5, 1, 'req-123');
+        $this->assertNull($result);
+    }
+
     public function testApiErrorThrowsRuntimeException(): void
     {
         $client = $this->createClient([

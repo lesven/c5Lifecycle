@@ -97,11 +97,14 @@ class SyncNetBoxUseCase
 
         $this->netBoxClient->updateDevice($deviceId, $patchData, $requestId);
 
-        // Contact assignment
+        // Contact assignment (idempotent: nur anlegen wenn noch nicht vorhanden)
         $contactId = isset($data['contact_id']) && $data['contact_id'] !== '' ? (int) $data['contact_id'] : 0;
         if ($contactId > 0) {
             $contactRoleId = $this->resolveContactRoleId();
-            $this->netBoxClient->createContactAssignment($deviceId, $contactId, $contactRoleId, $requestId);
+            $existing = $this->netBoxClient->findContactAssignment($deviceId, $contactId, $contactRoleId, $requestId);
+            if ($existing === null) {
+                $this->netBoxClient->createContactAssignment($deviceId, $contactId, $contactRoleId, $requestId);
+            }
         }
 
         // Journal entry
