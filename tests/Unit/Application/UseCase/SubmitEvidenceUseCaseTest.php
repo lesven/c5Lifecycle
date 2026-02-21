@@ -12,6 +12,8 @@ use App\Application\Validator\EventDataValidator;
 use App\Domain\Service\EventRegistry;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use PHPUnit\Framework\MockObject\MockObject;
+use RuntimeException;
 
 class SubmitEvidenceUseCaseTest extends TestCase
 {
@@ -25,14 +27,14 @@ class SubmitEvidenceUseCaseTest extends TestCase
         $syncNetBox ??= $this->createMock(SyncNetBoxUseCase::class);
 
         // Configure default mock returns
-        if ($sendMail instanceof \PHPUnit\Framework\MockObject\MockObject) {
+        if ($sendMail instanceof MockObject) {
             $sendMail->method('execute')->willReturn([
                 'subject' => 'Test Subject',
                 'body' => 'Test Body',
                 'recipients' => ['to' => 'test@example.com', 'cc' => []],
             ]);
         }
-        if ($syncNetBox instanceof \PHPUnit\Framework\MockObject\MockObject) {
+        if ($syncNetBox instanceof MockObject) {
             $syncNetBox->method('execute')->willReturn([
                 'synced' => false, 'status' => null, 'error' => null, 'error_trace' => null,
             ]);
@@ -102,7 +104,7 @@ class SubmitEvidenceUseCaseTest extends TestCase
     public function testMailFailureReturns502(): void
     {
         $sendMail = $this->createMock(SendEvidenceMailUseCase::class);
-        $sendMail->method('execute')->willThrowException(new \RuntimeException('SMTP error'));
+        $sendMail->method('execute')->willThrowException(new RuntimeException('SMTP error'));
 
         $useCase = $this->createUseCase(sendMail: $sendMail);
         $data = [
@@ -132,7 +134,7 @@ class SubmitEvidenceUseCaseTest extends TestCase
     public function testJiraFailureOnRequiredReturns502(): void
     {
         $createJira = $this->createMock(CreateJiraTicketUseCase::class);
-        $createJira->method('execute')->willThrowException(new \RuntimeException('Jira error'));
+        $createJira->method('execute')->willThrowException(new RuntimeException('Jira error'));
 
         $useCase = $this->createUseCase(createJira: $createJira);
         $data = [

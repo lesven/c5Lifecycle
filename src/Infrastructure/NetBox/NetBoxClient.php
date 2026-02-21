@@ -6,6 +6,8 @@ namespace App\Infrastructure\NetBox;
 
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Contracts\HttpClient\ResponseInterface;
+use RuntimeException;
 
 final class NetBoxClient
 {
@@ -49,7 +51,7 @@ final class NetBoxClient
     {
         $result = $this->post('/api/dcim/devices/', $data, $requestId);
         if ($result === null) {
-            throw new \RuntimeException('NetBox Device-Erstellung lieferte kein Ergebnis');
+            throw new RuntimeException('NetBox Device-Erstellung lieferte kein Ergebnis');
         }
         return $result;
     }
@@ -127,7 +129,7 @@ final class NetBoxClient
         return $this->handleResponse($response, $requestId);
     }
 
-    private function handleResponse(\Symfony\Contracts\HttpClient\ResponseInterface $response, string $requestId): ?array
+    private function handleResponse(ResponseInterface $response, string $requestId): ?array
     {
         $statusCode = $response->getStatusCode();
 
@@ -138,7 +140,7 @@ final class NetBoxClient
                 'http_code' => $statusCode,
                 'response' => $body,
             ]);
-            throw new \RuntimeException("NetBox API error (HTTP {$statusCode}): " . ($body ?: 'no response'));
+            throw new RuntimeException("NetBox API error (HTTP {$statusCode}): " . ($body ?: 'no response'));
         }
 
         $content = $response->getContent();

@@ -6,6 +6,7 @@ namespace App\Infrastructure\Persistence\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use DateTimeImmutable;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'submission_log')]
@@ -42,7 +43,7 @@ class SubmissionLog
     private bool $netboxSynced = false;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
-    private \DateTimeImmutable $submittedAt;
+    private DateTimeImmutable $submittedAt;
 
     public function __construct(
         string $requestId,
@@ -54,7 +55,7 @@ class SubmissionLog
         $this->eventType = $eventType;
         $this->assetId = $assetId;
         $this->data = $data;
-        $this->submittedAt = new \DateTimeImmutable();
+        $this->submittedAt = new DateTimeImmutable();
     }
 
     public function getId(): ?int
@@ -112,7 +113,7 @@ class SubmissionLog
         $this->netboxSynced = $netboxSynced;
     }
 
-    public function getSubmittedAt(): \DateTimeImmutable
+    public function getSubmittedAt(): DateTimeImmutable
     {
         return $this->submittedAt;
     }

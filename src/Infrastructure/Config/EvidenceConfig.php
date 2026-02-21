@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\Config;
 
 use Symfony\Component\Yaml\Yaml;
+use RuntimeException;
 
 final readonly class EvidenceConfig
 {
@@ -15,12 +16,12 @@ final readonly class EvidenceConfig
     public static function fromYamlFile(string $path): self
     {
         if (!file_exists($path)) {
-            throw new \RuntimeException("Config file not found: {$path}");
+            throw new RuntimeException("Config file not found: {$path}");
         }
 
         $data = Yaml::parseFile($path);
         if (!is_array($data)) {
-            throw new \RuntimeException('Invalid config file format');
+            throw new RuntimeException('Invalid config file format');
         }
 
         return new self($data);

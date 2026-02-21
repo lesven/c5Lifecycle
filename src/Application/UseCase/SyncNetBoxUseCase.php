@@ -11,6 +11,8 @@ use App\Domain\Service\StatusMapper;
 use App\Infrastructure\Config\EvidenceConfig;
 use App\Infrastructure\NetBox\NetBoxClient;
 use Psr\Log\LoggerInterface;
+use App\Domain\ValueObject\EventType;
+use RuntimeException;
 
 class SyncNetBoxUseCase
 {
@@ -65,11 +67,11 @@ class SyncNetBoxUseCase
 
         $device = $this->netBoxClient->findDeviceByAssetTag($assetId, $requestId);
         if ($device === null) {
-            $eventTypeEnum = \App\Domain\ValueObject\EventType::tryFrom($eventType);
+            $eventTypeEnum = EventType::tryFrom($eventType);
             if ($eventTypeEnum?->isProvisionEvent() && $this->config->isCreateOnProvision()) {
                 $device = $this->createNetBoxDevice($eventType, $data, $requestId);
             } else {
-                throw new \RuntimeException('Asset nicht in NetBox gefunden');
+                throw new RuntimeException('Asset nicht in NetBox gefunden');
             }
         }
 
@@ -148,7 +150,7 @@ class SyncNetBoxUseCase
         $roleId = $defaults['role_id'];
 
         if ($deviceTypeId === 0 || $siteId === 0 || $roleId === 0) {
-            throw new \RuntimeException(
+            throw new RuntimeException(
                 'NetBox Device-Anlage fehlgeschlagen: Pflicht-IDs fehlen in netbox.provision_defaults ' .
                 "(device_type_id={$deviceTypeId}, site_id={$siteId}, role_id={$roleId})"
             );

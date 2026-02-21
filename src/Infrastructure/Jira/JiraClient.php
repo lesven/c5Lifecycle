@@ -7,6 +7,7 @@ namespace App\Infrastructure\Jira;
 use App\Infrastructure\Config\EvidenceConfig;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use RuntimeException;
 
 final class JiraClient
 {
@@ -60,12 +61,12 @@ final class JiraClient
                 'http_code' => $statusCode,
                 'response' => $body,
             ]);
-            throw new \RuntimeException("Jira API error (HTTP {$statusCode}): " . ($body ?: 'no response'));
+            throw new RuntimeException("Jira API error (HTTP {$statusCode}): " . ($body ?: 'no response'));
         }
 
         $result = $response->toArray();
         if (!isset($result['key'])) {
-            throw new \RuntimeException('Jira response missing ticket key');
+            throw new RuntimeException('Jira response missing ticket key');
         }
 
         $this->jiraLogger->info('Jira ticket created', ['request_id' => $requestId, 'ticket' => $result['key']]);

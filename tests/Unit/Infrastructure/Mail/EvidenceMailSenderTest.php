@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
+use RuntimeException;
 
 class EvidenceMailSenderTest extends TestCase
 {
@@ -113,11 +114,11 @@ evidence:
         $mailer = $this->createMock(MailerInterface::class);
         $mailer->expects($this->once())
             ->method('send')
-            ->willThrowException(new \RuntimeException('SMTP connection failed'));
+            ->willThrowException(new RuntimeException('SMTP connection failed'));
 
         $sender = new EvidenceMailSender($mailer, $this->createConfig(), new NullLogger());
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('SMTP connection failed');
 
         $recipients = ['to' => 'test@company.de', 'cc' => []];
