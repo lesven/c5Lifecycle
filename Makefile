@@ -36,6 +36,9 @@ restart: ## Container neu starten
 composer-install: ## Composer-Abhängigkeiten installieren (setzt composer.json voraus)
 	$(COMPOSER) install --no-interaction --prefer-dist
 
+composer-update: ## Composer-Abhängigkeiten aktualisieren (setzt composer.json voraus)	
+	$(COMPOSER) update
+
 # generic helper offering arbitrary composer commands
 composer: ## Führe einen beliebigen Composer-Befehl aus. Nutze ARGS="<command>"
 	$(COMPOSER) $(ARGS)
@@ -66,6 +69,9 @@ lint: ## PHP-CS-Fixer Dry-Run
 
 lint-fix: ## PHP-CS-Fixer anwenden
 	$(PHP) vendor/bin/php-cs-fixer fix
+
+phpmd: ## PHP Mess Detector (phpmd) ausfuehren
+	$(PHP) vendor/bin/phpmd src,tests text cleancode,codesize,controversial,unusedcode
 
 coverage: ## PHPUnit mit Coverage-Report
 	$(PHP) php -dpcov.enabled=1 vendor/bin/phpunit --coverage-html=var/coverage --colors=always
