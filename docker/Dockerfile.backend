@@ -2,11 +2,11 @@ FROM composer:2 AS dependencies
 
 WORKDIR /app
 
-# Install PHP dependencies using composer image (which has git)
-COPY composer.json composer.lock* ./
-RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+# System dependencies (curl for Composer installer, git for Composer source downloads, PHP curl extension already included)
+RUN apk add --no-cache curl git
 
-FROM php:8.3-cli-alpine
+# Install Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer
 
 WORKDIR /app
 
