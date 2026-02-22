@@ -1,0 +1,20 @@
+framework:
+    http_client:
+        scoped_clients:
+            netbox.client:
+                base_uri: '%env(NETBOX_URL)%'
+                headers:
+                    Authorization: 'Token %env(NETBOX_TOKEN)%'
+                    Accept: 'application/json'
+                    Content-Type: 'application/json'
+                timeout: '%env(float:NETBOX_TIMEOUT)%'
+                verify_peer: '%env(bool:NETBOX_VERIFY_SSL)%'
+                verify_host: '%env(bool:NETBOX_VERIFY_SSL)%'
+
+            jira.client:
+                base_uri: '%env(JIRA_BASE_URL)%'
+                headers:
+                    Authorization: 'Bearer %env(JIRA_API_TOKEN)%'
+                    Accept: 'application/json'
+                    Content-Type: 'application/json'
+                timeout: 15.0

@@ -1,0 +1,74 @@
+# C5 Evidence Tool – Konfiguration
+# Kopieren als config.yaml und anpassen.
+
+smtp:
+  host: "mailpit"
+  port: 1025
+  encryption: "none"            # tls | ssl | "" (none)
+  username: ""
+  password: ""
+  from_address: "c5-evidence@company.de"
+  from_name: "C5 Evidence Tool"
+
+evidence:
+  rz_assets:
+    to: "rz-evidence@company.de"
+    cc: []
+  admin_devices:
+    to: "privileged-evidence@company.de"
+    cc:
+      - "it-security@company.de"
+
+jira:
+  enabled: false
+  base_url: "https://jira.example.de"
+  project_key: "ITOPS"
+  issue_type: "Task"
+  api_token: "CHANGE_ME"
+
+jira_rules:
+  rz_provision: "none"
+  rz_retire: "optional"
+  rz_owner_confirm: "none"
+  admin_provision: "none"
+  admin_user_commitment: "none"
+  admin_return: "required"
+  admin_access_cleanup: "required"
+
+netbox:
+  enabled: true                          # Feature-Toggle: true | false
+  base_url: "https://netbox.home.endeneu.de"   # NetBox-URL
+  api_token: "FyjtY5gZ5gBl86fcbH3SXVel6t7SJO4mxqZmJObY"                  # API-Token für Authentifizierung
+  timeout: 10                             # Timeout in Sekunden
+  verify_ssl: false                        # SSL-Zertifikatsprüfung
+  debug: true                             # true = NetBox-Fehler-Trace in API-Antworten sichtbar (nur für Debugging)
+  contact_role_owner: "tenancy/contact-roles/1/"             # Asset-Owner Contact Role: Slug, Name, ID oder URL-Pfad (z.B. "owner", "Asset Owner", "1", "tenancy/contact-roles/1/")
+
+  # Fehlerbehandlung bei NetBox-Problemen:
+  # "warn"  = Submit läuft weiter, Warnung wird geloggt (Default)
+  # "fail"  = Submit wird abgebrochen (nach Mail-Versand)
+  on_error: "warn"
+
+  # Sync-Regeln pro Event-Typ:
+  # "update_status" = Status-Update + Journal Entry
+  # "journal_only"  = Nur Journal Entry (kein Status-Update)
+  # "none"          = Kein NetBox-Sync
+  sync_rules:
+    rz_provision: "update_status"
+    rz_retire: "update_status"
+    rz_owner_confirm: "journal_only"
+    admin_provision: "update_status"
+    admin_user_commitment: "journal_only"
+    admin_return: "update_status"
+    admin_access_cleanup: "journal_only"
+
+  # Device automatisch anlegen wenn bei Inbetriebnahme nicht in NetBox vorhanden
+  # Gilt nur fuer rz_provision und admin_provision
+  create_on_provision: true
+
+  # Fallback-IDs fuer automatische Device-Anlage (benoetigt wenn create_on_provision: true)
+  # Device-Type wird zuerst per Hersteller+Modell gesucht; device_type_id nur als Fallback
+  provision_defaults:
+    device_type_id: 1   # NetBox Device-Type ID
+    site_id: 1          # NetBox Site ID
+    role_id: 1          # NetBox Device Role ID

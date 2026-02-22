@@ -1,0 +1,36 @@
+monolog:
+    channels:
+        - evidence
+        - netbox
+        - jira
+
+    handlers:
+        main:
+            type: stream
+            path: '%kernel.logs_dir%/%kernel.environment%.log'
+            level: debug
+            channels: ['!event']
+
+        evidence:
+            type: stream
+            path: '%kernel.logs_dir%/evidence.log'
+            level: info
+            channels: [evidence]
+
+        netbox:
+            type: stream
+            path: '%kernel.logs_dir%/netbox.log'
+            level: info
+            channels: [netbox]
+
+        jira:
+            type: stream
+            path: '%kernel.logs_dir%/jira.log'
+            level: info
+            channels: [jira]
+
+when@prod:
+    monolog:
+        handlers:
+            main:
+                level: warning

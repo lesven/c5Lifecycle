@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: intl, pdo_pgsql
+          coverage: pcov
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Run PHPUnit
+        run: vendor/bin/phpunit --colors=always --coverage-text
+        env:
+          KERNEL_CLASS: App\Kernel
+          APP_ENV: test
+          APP_SECRET: test_secret_not_for_production
+          DATABASE_URL: sqlite:///:memory:
+          MESSENGER_TRANSPORT_DSN: in-memory://
+          MAILER_DSN: null://null
+          NETBOX_URL: https://netbox.test
+          NETBOX_TOKEN: test-token
+          NETBOX_TIMEOUT: '5'
+          NETBOX_VERIFY_SSL: 'false'
+          JIRA_BASE_URL: https://jira.test
+          JIRA_API_TOKEN: test-token
+          CORS_ALLOW_ORIGIN: '^https?://localhost(:[0-9]+)?$'
+
+  phpstan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: intl, pdo_pgsql
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Generate Symfony container cache
+        run: php bin/console cache:warmup --env=dev
+        env:
+          APP_ENV: dev
+          DATABASE_URL: sqlite:///:memory:
+          MESSENGER_TRANSPORT_DSN: in-memory://
+          MAILER_DSN: null://null
+          NETBOX_URL: https://netbox.test
+          NETBOX_TOKEN: test-token
+          JIRA_BASE_URL: https://jira.test
+          JIRA_API_TOKEN: test-token
+
+      - name: Run PHPStan
+        run: vendor/bin/phpstan analyse --memory-limit=256M
+
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Run PHP-CS-Fixer
+        run: vendor/bin/php-cs-fixer fix --dry-run --diff

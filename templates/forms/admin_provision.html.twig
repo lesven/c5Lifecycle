@@ -1,0 +1,95 @@
+{% extends 'form_base.html.twig' %}
+
+{% set form_title = 'Inbetriebnahme Admin-Endgerät' %}
+{% set form_icon = '💻' %}
+{% set form_subtitle = 'C5 Evidence · ADM · Inbetriebnahme' %}
+{% set track_class = 'track-b' %}
+{% set track_label = 'Track B – Admin-Endgeräte' %}
+{% set badge_class = 'badge-b' %}
+{% set event_type = 'admin_provision' %}
+
+{% block form_fields %}
+    <fieldset class="form-section">
+      <legend>Gerätedaten</legend>
+      <div class="field-group">
+        <label for="asset_id">Asset-ID <span class="required-marker">*</span></label>
+        <input type="text" id="asset_id" name="asset_id" required>
+      </div>
+      <div class="field-group">
+        <label for="device_type">Gerätetyp <span class="required-marker">*</span></label>
+        <select id="device_type" name="device_type" required>
+          <option value="">– Bitte wählen –</option>
+          <option>Admin Laptop</option>
+          <option>Jump Host</option>
+          <option>Break-Glass</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label for="manufacturer">Hersteller <span class="required-marker">*</span></label>
+        <input type="text" id="manufacturer" name="manufacturer" required>
+      </div>
+      <div class="field-group">
+        <label for="model">Modell <span class="required-marker">*</span></label>
+        <input type="text" id="model" name="model" required>
+      </div>
+      <div class="field-group">
+        <label for="serial_number">Seriennummer <span class="required-marker">*</span></label>
+        <input type="text" id="serial_number" name="serial_number" required>
+      </div>
+      <div class="field-group">
+        <label for="commission_date">Datum Inbetriebnahme <span class="required-marker">*</span></label>
+        <input type="date" id="commission_date" name="commission_date" required>
+      </div>
+      <div class="field-group">
+        <label for="admin_user">Zugewiesener Admin-User (Name + Mail/ID) <span class="required-marker">*</span></label>
+        <input type="text" id="admin_user" name="admin_user" required>
+      </div>
+      <div class="field-group">
+        <label for="security_owner">Security Owner (Name/Rolle) <span class="required-marker">*</span></label>
+        <input type="text" id="security_owner" name="security_owner" required>
+      </div>
+      <div class="field-group">
+        <label for="purpose">Zweck / Privileged Role <span class="required-marker">*</span></label>
+        <input type="text" id="purpose" name="purpose" required placeholder="z. B. Firewall Admin">
+      </div>
+    </fieldset>
+
+    <fieldset class="form-section">
+      <legend>Baseline Hardening</legend>
+      <div class="field-checkbox">
+        <label class="checkbox-label">
+          <input type="checkbox" name="disk_encryption" value="1" required>
+          <span>Disk Encryption aktiv</span>
+          <span class="required-marker">*</span>
+        </label>
+      </div>
+      <div class="field-checkbox">
+        <label class="checkbox-label">
+          <input type="checkbox" name="mfa_active" value="1" required>
+          <span>MFA aktiv</span>
+          <span class="required-marker">*</span>
+        </label>
+      </div>
+      <div class="field-checkbox">
+        <label class="checkbox-label">
+          <input type="checkbox" name="edr_active" value="1" required>
+          <span>EDR/AV aktiv</span>
+          <span class="required-marker">*</span>
+        </label>
+      </div>
+      <div class="field-checkbox">
+        <label class="checkbox-label">
+          <input type="checkbox" name="patch_process" value="1" required>
+          <span>Patch-Prozess aktiv</span>
+          <span class="required-marker">*</span>
+        </label>
+      </div>
+      <div class="field-checkbox">
+        <label class="checkbox-label">
+          <input type="checkbox" name="no_private_use" value="1" required>
+          <span>Keine private Nutzung</span>
+          <span class="required-marker">*</span>
+        </label>
+      </div>
+    </fieldset>
+{% endblock %}
