@@ -229,4 +229,17 @@ class EvidenceMailBuilderTest extends TestCase
         $this->assertStringContainsString('Erste Zeile', $body);
         $this->assertStringContainsString('äöüÄÖÜß', $body);
     }
+
+    public function testBuildIncludesSubmittedByWhenProvided(): void
+    {
+        $body = $this->builder->build($this->sampleEvent, ['asset_id' => 'SRV-001'], 'req-123', 'Max Mustermann (max@company.de)');
+        $this->assertStringContainsString('Eingetragen von (System):', $body);
+        $this->assertStringContainsString('Max Mustermann (max@company.de)', $body);
+    }
+
+    public function testBuildWithoutSubmittedByOmitsSystemUserLine(): void
+    {
+        $body = $this->builder->build($this->sampleEvent, ['asset_id' => 'SRV-001'], 'req-123');
+        $this->assertStringNotContainsString('Eingetragen von (System):', $body);
+    }
 }

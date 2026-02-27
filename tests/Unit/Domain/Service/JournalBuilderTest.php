@@ -107,4 +107,18 @@ class JournalBuilderTest extends TestCase
         $result = $this->builder->build('rz_provision', $this->eventMeta, [], 'req-123', 'test@example.com');
         $this->assertStringContainsString('Asset-ID: UNKNOWN', $result);
     }
+
+    public function testBuildWithSubmittedByIncludesSystemUserLine(): void
+    {
+        $data = ['asset_id' => 'SRV-001'];
+        $result = $this->builder->build('rz_provision', $this->eventMeta, $data, 'req-123', 'test@example.com', 'Max Mustermann (max@company.de)');
+        $this->assertStringContainsString('System-User: Max Mustermann (max@company.de)', $result);
+    }
+
+    public function testBuildWithoutSubmittedByBackwardsCompatible(): void
+    {
+        $data = ['asset_id' => 'SRV-001'];
+        $result = $this->builder->build('rz_provision', $this->eventMeta, $data, 'req-123', 'test@example.com');
+        $this->assertStringNotContainsString('System-User:', $result);
+    }
 }

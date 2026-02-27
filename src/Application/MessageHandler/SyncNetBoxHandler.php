@@ -31,6 +31,7 @@ final class SyncNetBoxHandler
             $message->requestId,
             $message->eventMeta,
             $message->data,
+            $message->submittedBy,
         );
 
         $result = $this->useCase->execute($submission, $message->emailBody, $message->evidenceTo);

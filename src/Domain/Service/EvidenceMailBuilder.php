@@ -62,7 +62,7 @@ final class EvidenceMailBuilder
 
     private const SKIP_FIELDS = ['tenant_id'];
 
-    public function build(EventDefinition $event, array $data, string $requestId): string
+    public function build(EventDefinition $event, array $data, string $requestId, ?string $submittedBy = null): string
     {
         $lines = [];
         $lines[] = '═══════════════════════════════════════════';
@@ -93,6 +93,13 @@ final class EvidenceMailBuilder
         }
 
         $lines[] = '';
+
+        if ($submittedBy !== null) {
+            $lines[] = '───────────────────────────────────────────';
+            $lines[] = str_pad('Eingetragen von (System):', 38) . $submittedBy;
+            $lines[] = '';
+        }
+
         $lines[] = '───────────────────────────────────────────';
         $lines[] = 'Diese E-Mail wurde automatisch vom C5 Evidence Tool erstellt.';
         $lines[] = 'Request-ID: ' . $requestId;

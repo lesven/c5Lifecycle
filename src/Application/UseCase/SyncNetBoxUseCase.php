@@ -98,6 +98,14 @@ class SyncNetBoxUseCase
             }
         }
 
+        // Always track last modifier — independent of syncRule
+        if ($submission->submittedBy !== null) {
+            $patchData['custom_fields'] = array_merge(
+                $patchData['custom_fields'] ?? [],
+                ['cf_last_modified_by' => $submission->submittedBy]
+            );
+        }
+
         $this->netBoxClient->updateDevice($deviceId, $patchData, $requestId);
 
         // Contact assignment (idempotent: nur anlegen wenn noch nicht vorhanden)
@@ -112,7 +120,7 @@ class SyncNetBoxUseCase
 
         // Journal entry
         $kind = $this->statusMapper->getJournalKind($eventType);
-        $comments = $this->journalBuilder->build($eventType, $submission->eventMeta, $data, $requestId, $evidenceTo);
+        $comments = $this->journalBuilder->build($eventType, $submission->eventMeta, $data, $requestId, $evidenceTo, $submission->submittedBy);
 
         $this->netBoxClient->createJournalEntry([
             'assigned_object_type' => 'dcim.device',

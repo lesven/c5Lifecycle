@@ -31,6 +31,7 @@ final class CreateJiraTicketHandler
             $message->requestId,
             $message->eventMeta,
             $message->data,
+            $message->submittedBy,
         );
 
         $ticket = $this->useCase->execute($submission);

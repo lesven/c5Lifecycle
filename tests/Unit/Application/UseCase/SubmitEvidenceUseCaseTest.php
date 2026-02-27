@@ -9,6 +9,7 @@ use App\Application\UseCase\SendEvidenceMailUseCase;
 use App\Application\UseCase\SubmitEvidenceUseCase;
 use App\Application\UseCase\SyncNetBoxUseCase;
 use App\Application\Validator\EventDataValidator;
+use App\Domain\Repository\SubmissionLogRepositoryInterface;
 use App\Domain\Service\EventRegistry;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -21,10 +22,12 @@ class SubmitEvidenceUseCaseTest extends TestCase
         ?SendEvidenceMailUseCase $sendMail = null,
         ?CreateJiraTicketUseCase $createJira = null,
         ?SyncNetBoxUseCase $syncNetBox = null,
+        ?SubmissionLogRepositoryInterface $submissionLogRepository = null,
     ): SubmitEvidenceUseCase {
         $sendMail ??= $this->createMock(SendEvidenceMailUseCase::class);
         $createJira ??= $this->createMock(CreateJiraTicketUseCase::class);
         $syncNetBox ??= $this->createMock(SyncNetBoxUseCase::class);
+        $submissionLogRepository ??= $this->createMock(SubmissionLogRepositoryInterface::class);
 
         // Configure default mock returns
         if ($sendMail instanceof MockObject) {
@@ -47,6 +50,7 @@ class SubmitEvidenceUseCaseTest extends TestCase
             $createJira,
             $syncNetBox,
             new NullLogger(),
+            $submissionLogRepository,
         );
     }
 

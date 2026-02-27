@@ -8,7 +8,7 @@ use App\Domain\ValueObject\EventDefinition;
 
 final class JournalBuilder
 {
-    public function build(string $eventType, EventDefinition $eventMeta, array $data, string $requestId, string $evidenceTo): string
+    public function build(string $eventType, EventDefinition $eventMeta, array $data, string $requestId, string $evidenceTo, ?string $submittedBy = null): string
     {
         $label = $eventMeta->label;
         $assetId = $data['asset_id'] ?? 'UNKNOWN';
@@ -28,6 +28,10 @@ final class JournalBuilder
             $lines[] = "Erfasst von: {$data['admin_user']}";
         } elseif (!empty($data['owner'])) {
             $lines[] = "Erfasst von: {$data['owner']}";
+        }
+
+        if ($submittedBy !== null) {
+            $lines[] = "System-User: {$submittedBy}";
         }
 
         $lines[] = "Evidence-Mail versendet an: {$evidenceTo}";
