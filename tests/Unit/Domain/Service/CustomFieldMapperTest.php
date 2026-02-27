@@ -27,6 +27,7 @@ class CustomFieldMapperTest extends TestCase
             'patch_process' => true,
             'access_controlled' => true,
             'change_ref' => 'CHG-001',
+            'location' => 'RZ-Berlin / Rack 12',
         ];
         $result = $this->mapper->map('rz_provision', $data);
         $this->assertEquals('Team Platform', $result['cf_asset_owner']);
@@ -37,6 +38,7 @@ class CustomFieldMapperTest extends TestCase
         $this->assertTrue($result['cf_patch_process']);
         $this->assertTrue($result['cf_access_controlled']);
         $this->assertEquals('CHG-001', $result['cf_change_ref']);
+        $this->assertEquals('RZ-Berlin / Rack 12', $result['cf_location']);
     }
 
     public function testRzRetireMapsFields(): void

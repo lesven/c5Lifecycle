@@ -28,7 +28,13 @@ class DeviceTransformerTest extends TestCase
                 'manufacturer' => ['name' => 'Dell', 'display' => 'Dell'],
             ],
             'device_role' => ['display' => 'Server', 'name' => 'server'],
-            'site' => ['display' => 'RZ-Nord', 'name' => 'RZ-Nord'],
+            'site' => [
+                'id' => 10,
+                'display' => 'RZ-Nord',
+                'name' => 'RZ-Nord',
+                'region' => ['id' => 1, 'name' => 'DACH'],
+                'group' => ['id' => 5, 'name' => 'Frankfurt'],
+            ],
             'location' => ['display' => 'Halle A'],
             'rack' => ['display' => 'Rack A3'],
             'position' => 22,
@@ -94,6 +100,37 @@ class DeviceTransformerTest extends TestCase
     {
         $result = $this->transformer->transform($this->sampleDevice());
         $this->assertEquals('RZ-Nord / Halle A / Rack A3 / U22', $result['location']);
+    }
+
+    public function testTransformReturnsSiteId(): void
+    {
+        $result = $this->transformer->transform($this->sampleDevice());
+        $this->assertEquals('10', $result['site_id']);
+        $this->assertEquals('RZ-Nord', $result['site_name']);
+    }
+
+    public function testTransformReturnsSiteGroupId(): void
+    {
+        $result = $this->transformer->transform($this->sampleDevice());
+        $this->assertEquals('5', $result['site_group_id']);
+        $this->assertEquals('Frankfurt', $result['site_group_name']);
+    }
+
+    public function testTransformReturnsRegionId(): void
+    {
+        $result = $this->transformer->transform($this->sampleDevice());
+        $this->assertEquals('1', $result['region_id']);
+        $this->assertEquals('DACH', $result['region_name']);
+    }
+
+    public function testTransformReturnEmptySiteFieldsWhenSiteMissing(): void
+    {
+        $device = $this->sampleDevice();
+        unset($device['site']);
+        $result = $this->transformer->transform($device);
+        $this->assertEquals('', $result['site_id']);
+        $this->assertEquals('', $result['site_group_id']);
+        $this->assertEquals('', $result['region_id']);
     }
 
     public function testTransformBuildsLocationWithoutRack(): void

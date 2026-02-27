@@ -121,4 +121,32 @@ class JournalBuilderTest extends TestCase
         $result = $this->builder->build('rz_provision', $this->eventMeta, $data, 'req-123', 'test@example.com');
         $this->assertStringNotContainsString('System-User:', $result);
     }
+
+    public function testBuildIncludesChangeRefWhenPresent(): void
+    {
+        $data = ['asset_id' => 'SRV-001', 'change_ref' => 'CHG-9999'];
+        $result = $this->builder->build('rz_provision', $this->eventMeta, $data, 'req-123', 'test@example.com');
+        $this->assertStringContainsString('Change-Ref: CHG-9999', $result);
+    }
+
+    public function testBuildDoesNotIncludeChangeRefWhenMissing(): void
+    {
+        $data = ['asset_id' => 'SRV-001'];
+        $result = $this->builder->build('rz_provision', $this->eventMeta, $data, 'req-123', 'test@example.com');
+        $this->assertStringNotContainsString('Change-Ref:', $result);
+    }
+
+    public function testBuildWithReProvisionContextAddsReProvisionLabel(): void
+    {
+        $data = ['asset_id' => 'SRV-001'];
+        $result = $this->builder->build('rz_provision', $this->eventMeta, $data, 'req-123', 'test@example.com', null, ['is_re_provision' => true]);
+        $this->assertStringContainsString('(Re-Provision)', $result);
+    }
+
+    public function testBuildWithoutReProvisionContextHasNoReProvisionLabel(): void
+    {
+        $data = ['asset_id' => 'SRV-001'];
+        $result = $this->builder->build('rz_provision', $this->eventMeta, $data, 'req-123', 'test@example.com');
+        $this->assertStringNotContainsString('Re-Provision', $result);
+    }
 }

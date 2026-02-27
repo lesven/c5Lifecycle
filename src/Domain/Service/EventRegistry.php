@@ -55,7 +55,8 @@ final class EventRegistry
                 subjectType: 'Inbetriebnahme',
                 requiredFields: [
                     'asset_id', 'device_type',
-                    'location', 'commission_date', 'asset_owner', 'criticality',
+                    'region_id', 'site_group_id', 'site_id',
+                    'commission_date', 'asset_owner', 'criticality',
                     'change_ref', 'monitoring_active', 'patch_process', 'access_controlled',
                 ],
             ),

@@ -13,6 +13,12 @@
     model: 'Modell',
     serial_number: 'Seriennummer',
     location: 'Standort',
+    region_id: 'Region',
+    region_name: 'Region',
+    site_group_id: 'Standortgruppe',
+    site_group_name: 'Standortgruppe',
+    site_id: 'Standort',
+    site_name: 'Standort',
     commission_date: 'Datum Inbetriebnahme',
     asset_owner: 'Asset Owner',
     service: 'Service/Plattform',
@@ -73,7 +79,9 @@
     manufacturer: '#manufacturer',
     model: '#model',
     device_type: '#device_type',
-    location: '#location',
+    site_id: '#site_id',
+    site_group_id: '#site_group_id',
+    region_id: '#region_id',
     tenant_id: '#tenant_id',
   };
   var NETBOX_CUSTOM_FIELD_MAP = {
@@ -83,6 +91,153 @@
     admin_user: '#admin_user',
     security_owner: '#security_owner',
   };
+
+  // ── Location dropdowns (Region → Standortgruppe → Standort) ──
+  var _locationData = null; // { regions, siteGroups, sites } – cached after first load
+
+  function loadLocations(form) {
+    if (!form.querySelector('#region_id')) return;
+
+    var loadingHint = form.querySelector('#location-loading');
+    var errorHint = form.querySelector('#location-error');
+    var submitBtn = form.querySelector('.btn-submit');
+
+    if (loadingHint) loadingHint.classList.remove('hidden');
+
+    Promise.all([
+      fetch(API_BASE + '/locations/regions').then(checkAuth).then(function (r) { return r.json(); }),
+      fetch(API_BASE + '/locations/site-groups').then(checkAuth).then(function (r) { return r.json(); }),
+      fetch(API_BASE + '/locations/sites').then(checkAuth).then(function (r) { return r.json(); }),
+    ])
+      .then(function (results) {
+        if (loadingHint) loadingHint.classList.add('hidden');
+
+        // Check for error responses (503 etc.)
+        if (!Array.isArray(results[0]) || !Array.isArray(results[1]) || !Array.isArray(results[2])) {
+          throw new Error('Ungültige Antwort von NetBox');
+        }
+
+        _locationData = {
+          regions: results[0],
+          siteGroups: results[1],
+          sites: results[2],
+        };
+
+        // Populate regions
+        var regionSel = form.querySelector('#region_id');
+        regionSel.innerHTML = '<option value="">– Bitte wählen –</option>';
+        _locationData.regions.forEach(function (r) {
+          var o = document.createElement('option');
+          o.value = String(r.id);
+          o.textContent = r.name;
+          regionSel.appendChild(o);
+        });
+
+        filterSiteGroups(form);
+        filterSites(form);
+      })
+      .catch(function () {
+        if (loadingHint) loadingHint.classList.add('hidden');
+        if (errorHint) errorHint.classList.remove('hidden');
+        if (submitBtn) submitBtn.disabled = true;
+        // Mark selects as non-functional
+        ['#region_id', '#site_group_id', '#site_id'].forEach(function (sel) {
+          var el = form.querySelector(sel);
+          if (el) {
+            el.innerHTML = '<option value="">– Nicht verfügbar –</option>';
+            el.disabled = true;
+          }
+        });
+      });
+  }
+
+  function filterSiteGroups(form) {
+    if (!_locationData) return;
+    var regionSel = form.querySelector('#region_id');
+    var groupSel = form.querySelector('#site_group_id');
+    if (!regionSel || !groupSel) return;
+
+    var selectedRegionId = regionSel.value ? Number(regionSel.value) : null;
+    var prevGroupVal = groupSel.value;
+
+    // Determine which site-groups have at least one site in the selected region.
+    // If no region is selected, all site-groups are visible.
+    var visibleGroupIds = null;
+    if (selectedRegionId !== null) {
+      var sitesInRegion = _locationData.sites.filter(function (s) {
+        return s.region_id === selectedRegionId;
+      });
+      visibleGroupIds = {};
+      sitesInRegion.forEach(function (s) {
+        if (s.site_group_id !== null && s.site_group_id !== undefined) {
+          visibleGroupIds[s.site_group_id] = true;
+        }
+      });
+    }
+
+    groupSel.innerHTML = '<option value="">– Bitte wählen –</option>';
+    _locationData.siteGroups
+      .filter(function (g) {
+        return visibleGroupIds === null || visibleGroupIds[g.id] === true;
+      })
+      .forEach(function (g) {
+        var o = document.createElement('option');
+        o.value = String(g.id);
+        o.textContent = g.name;
+        groupSel.appendChild(o);
+      });
+
+    // Restore previous selection if still valid
+    if (prevGroupVal) groupSel.value = prevGroupVal;
+    if (!groupSel.value) groupSel.selectedIndex = 0;
+
+    filterSites(form);
+    syncLocationNames(form);
+  }
+
+  function filterSites(form) {
+    if (!_locationData) return;
+    var groupSel = form.querySelector('#site_group_id');
+    var siteSel = form.querySelector('#site_id');
+    if (!groupSel || !siteSel) return;
+
+    var selectedGroupId = groupSel.value ? Number(groupSel.value) : null;
+    var prevSiteVal = siteSel.value;
+
+    siteSel.innerHTML = '<option value="">– Bitte wählen –</option>';
+    _locationData.sites
+      .filter(function (s) {
+        return selectedGroupId === null || s.site_group_id === selectedGroupId || !selectedGroupId;
+      })
+      .forEach(function (s) {
+        var o = document.createElement('option');
+        o.value = String(s.id);
+        o.textContent = s.name;
+        siteSel.appendChild(o);
+      });
+
+    // Restore previous selection if still valid
+    if (prevSiteVal) siteSel.value = prevSiteVal;
+    if (!siteSel.value) siteSel.selectedIndex = 0;
+
+    syncLocationNames(form);
+  }
+
+  function syncLocationNames(form) {
+    if (!_locationData) return;
+    var pairs = [
+      { selId: '#region_id', inputId: '#region_name', list: 'regions' },
+      { selId: '#site_group_id', inputId: '#site_group_name', list: 'siteGroups' },
+      { selId: '#site_id', inputId: '#site_name', list: 'sites' },
+    ];
+    pairs.forEach(function (p) {
+      var sel = form.querySelector(p.selId);
+      var inp = form.querySelector(p.inputId);
+      if (!sel || !inp) return;
+      var opt = sel.options[sel.selectedIndex];
+      inp.value = (opt && opt.value) ? opt.text : '';
+    });
+  }
 
   function loadTenants(form) {
     var sel = form.querySelector('#tenant_id');
@@ -172,6 +327,13 @@
 
         // Sync tenant name from selected option
         syncTenantName(form);
+
+        // Re-apply location cascade if location data is already loaded
+        if (_locationData && form.querySelector('#region_id')) {
+          filterSiteGroups(form);
+          filterSites(form);
+        }
+        syncLocationNames(form);
 
         // Prefill custom fields
         if (data.custom_fields) {
@@ -590,6 +752,32 @@
 
     // Load contacts dropdown if present
     loadContacts(form);
+
+    // Load location dropdowns (Region / Standortgruppe / Standort) if present
+    loadLocations(form);
+
+    // Cascade: Region → Standortgruppe → Standort
+    var regionSel = form.querySelector('#region_id');
+    if (regionSel) {
+      regionSel.addEventListener('change', function () {
+        filterSiteGroups(form);
+        filterSites(form);
+        syncLocationNames(form);
+      });
+    }
+    var siteGroupSel = form.querySelector('#site_group_id');
+    if (siteGroupSel) {
+      siteGroupSel.addEventListener('change', function () {
+        filterSites(form);
+        syncLocationNames(form);
+      });
+    }
+    var siteSel = form.querySelector('#site_id');
+    if (siteSel) {
+      siteSel.addEventListener('change', function () {
+        syncLocationNames(form);
+      });
+    }
 
     // Sync tenant_name hidden field when dropdown changes
     var tenantSel = form.querySelector('#tenant_id');

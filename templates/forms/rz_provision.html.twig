@@ -41,9 +41,32 @@
 
     <fieldset class="form-section">
       <legend>Standort & Zuordnung</legend>
+      <div id="location-loading" class="field-group location-loading-hint hidden">
+        <span class="loading-text">Standort-Daten werden geladen …</span>
+      </div>
+      <div id="location-error" class="field-group location-error-hint hidden">
+        <span class="error-text">⚠ Standort-Daten konnten nicht geladen werden (NetBox nicht erreichbar). Das Formular kann nicht eingereicht werden.</span>
+      </div>
       <div class="field-group">
-        <label for="location">Standort (RZ + Rack/Position) <span class="required-marker">*</span></label>
-        <input type="text" id="location" name="location" required placeholder="z. B. RZ Haan Rack B-12">
+        <label for="region_id">Region <span class="required-marker">*</span></label>
+        <select id="region_id" name="region_id" required>
+          <option value="">– Wird geladen … –</option>
+        </select>
+        <input type="hidden" id="region_name" name="region_name">
+      </div>
+      <div class="field-group">
+        <label for="site_group_id">Standortgruppe <span class="required-marker">*</span></label>
+        <select id="site_group_id" name="site_group_id" required>
+          <option value="">– Bitte zuerst Region wählen –</option>
+        </select>
+        <input type="hidden" id="site_group_name" name="site_group_name">
+      </div>
+      <div class="field-group">
+        <label for="site_id">Standort <span class="required-marker">*</span></label>
+        <select id="site_id" name="site_id" required>
+          <option value="">– Bitte zuerst Standortgruppe wählen –</option>
+        </select>
+        <input type="hidden" id="site_name" name="site_name">
       </div>
       <div class="field-group">
         <label for="commission_date">Datum Inbetriebnahme <span class="required-marker">*</span></label>

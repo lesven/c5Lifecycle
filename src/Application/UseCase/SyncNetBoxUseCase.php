@@ -67,10 +67,12 @@ class SyncNetBoxUseCase
         $result = ['status' => null];
 
         $device = $this->netBoxClient->findDeviceByAssetTag($assetId, $requestId);
+        $isNewDevice = false;
         if ($device === null) {
             $eventTypeEnum = EventType::tryFrom($eventType);
             if ($eventTypeEnum?->isProvisionEvent() && $this->config->isCreateOnProvision()) {
                 $device = $this->createNetBoxDevice($eventType, $data, $requestId);
+                $isNewDevice = true;
             } else {
                 throw new RuntimeException('Asset nicht in NetBox gefunden');
             }
@@ -96,6 +98,31 @@ class SyncNetBoxUseCase
             if (!empty($customFields)) {
                 $patchData['custom_fields'] = $customFields;
             }
+
+            // Re-Provision: aktualisiere serial und device_type für bereits vorhandene Devices
+            $eventTypeEnum = EventType::tryFrom($eventType);
+            if (!$isNewDevice && $eventTypeEnum?->isProvisionEvent()) {
+                $serialNumber = trim((string) ($data['serial_number'] ?? ''));
+                if ($serialNumber !== '') {
+                    $patchData['serial'] = $serialNumber;
+                }
+
+                $manufacturer = trim((string) ($data['manufacturer'] ?? ''));
+                $model = trim((string) ($data['model'] ?? ''));
+                if ($model !== '') {
+                    try {
+                        $deviceType = $this->netBoxClient->findDeviceTypeByModel($manufacturer, $model, $requestId);
+                        if ($deviceType !== null) {
+                            $patchData['device_type'] = (int) $deviceType['id'];
+                        }
+                    } catch (\Throwable $e) {
+                        $this->netboxLogger->warning('Device-Type-Lookup fehlgeschlagen (non-blocking)', [
+                            'request_id' => $requestId,
+                            'message' => $e->getMessage(),
+                        ]);
+                    }
+                }
+            }
         }
 
         // Always track last modifier — independent of syncRule
@@ -120,7 +147,7 @@ class SyncNetBoxUseCase
 
         // Journal entry
         $kind = $this->statusMapper->getJournalKind($eventType);
-        $comments = $this->journalBuilder->build($eventType, $submission->eventMeta, $data, $requestId, $evidenceTo, $submission->submittedBy);
+        $comments = $this->journalBuilder->build($eventType, $submission->eventMeta, $data, $requestId, $evidenceTo, $submission->submittedBy, ['is_re_provision' => !$isNewDevice]);
 
         $this->netBoxClient->createJournalEntry([
             'assigned_object_type' => 'dcim.device',

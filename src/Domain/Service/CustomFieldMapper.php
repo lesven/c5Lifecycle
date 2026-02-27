@@ -16,6 +16,7 @@ final class CustomFieldMapper
             'patch_process' => 'cf_patch_process',
             'access_controlled' => 'cf_access_controlled',
             'change_ref' => 'cf_change_ref',
+            'location' => 'cf_location',
         ],
         'rz_retire' => [
             'retire_date' => 'cf_retire_date',
