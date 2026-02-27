@@ -17,7 +17,8 @@ final class TenantsController
         private readonly NetBoxClient $netBoxClient,
         private readonly EvidenceConfig $config,
         private readonly LoggerInterface $netboxLogger,
-    ) {}
+    ) {
+    }
 
     #[Route('/api/tenants', name: 'api_tenants', methods: ['GET'])]
     public function __invoke(): JsonResponse
@@ -30,7 +31,7 @@ final class TenantsController
 
         try {
             $tenants = $this->netBoxClient->getTenants($requestId);
-            $result = array_map(fn(array $t) => ['id' => $t['id'], 'name' => $t['name']], $tenants);
+            $result = array_map(fn (array $t) => ['id' => $t['id'], 'name' => $t['name']], $tenants);
             return new JsonResponse($result);
         } catch (\Throwable $e) {
             $this->netboxLogger->error('Tenants fetch failed', [

@@ -5,25 +5,26 @@ declare(strict_types=1);
 namespace App\Application\UseCase;
 
 use App\Application\DTO\EvidenceSubmission;
+use App\Domain\Repository\NetBoxClientInterface;
 use App\Domain\Service\CustomFieldMapper;
 use App\Domain\Service\JournalBuilder;
 use App\Domain\Service\StatusMapper;
-use App\Infrastructure\Config\EvidenceConfig;
-use App\Infrastructure\NetBox\NetBoxClient;
-use Psr\Log\LoggerInterface;
 use App\Domain\ValueObject\EventType;
+use App\Infrastructure\Config\EvidenceConfig;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
 
 class SyncNetBoxUseCase
 {
     public function __construct(
-        private readonly NetBoxClient $netBoxClient,
+        private readonly NetBoxClientInterface $netBoxClient,
         private readonly StatusMapper $statusMapper,
         private readonly CustomFieldMapper $customFieldMapper,
         private readonly JournalBuilder $journalBuilder,
         private readonly EvidenceConfig $config,
         private readonly LoggerInterface $netboxLogger,
-    ) {}
+    ) {
+    }
 
     /**
      * @return array{synced: bool, status: string|null, error: string|null, error_trace: string|null}

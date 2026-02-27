@@ -4,31 +4,34 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Jira;
 
+use App\Domain\Repository\JiraClientInterface;
+use App\Domain\ValueObject\EventDefinition;
 use App\Infrastructure\Config\EvidenceConfig;
 use Psr\Log\LoggerInterface;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 use RuntimeException;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-final class JiraClient
+final class JiraClient implements JiraClientInterface
 {
     public function __construct(
         private readonly HttpClientInterface $jiraClient,
         private readonly EvidenceConfig $config,
         private readonly LoggerInterface $jiraLogger,
-    ) {}
+    ) {
+    }
 
-    public function createTicket(array $event, array $data, string $requestId): string
+    public function createTicket(EventDefinition $event, array $data, string $requestId): string
     {
         $projectKey = $this->config->getJiraProjectKey();
         $issueType = $this->config->getJiraIssueType();
 
         $assetId = $data['asset_id'] ?? 'UNKNOWN';
-        $summary = sprintf('[C5] %s – %s', $event['label'], $assetId);
+        $summary = sprintf('[C5] %s – %s', $event->label, $assetId);
 
         $descLines = [
-            "C5 Evidence – {$event['label']}",
+            "C5 Evidence – {$event->label}",
             "Request-ID: {$requestId}",
-            "",
+            '',
         ];
         foreach ($data as $key => $value) {
             if (is_bool($value)) {

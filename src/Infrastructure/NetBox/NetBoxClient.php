@@ -4,17 +4,19 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\NetBox;
 
+use App\Domain\Repository\NetBoxClientInterface;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
-use RuntimeException;
 
-final class NetBoxClient
+final class NetBoxClient implements NetBoxClientInterface
 {
     public function __construct(
         private readonly HttpClientInterface $netboxClient,
         private readonly LoggerInterface $netboxLogger,
-    ) {}
+    ) {
+    }
 
     public function findDeviceByAssetTag(string $assetTag, string $requestId): ?array
     {

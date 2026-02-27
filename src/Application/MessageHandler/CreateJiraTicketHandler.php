@@ -16,7 +16,8 @@ final class CreateJiraTicketHandler
     public function __construct(
         private readonly CreateJiraTicketUseCase $useCase,
         private readonly LoggerInterface $jiraLogger,
-    ) {}
+    ) {
+    }
 
     public function __invoke(CreateJiraTicketMessage $message): void
     {

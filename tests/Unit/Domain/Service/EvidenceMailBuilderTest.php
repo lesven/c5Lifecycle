@@ -5,23 +5,24 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Domain\Service;
 
 use App\Domain\Service\EvidenceMailBuilder;
+use App\Domain\ValueObject\EventDefinition;
 use PHPUnit\Framework\TestCase;
 
 class EvidenceMailBuilderTest extends TestCase
 {
     private EvidenceMailBuilder $builder;
-    private array $sampleEvent;
+    private EventDefinition $sampleEvent;
 
     protected function setUp(): void
     {
         $this->builder = new EvidenceMailBuilder();
-        $this->sampleEvent = [
-            'track' => 'rz_assets',
-            'label' => 'Inbetriebnahme RZ-Asset',
-            'category' => 'RZ',
-            'subject_type' => 'Inbetriebnahme',
-            'required_fields' => ['asset_id', 'device_type'],
-        ];
+        $this->sampleEvent = new EventDefinition(
+            track: 'rz_assets',
+            label: 'Inbetriebnahme RZ-Asset',
+            category: 'RZ',
+            subjectType: 'Inbetriebnahme',
+            requiredFields: ['asset_id', 'device_type'],
+        );
     }
 
     public function testBuildContainsEventLabel(): void
@@ -141,13 +142,13 @@ class EvidenceMailBuilderTest extends TestCase
 
     public function testBuildWithAdminEvent(): void
     {
-        $adminEvent = [
-            'track' => 'admin_devices',
-            'label' => 'Rückgabe Admin-Endgerät',
-            'category' => 'ADM',
-            'subject_type' => 'Rückgabe',
-            'required_fields' => ['asset_id'],
-        ];
+        $adminEvent = new EventDefinition(
+            track: 'admin_devices',
+            label: 'Rückgabe Admin-Endgerät',
+            category: 'ADM',
+            subjectType: 'Rückgabe',
+            requiredFields: ['asset_id'],
+        );
         $body = $this->builder->build($adminEvent, ['asset_id' => 'WS-100'], 'req-456');
         $this->assertStringContainsString('Kategorie:   ADM', $body);
         $this->assertStringContainsString('Rückgabe Admin-Endgerät', $body);
@@ -155,13 +156,13 @@ class EvidenceMailBuilderTest extends TestCase
 
     public function testBuildWithGermanUmlautsAndSpecialCharacters(): void
     {
-        $retireEvent = [
-            'track' => 'rz_assets',
-            'label' => 'Außerbetriebnahme RZ-Asset',
-            'category' => 'RZ',
-            'subject_type' => 'Außerbetriebnahme',
-            'required_fields' => ['asset_id', 'data_handling'],
-        ];
+        $retireEvent = new EventDefinition(
+            track: 'rz_assets',
+            label: 'Außerbetriebnahme RZ-Asset',
+            category: 'RZ',
+            subjectType: 'Außerbetriebnahme',
+            requiredFields: ['asset_id', 'data_handling'],
+        );
 
         $data = [
             'asset_id' => 'SRV-äöü-001',

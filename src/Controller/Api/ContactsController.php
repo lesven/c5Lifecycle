@@ -17,7 +17,8 @@ final class ContactsController
         private readonly NetBoxClient $netBoxClient,
         private readonly EvidenceConfig $config,
         private readonly LoggerInterface $netboxLogger,
-    ) {}
+    ) {
+    }
 
     #[Route('/api/contacts', name: 'api_contacts', methods: ['GET'])]
     public function __invoke(): JsonResponse
@@ -30,7 +31,7 @@ final class ContactsController
 
         try {
             $contacts = $this->netBoxClient->getContacts($requestId);
-            $result = array_map(fn(array $c) => ['id' => $c['id'], 'name' => $c['name']], $contacts);
+            $result = array_map(fn (array $c) => ['id' => $c['id'], 'name' => $c['name']], $contacts);
             return new JsonResponse($result);
         } catch (\Throwable $e) {
             $this->netboxLogger->error('Contacts fetch failed', [

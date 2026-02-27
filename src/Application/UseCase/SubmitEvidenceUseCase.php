@@ -20,7 +20,8 @@ final class SubmitEvidenceUseCase
         private readonly CreateJiraTicketUseCase $createJira,
         private readonly SyncNetBoxUseCase $syncNetBox,
         private readonly LoggerInterface $evidenceLogger,
-    ) {}
+    ) {
+    }
 
     public function execute(string $eventType, array $data): SubmissionResult
     {
@@ -39,11 +40,10 @@ final class SubmitEvidenceUseCase
         }
 
         $event = $this->eventRegistry->get($eventType);
-        // defensive: EventRegistry::get() can return null, static analysers
-        // (phpstan) verstehen die vorherige exists() check nicht immer.
+        // defensive: EventRegistry::get() can return null
         if ($event === null) {
             $this->evidenceLogger->error('Event metadata missing', ['request_id' => $requestId, 'event' => $eventType]);
-            $result->error = "Interner Fehler: Event-Metadaten nicht gefunden";
+            $result->error = 'Interner Fehler: Event-Metadaten nicht gefunden';
             $result->httpStatus = 500;
             return $result;
         }

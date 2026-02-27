@@ -8,16 +8,16 @@ use App\Infrastructure\Config\EvidenceConfig;
 use App\Infrastructure\Mail\EvidenceMailSender;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use RuntimeException;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
-use RuntimeException;
 
 class EvidenceMailSenderTest extends TestCase
 {
     private function createConfig(): EvidenceConfig
     {
         $configPath = sys_get_temp_dir() . '/c5_test_config_' . uniqid() . '.yaml';
-        file_put_contents($configPath, "
+        file_put_contents($configPath, '
 smtp:
   host: localhost
   port: 1025
@@ -27,7 +27,7 @@ evidence:
   rz_assets:
     to: rz@company.de
     cc: []
-");
+');
         $config = EvidenceConfig::fromYamlFile($configPath);
         unlink($configPath);
         return $config;

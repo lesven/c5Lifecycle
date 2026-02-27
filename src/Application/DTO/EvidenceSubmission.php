@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace App\Application\DTO;
 
+use App\Domain\ValueObject\EventDefinition;
+
 final readonly class EvidenceSubmission
 {
     public function __construct(
         public string $eventType,
         public string $requestId,
-        public array $eventMeta,
+        public EventDefinition $eventMeta,
         public array $data,
     ) {
-        // Convenience accessor
     }
 
     public function assetId(): string
@@ -22,6 +23,6 @@ final readonly class EvidenceSubmission
 
     public function track(): string
     {
-        return $this->eventMeta['track'];
+        return $this->eventMeta->track;
     }
 }

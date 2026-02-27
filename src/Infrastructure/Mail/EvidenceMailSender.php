@@ -4,18 +4,20 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Mail;
 
+use App\Domain\Repository\EvidenceMailSenderInterface;
 use App\Infrastructure\Config\EvidenceConfig;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 
-final class EvidenceMailSender
+final class EvidenceMailSender implements EvidenceMailSenderInterface
 {
     public function __construct(
         private readonly MailerInterface $mailer,
         private readonly EvidenceConfig $config,
         private readonly LoggerInterface $evidenceLogger,
-    ) {}
+    ) {
+    }
 
     /**
      * @param array{to: string, cc: string[]} $recipients

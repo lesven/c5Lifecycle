@@ -12,7 +12,8 @@ final class DoctrineSubmissionLogRepository implements SubmissionLogRepositoryIn
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-    ) {}
+    ) {
+    }
 
     public function save(SubmissionLog $log): void
     {

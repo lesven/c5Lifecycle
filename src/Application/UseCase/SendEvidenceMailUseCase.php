@@ -5,19 +5,20 @@ declare(strict_types=1);
 namespace App\Application\UseCase;
 
 use App\Application\DTO\EvidenceSubmission;
-use App\Domain\Service\EvidenceMailBuilder;
+use App\Domain\Repository\EvidenceMailSenderInterface;
 use App\Domain\Service\EventRegistry;
+use App\Domain\Service\EvidenceMailBuilder;
 use App\Infrastructure\Config\EvidenceConfig;
-use App\Infrastructure\Mail\EvidenceMailSender;
 
 class SendEvidenceMailUseCase
 {
     public function __construct(
         private readonly EvidenceMailBuilder $mailBuilder,
-        private readonly EvidenceMailSender $mailSender,
+        private readonly EvidenceMailSenderInterface $mailSender,
         private readonly EventRegistry $eventRegistry,
         private readonly EvidenceConfig $config,
-    ) {}
+    ) {
+    }
 
     /**
      * Build and send the evidence email.

@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Config;
 
-use Symfony\Component\Yaml\Yaml;
 use RuntimeException;
+use Symfony\Component\Yaml\Yaml;
 
 final readonly class EvidenceConfig
 {
     private function __construct(
         private array $data,
-    ) {}
+    ) {
+    }
 
     public static function fromYamlFile(string $path): self
     {

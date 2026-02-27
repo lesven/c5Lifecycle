@@ -32,6 +32,15 @@ services:
     App\Domain\Repository\SubmissionLogRepositoryInterface:
         alias: App\Infrastructure\Persistence\DoctrineSubmissionLogRepository
 
+    App\Domain\Repository\EvidenceMailSenderInterface:
+        alias: App\Infrastructure\Mail\EvidenceMailSender
+
+    App\Domain\Repository\JiraClientInterface:
+        alias: App\Infrastructure\Jira\JiraClient
+
+    App\Domain\Repository\NetBoxClientInterface:
+        alias: App\Infrastructure\NetBox\NetBoxClient
+
     # NetBox HTTP client from YAML config (not env vars)
     netbox.yaml_client:
         class: Symfony\Contracts\HttpClient\HttpClientInterface

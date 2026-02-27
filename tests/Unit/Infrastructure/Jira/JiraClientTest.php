@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Infrastructure\Jira;
 
+use App\Domain\ValueObject\EventDefinition;
 use App\Infrastructure\Config\EvidenceConfig;
 use App\Infrastructure\Jira\JiraClient;
 use PHPUnit\Framework\TestCase;
@@ -16,7 +17,7 @@ class JiraClientTest extends TestCase
     private function createConfig(): EvidenceConfig
     {
         $configPath = sys_get_temp_dir() . '/c5_test_config_' . uniqid() . '.yaml';
-        file_put_contents($configPath, "
+        file_put_contents($configPath, '
 smtp:
   host: localhost
   port: 1025
@@ -32,7 +33,7 @@ jira:
   project_key: ITOPS
   issue_type: Task
   api_token: test-token
-");
+');
         $config = EvidenceConfig::fromYamlFile($configPath);
         unlink($configPath);
         return $config;
@@ -50,7 +51,13 @@ jira:
             new MockResponse(json_encode(['key' => 'ITOPS-42']), ['http_code' => 201]),
         ]);
 
-        $event = ['label' => 'Inbetriebnahme RZ-Asset'];
+        $event = new EventDefinition(
+            track: 'rz_assets',
+            label: 'Inbetriebnahme RZ-Asset',
+            category: 'RZ',
+            subjectType: 'Inbetriebnahme',
+            requiredFields: [],
+        );
         $data = ['asset_id' => 'SRV-001', 'device_type' => 'Server'];
 
         $ticket = $client->createTicket($event, $data, 'req-123');
@@ -63,7 +70,13 @@ jira:
             new MockResponse(json_encode(['key' => 'ITOPS-99']), ['http_code' => 201]),
         ]);
 
-        $event = ['label' => 'Test Event'];
+        $event = new EventDefinition(
+            track: 'rz_assets',
+            label: 'Test Event',
+            category: 'RZ',
+            subjectType: 'Test',
+            requiredFields: [],
+        );
         $ticket = $client->createTicket($event, [], 'req-456');
         $this->assertEquals('ITOPS-99', $ticket);
     }
@@ -74,7 +87,13 @@ jira:
             new MockResponse(json_encode(['key' => 'ITOPS-50']), ['http_code' => 201]),
         ]);
 
-        $event = ['label' => 'Test'];
+        $event = new EventDefinition(
+            track: 'rz_assets',
+            label: 'Test',
+            category: 'RZ',
+            subjectType: 'Test',
+            requiredFields: [],
+        );
         $data = ['monitoring_active' => true, 'patch_process' => false];
 
         $ticket = $client->createTicket($event, $data, 'req-789');
@@ -89,7 +108,15 @@ jira:
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Jira API error (HTTP 403)');
-        $client->createTicket(['label' => 'Test'], ['asset_id' => 'SRV-001'], 'req-123');
+
+        $event = new EventDefinition(
+            track: 'rz_assets',
+            label: 'Test',
+            category: 'RZ',
+            subjectType: 'Test',
+            requiredFields: [],
+        );
+        $client->createTicket($event, ['asset_id' => 'SRV-001'], 'req-123');
     }
 
     public function testCreateTicketThrowsOnMissingKey(): void
@@ -100,6 +127,14 @@ jira:
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Jira response missing ticket key');
-        $client->createTicket(['label' => 'Test'], ['asset_id' => 'SRV-001'], 'req-123');
+
+        $event = new EventDefinition(
+            track: 'rz_assets',
+            label: 'Test',
+            category: 'RZ',
+            subjectType: 'Test',
+            requiredFields: [],
+        );
+        $client->createTicket($event, ['asset_id' => 'SRV-001'], 'req-123');
     }
 }

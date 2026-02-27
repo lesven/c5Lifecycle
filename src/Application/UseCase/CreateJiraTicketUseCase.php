@@ -5,15 +5,16 @@ declare(strict_types=1);
 namespace App\Application\UseCase;
 
 use App\Application\DTO\EvidenceSubmission;
+use App\Domain\Repository\JiraClientInterface;
 use App\Infrastructure\Config\EvidenceConfig;
-use App\Infrastructure\Jira\JiraClient;
 
 class CreateJiraTicketUseCase
 {
     public function __construct(
-        private readonly JiraClient $jiraClient,
+        private readonly JiraClientInterface $jiraClient,
         private readonly EvidenceConfig $config,
-    ) {}
+    ) {
+    }
 
     /**
      * Create a Jira ticket if required/optional for this event type.

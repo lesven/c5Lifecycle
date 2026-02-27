@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Domain\Service;
 
 use App\Domain\Service\EventRegistry;
+use App\Domain\ValueObject\EventDefinition;
 use PHPUnit\Framework\TestCase;
 
 class EventRegistryTest extends TestCase
@@ -47,12 +48,12 @@ class EventRegistryTest extends TestCase
     {
         foreach ($this->allEventTypes as $eventType) {
             $event = $this->registry->get($eventType);
-            $this->assertIsArray($event, "Event '{$eventType}' should return array");
-            $this->assertArrayHasKey('track', $event);
-            $this->assertArrayHasKey('label', $event);
-            $this->assertArrayHasKey('category', $event);
-            $this->assertArrayHasKey('subject_type', $event);
-            $this->assertArrayHasKey('required_fields', $event);
+            $this->assertInstanceOf(EventDefinition::class, $event, "Event '{$eventType}' should return EventDefinition");
+            $this->assertNotEmpty($event->track);
+            $this->assertNotEmpty($event->label);
+            $this->assertNotEmpty($event->category);
+            $this->assertNotEmpty($event->subjectType);
+            $this->assertNotEmpty($event->requiredFields);
         }
     }
 
@@ -66,8 +67,8 @@ class EventRegistryTest extends TestCase
         $rzEvents = ['rz_provision', 'rz_retire', 'rz_owner_confirm'];
         foreach ($rzEvents as $eventType) {
             $event = $this->registry->get($eventType);
-            $this->assertEquals('rz_assets', $event['track'], "Event '{$eventType}' should have track 'rz_assets'");
-            $this->assertEquals('RZ', $event['category'], "Event '{$eventType}' should have category 'RZ'");
+            $this->assertEquals('rz_assets', $event->track, "Event '{$eventType}' should have track 'rz_assets'");
+            $this->assertEquals('RZ', $event->category, "Event '{$eventType}' should have category 'RZ'");
         }
     }
 
@@ -76,8 +77,8 @@ class EventRegistryTest extends TestCase
         $adminEvents = ['admin_provision', 'admin_user_commitment', 'admin_return', 'admin_access_cleanup'];
         foreach ($adminEvents as $eventType) {
             $event = $this->registry->get($eventType);
-            $this->assertEquals('admin_devices', $event['track'], "Event '{$eventType}' should have track 'admin_devices'");
-            $this->assertEquals('ADM', $event['category'], "Event '{$eventType}' should have category 'ADM'");
+            $this->assertEquals('admin_devices', $event->track, "Event '{$eventType}' should have track 'admin_devices'");
+            $this->assertEquals('ADM', $event->category, "Event '{$eventType}' should have category 'ADM'");
         }
     }
 
@@ -87,7 +88,7 @@ class EventRegistryTest extends TestCase
             $event = $this->registry->get($eventType);
             $this->assertContains(
                 'asset_id',
-                $event['required_fields'],
+                $event->requiredFields,
                 "Event '{$eventType}' should require 'asset_id'"
             );
         }
@@ -101,7 +102,7 @@ class EventRegistryTest extends TestCase
             'location', 'commission_date', 'asset_owner', 'service', 'criticality',
             'change_ref', 'monitoring_active', 'patch_process', 'access_controlled',
         ];
-        $this->assertEquals($expected, $event['required_fields']);
+        $this->assertEquals($expected, $event->requiredFields);
     }
 
     public function testRzRetireRequiredFields(): void
@@ -110,7 +111,7 @@ class EventRegistryTest extends TestCase
         $expected = [
             'asset_id', 'retire_date', 'reason', 'owner_approval', 'followup', 'data_handling',
         ];
-        $this->assertEquals($expected, $event['required_fields']);
+        $this->assertEquals($expected, $event->requiredFields);
     }
 
     public function testBuildSubjectForRzProvision(): void
@@ -156,8 +157,8 @@ class EventRegistryTest extends TestCase
     {
         foreach ($this->allEventTypes as $eventType) {
             $event = $this->registry->get($eventType);
-            $this->assertNotEmpty($event['label'], "Event '{$eventType}' should have a non-empty label");
-            $this->assertNotEmpty($event['subject_type'], "Event '{$eventType}' should have a non-empty subject_type");
+            $this->assertNotEmpty($event->label, "Event '{$eventType}' should have a non-empty label");
+            $this->assertNotEmpty($event->subjectType, "Event '{$eventType}' should have a non-empty subjectType");
         }
     }
 

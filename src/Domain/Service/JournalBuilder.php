@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Domain\Service;
 
+use App\Domain\ValueObject\EventDefinition;
+
 final class JournalBuilder
 {
-    public function build(string $eventType, array $eventMeta, array $data, string $requestId, string $evidenceTo): string
+    public function build(string $eventType, EventDefinition $eventMeta, array $data, string $requestId, string $evidenceTo): string
     {
-        $label = $eventMeta['label'] ?? $eventType;
+        $label = $eventMeta->label;
         $assetId = $data['asset_id'] ?? 'UNKNOWN';
         $date = date('Y-m-d');
 

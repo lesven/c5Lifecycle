@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\Validator;
 
+use App\Domain\ValueObject\EventDefinition;
+
 final class EventDataValidator
 {
     /**
@@ -11,11 +13,11 @@ final class EventDataValidator
      *
      * @return array<string, string> field => error message
      */
-    public function validate(string $eventType, array $event, array $data): array
+    public function validate(string $eventType, EventDefinition $event, array $data): array
     {
         $errors = [];
 
-        foreach ($event['required_fields'] as $field) {
+        foreach ($event->requiredFields as $field) {
             $val = $data[$field] ?? null;
             if ($val === false || $val === null || $val === '') {
                 $errors[$field] = 'Pflichtfeld';

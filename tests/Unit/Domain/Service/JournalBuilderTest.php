@@ -5,20 +5,24 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Domain\Service;
 
 use App\Domain\Service\JournalBuilder;
+use App\Domain\ValueObject\EventDefinition;
 use PHPUnit\Framework\TestCase;
 
 class JournalBuilderTest extends TestCase
 {
     private JournalBuilder $builder;
-    private array $eventMeta;
+    private EventDefinition $eventMeta;
 
     protected function setUp(): void
     {
         $this->builder = new JournalBuilder();
-        $this->eventMeta = [
-            'label' => 'Inbetriebnahme RZ-Asset',
-            'category' => 'RZ',
-        ];
+        $this->eventMeta = new EventDefinition(
+            track: 'rz_assets',
+            label: 'Inbetriebnahme RZ-Asset',
+            category: 'RZ',
+            subjectType: 'Inbetriebnahme',
+            requiredFields: [],
+        );
     }
 
     public function testBuildContainsEventLabel(): void
@@ -61,7 +65,14 @@ class JournalBuilderTest extends TestCase
     public function testBuildContainsAdminUserAsSubmitter(): void
     {
         $data = ['asset_id' => 'WS-001', 'admin_user' => 'admin1'];
-        $result = $this->builder->build('admin_provision', ['label' => 'Inbetriebnahme Admin-Endgerät', 'category' => 'ADM'], $data, 'req-456', 'test@example.com');
+        $adminMeta = new EventDefinition(
+            track: 'admin_devices',
+            label: 'Inbetriebnahme Admin-Endgerät',
+            category: 'ADM',
+            subjectType: 'Inbetriebnahme',
+            requiredFields: [],
+        );
+        $result = $this->builder->build('admin_provision', $adminMeta, $data, 'req-456', 'test@example.com');
         $this->assertStringContainsString('Erfasst von: admin1', $result);
     }
 
@@ -72,7 +83,13 @@ class JournalBuilderTest extends TestCase
             'data_handling' => 'Secure Wipe',
             'data_handling_ref' => 'WIPE-2024-001',
         ];
-        $retireMeta = ['label' => 'Außerbetriebnahme RZ-Asset', 'category' => 'RZ'];
+        $retireMeta = new EventDefinition(
+            track: 'rz_assets',
+            label: 'Außerbetriebnahme RZ-Asset',
+            category: 'RZ',
+            subjectType: 'Außerbetriebnahme',
+            requiredFields: [],
+        );
         $result = $this->builder->build('rz_retire', $retireMeta, $data, 'req-789', 'test@example.com');
         $this->assertStringContainsString('Data-Handling-Methode: Secure Wipe', $result);
         $this->assertStringContainsString('Nachweisreferenz: WIPE-2024-001', $result);

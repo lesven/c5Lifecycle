@@ -13,7 +13,8 @@ final class SubmitController
 {
     public function __construct(
         private readonly SubmitEvidenceUseCase $submitEvidence,
-    ) {}
+    ) {
+    }
 
     #[Route('/api/submit/{eventType}', name: 'api_submit', methods: ['POST'], requirements: ['eventType' => '[\w_-]+'])]
     public function __invoke(Request $request, string $eventType): JsonResponse

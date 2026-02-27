@@ -4,19 +4,20 @@ declare(strict_types=1);
 
 namespace App\Application\UseCase;
 
+use App\Domain\Repository\NetBoxClientInterface;
 use App\Domain\Service\DeviceTransformer;
 use App\Infrastructure\Config\EvidenceConfig;
-use App\Infrastructure\NetBox\NetBoxClient;
 use Psr\Log\LoggerInterface;
 
 final class LookupAssetUseCase
 {
     public function __construct(
-        private readonly NetBoxClient $netBoxClient,
+        private readonly NetBoxClientInterface $netBoxClient,
         private readonly DeviceTransformer $deviceTransformer,
         private readonly EvidenceConfig $config,
         private readonly LoggerInterface $netboxLogger,
-    ) {}
+    ) {
+    }
 
     public function execute(string $assetId): array
     {

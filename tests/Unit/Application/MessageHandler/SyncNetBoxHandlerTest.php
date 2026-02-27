@@ -8,6 +8,7 @@ use App\Application\DTO\EvidenceSubmission;
 use App\Application\Message\SyncNetBoxMessage;
 use App\Application\MessageHandler\SyncNetBoxHandler;
 use App\Application\UseCase\SyncNetBoxUseCase;
+use App\Domain\ValueObject\EventDefinition;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
@@ -18,7 +19,13 @@ class SyncNetBoxHandlerTest extends TestCase
         $message = new SyncNetBoxMessage(
             requestId: 'req-789',
             eventType: 'rz_provision',
-            eventMeta: ['label' => 'RZ-Bereitstellung', 'track' => 'rz_assets'],
+            eventMeta: new EventDefinition(
+                track: 'rz_assets',
+                label: 'RZ-Bereitstellung',
+                category: 'RZ',
+                subjectType: 'Inbetriebnahme',
+                requiredFields: [],
+            ),
             data: ['asset_id' => 'SRV-003', 'device_type' => 'Server'],
             emailBody: 'Evidence mail body content',
             evidenceTo: 'evidence@example.com',
@@ -47,7 +54,13 @@ class SyncNetBoxHandlerTest extends TestCase
         $message = new SyncNetBoxMessage(
             requestId: 'req-err',
             eventType: 'rz_retire',
-            eventMeta: ['label' => 'RZ-Außerbetriebnahme', 'track' => 'rz_assets'],
+            eventMeta: new EventDefinition(
+                track: 'rz_assets',
+                label: 'RZ-Außerbetriebnahme',
+                category: 'RZ',
+                subjectType: 'Außerbetriebnahme',
+                requiredFields: [],
+            ),
             data: ['asset_id' => 'SRV-004'],
             emailBody: 'body',
             evidenceTo: 'to@test.de',

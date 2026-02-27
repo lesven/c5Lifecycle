@@ -8,6 +8,7 @@ use App\Application\DTO\EvidenceSubmission;
 use App\Application\Message\CreateJiraTicketMessage;
 use App\Application\MessageHandler\CreateJiraTicketHandler;
 use App\Application\UseCase\CreateJiraTicketUseCase;
+use App\Domain\ValueObject\EventDefinition;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
@@ -18,7 +19,13 @@ class CreateJiraTicketHandlerTest extends TestCase
         $message = new CreateJiraTicketMessage(
             requestId: 'req-123',
             eventType: 'rz_provision',
-            eventMeta: ['label' => 'RZ-Bereitstellung', 'track' => 'rz_assets'],
+            eventMeta: new EventDefinition(
+                track: 'rz_assets',
+                label: 'RZ-Bereitstellung',
+                category: 'RZ',
+                subjectType: 'Inbetriebnahme',
+                requiredFields: [],
+            ),
             data: ['asset_id' => 'SRV-001', 'device_type' => 'Server'],
         );
 
@@ -41,7 +48,13 @@ class CreateJiraTicketHandlerTest extends TestCase
         $message = new CreateJiraTicketMessage(
             requestId: 'req-456',
             eventType: 'rz_owner_confirm',
-            eventMeta: ['label' => 'RZ-Eigentümerbestätigung', 'track' => 'rz_assets'],
+            eventMeta: new EventDefinition(
+                track: 'rz_assets',
+                label: 'RZ-Eigentümerbestätigung',
+                category: 'RZ',
+                subjectType: 'Bestätigung',
+                requiredFields: [],
+            ),
             data: ['asset_id' => 'SRV-002'],
         );
 

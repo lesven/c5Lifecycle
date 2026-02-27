@@ -13,7 +13,8 @@ final class AssetLookupController
 {
     public function __construct(
         private readonly LookupAssetUseCase $lookupAsset,
-    ) {}
+    ) {
+    }
 
     #[Route('/api/asset-lookup', name: 'api_asset_lookup', methods: ['GET'])]
     public function __invoke(Request $request): JsonResponse

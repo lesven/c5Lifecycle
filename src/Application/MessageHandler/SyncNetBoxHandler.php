@@ -16,7 +16,8 @@ final class SyncNetBoxHandler
     public function __construct(
         private readonly SyncNetBoxUseCase $useCase,
         private readonly LoggerInterface $netboxLogger,
-    ) {}
+    ) {
+    }
 
     public function __invoke(SyncNetBoxMessage $message): void
     {

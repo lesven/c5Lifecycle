@@ -10,9 +10,9 @@ use App\Application\UseCase\SubmitEvidenceUseCase;
 use App\Application\UseCase\SyncNetBoxUseCase;
 use App\Application\Validator\EventDataValidator;
 use App\Domain\Service\EventRegistry;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
-use PHPUnit\Framework\MockObject\MockObject;
 use RuntimeException;
 
 class SubmitEvidenceUseCaseTest extends TestCase

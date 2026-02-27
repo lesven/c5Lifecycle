@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Service;
 
+use App\Domain\ValueObject\EventDefinition;
+
 final class EvidenceMailBuilder
 {
     private const LABELS = [
@@ -60,15 +62,15 @@ final class EvidenceMailBuilder
 
     private const SKIP_FIELDS = ['tenant_id'];
 
-    public function build(array $event, array $data, string $requestId): string
+    public function build(EventDefinition $event, array $data, string $requestId): string
     {
         $lines = [];
         $lines[] = '═══════════════════════════════════════════';
-        $lines[] = '  C5 EVIDENCE – ' . strtoupper($event['label']);
+        $lines[] = '  C5 EVIDENCE – ' . strtoupper($event->label);
         $lines[] = '═══════════════════════════════════════════';
         $lines[] = '';
-        $lines[] = 'Event:       ' . $event['label'];
-        $lines[] = 'Kategorie:   ' . $event['category'];
+        $lines[] = 'Event:       ' . $event->label;
+        $lines[] = 'Kategorie:   ' . $event->category;
         $lines[] = 'Request-ID:  ' . $requestId;
         $lines[] = 'Zeitstempel: ' . date('Y-m-d H:i:s T');
         $lines[] = '';
