@@ -1,4 +1,4 @@
-.PHONY: help setup build up down restart logs status clean test stan lint lint-fix coverage migrate
+.PHONY: help setup build up down restart logs status clean test stan lint lint-fix coverage migrate deploy
 
 COMPOSE = docker compose
 # compute absolute path once (avoid tricky escaping of $$(pwd))
@@ -79,3 +79,16 @@ coverage: ## PHPUnit mit Coverage-Report
 clean: ## Container, Images und Volumes entfernen
 	$(COMPOSE) down -v --rmi local
 	@echo "Aufgeraeumt."
+
+deploy: ## Deployment auf externem Server: Code pullen, bauen, migrieren, neustarten
+	@echo "⚡ Starte Deployment..."
+	git pull origin main
+	@echo "📦 Baue Docker-Images..."
+	$(COMPOSE) build
+	@echo "🚀 Starte Container..."
+	$(COMPOSE) up -d
+	@echo "🗄️  Führe Datenbankmigrationen aus..."
+	$(COMPOSE) exec -T app php bin/console doctrine:migrations:migrate --no-interaction
+	@echo "🧹 Leere Cache..."
+	$(COMPOSE) exec -T app php bin/console cache:clear --env=prod
+	@echo "✅ Deployment abgeschlossen!"
