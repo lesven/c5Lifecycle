@@ -98,11 +98,35 @@ class EventRegistryTest extends TestCase
     {
         $event = $this->registry->get('rz_provision');
         $expected = [
-            'asset_id', 'device_type', 'manufacturer', 'model', 'serial_number',
-            'location', 'commission_date', 'asset_owner', 'service', 'criticality',
+            'asset_id', 'device_type',
+            'location', 'commission_date', 'asset_owner', 'criticality',
             'change_ref', 'monitoring_active', 'patch_process', 'access_controlled',
         ];
         $this->assertEquals($expected, $event->requiredFields);
+    }
+
+    public function testOptionalFieldsAreNotRequiredForProvisionEvents(): void
+    {
+        $optionalFields = ['manufacturer', 'model', 'serial_number'];
+
+        foreach (['rz_provision', 'admin_provision'] as $eventType) {
+            $event = $this->registry->get($eventType);
+            foreach ($optionalFields as $field) {
+                $this->assertNotContains(
+                    $field,
+                    $event->requiredFields,
+                    "Field '{$field}' must NOT be required for event '{$eventType}'"
+                );
+            }
+        }
+
+        // service ist nur bei rz_provision optional
+        $rzEvent = $this->registry->get('rz_provision');
+        $this->assertNotContains(
+            'service',
+            $rzEvent->requiredFields,
+            "Field 'service' must NOT be required for event 'rz_provision'"
+        );
     }
 
     public function testRzRetireRequiredFields(): void

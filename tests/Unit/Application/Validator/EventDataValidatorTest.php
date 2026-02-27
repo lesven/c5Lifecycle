@@ -50,9 +50,51 @@ class EventDataValidatorTest extends TestCase
         $errors = $this->validator->validate('rz_provision', $event, $data);
         $this->assertNotEmpty($errors);
         $this->assertArrayHasKey('device_type', $errors);
-        $this->assertArrayHasKey('manufacturer', $errors);
-        $this->assertArrayHasKey('model', $errors);
         $this->assertEquals('Pflichtfeld', $errors['device_type']);
+        // manufacturer, model, serial_number, service sind optional
+        $this->assertArrayNotHasKey('manufacturer', $errors);
+        $this->assertArrayNotHasKey('model', $errors);
+        $this->assertArrayNotHasKey('serial_number', $errors);
+        $this->assertArrayNotHasKey('service', $errors);
+    }
+
+    public function testRzProvisionIsValidWithoutOptionalFields(): void
+    {
+        $event = $this->registry->get('rz_provision');
+        $data = [
+            'asset_id' => 'SRV-001',
+            'device_type' => 'Server',
+            'location' => 'DC-1 Rack A3',
+            'commission_date' => '2024-01-15',
+            'asset_owner' => 'Team Infrastructure',
+            'criticality' => 'hoch',
+            'change_ref' => 'CHG-001',
+            'monitoring_active' => true,
+            'patch_process' => true,
+            'access_controlled' => true,
+        ];
+        $errors = $this->validator->validate('rz_provision', $event, $data);
+        $this->assertEmpty($errors, 'rz_provision muss ohne manufacturer/model/serial_number/service valide sein');
+    }
+
+    public function testAdminProvisionIsValidWithoutOptionalFields(): void
+    {
+        $event = $this->registry->get('admin_provision');
+        $data = [
+            'asset_id' => 'WS-001',
+            'device_type' => 'Admin Laptop',
+            'commission_date' => '2024-01-15',
+            'admin_user' => 'admin1',
+            'security_owner' => 'IT Security',
+            'purpose' => 'Firewall Admin',
+            'disk_encryption' => true,
+            'mfa_active' => true,
+            'edr_active' => true,
+            'patch_process' => true,
+            'no_private_use' => true,
+        ];
+        $errors = $this->validator->validate('admin_provision', $event, $data);
+        $this->assertEmpty($errors, 'admin_provision muss ohne manufacturer/model/serial_number valide sein');
     }
 
     public function testValidateDetectsEmptyStringAsInvalid(): void
