@@ -68,6 +68,12 @@ body {
 .topbar-logo span { color: var(--c-primary); }
 .topbar-sep { color: var(--c-border); font-weight: 300; }
 .topbar-subtitle { color: var(--c-text-secondary); font-size: var(--fs-sm); }
+.topbar-user { margin-left: auto; display: flex; align-items: center; gap: var(--s-sm); font-size: var(--fs-sm); }
+.topbar-username { color: var(--c-text-secondary); font-weight: 500; }
+.topbar-logout { color: var(--c-error); text-decoration: none; font-weight: 500; }
+.topbar-logout:hover { text-decoration: underline; }
+.topbar-admin-link { color: var(--c-primary); text-decoration: none; font-weight: 500; }
+.topbar-admin-link:hover { text-decoration: underline; }
 
 /* Layout */
 .page-wrapper {
@@ -428,3 +434,191 @@ input:focus, select:focus, textarea:focus {
   color: #8a6d00;
   border: 1px solid #e6c619;
 }
+
+/* ── Login Page ── */
+.login-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 60px);
+  padding: var(--s-lg);
+}
+.login-card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--s-2xl) var(--s-xl);
+  width: 100%;
+  max-width: 400px;
+}
+.login-header { text-align: center; margin-bottom: var(--s-xl); }
+.login-logo {
+  font-weight: 700;
+  font-size: var(--fs-xl);
+  color: var(--c-text);
+  letter-spacing: -.02em;
+}
+.login-logo span { color: var(--c-primary); }
+.login-subtitle {
+  color: var(--c-text-secondary);
+  font-size: var(--fs-base);
+  margin-top: var(--s-xs);
+}
+.login-error {
+  background: var(--c-error-bg);
+  color: var(--c-error);
+  border: 1px solid var(--c-error);
+  border-radius: var(--radius);
+  padding: var(--s-sm) var(--s-md);
+  font-size: var(--fs-sm);
+  margin-bottom: var(--s-md);
+}
+.login-form { display: flex; flex-direction: column; gap: var(--s-md); }
+.login-field label {
+  display: block;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--c-text);
+  margin-bottom: var(--s-xs);
+}
+.login-field input {
+  width: 100%;
+  padding: var(--s-sm) var(--s-md);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  background: var(--c-surface);
+  color: var(--c-text);
+  transition: border-color .15s;
+}
+.login-field input:focus {
+  outline: none;
+  border-color: var(--c-primary);
+  box-shadow: 0 0 0 3px var(--c-primary-light);
+}
+.btn-login {
+  width: 100%;
+  padding: var(--s-sm) var(--s-md);
+  background: var(--c-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+  margin-top: var(--s-sm);
+}
+.btn-login:hover { background: var(--c-primary-hover); }
+
+/* ── Admin Area ── */
+.admin-main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--s-xl) var(--s-lg);
+}
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--s-lg);
+}
+.admin-header h1 { font-size: var(--fs-xl); }
+.admin-footer { margin-top: var(--s-xl); }
+
+/* Flash messages */
+.flash {
+  padding: var(--s-sm) var(--s-md);
+  border-radius: var(--radius);
+  font-size: var(--fs-sm);
+  margin-bottom: var(--s-md);
+}
+.flash-success { background: var(--c-success-bg); color: var(--c-success); border: 1px solid var(--c-success-border); }
+.flash-error { background: var(--c-error-bg); color: var(--c-error); border: 1px solid var(--c-error); }
+
+/* Admin table */
+.admin-table-wrapper { overflow-x: auto; }
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+.admin-table th,
+.admin-table td {
+  padding: var(--s-sm) var(--s-md);
+  text-align: left;
+  border-bottom: 1px solid var(--c-border-light);
+}
+.admin-table th {
+  font-weight: 600;
+  color: var(--c-text-secondary);
+  background: var(--c-bg);
+  white-space: nowrap;
+}
+.admin-table .row-inactive { opacity: .5; }
+.admin-table .empty-row { color: var(--c-text-muted); text-align: center; padding: var(--s-xl); }
+
+.role-badge, .status-badge {
+  display: inline-block;
+  font-size: .75rem;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+.role-admin { color: var(--c-track-b); background: var(--c-track-b-bg); }
+.role-user { color: var(--c-track-a); background: var(--c-track-a-bg); }
+.status-active { color: var(--c-success); background: var(--c-success-bg); }
+.status-inactive { color: var(--c-error); background: var(--c-error-bg); }
+
+.actions-cell { white-space: nowrap; display: flex; gap: var(--s-xs); }
+.inline-form { display: inline; }
+.btn-sm {
+  padding: 4px 10px;
+  font-size: .75rem;
+  font-family: var(--font-body);
+  font-weight: 500;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: background .15s;
+}
+.btn-sm.btn-secondary { background: var(--c-surface); color: var(--c-text); }
+.btn-sm.btn-secondary:hover { background: var(--c-bg); }
+.btn-sm.btn-danger { background: var(--c-error-bg); color: var(--c-error); border-color: var(--c-error); }
+.btn-sm.btn-danger:hover { background: var(--c-error); color: #fff; }
+.btn-sm.btn-success { background: var(--c-success-bg); color: var(--c-success); border-color: var(--c-success-border); }
+.btn-sm.btn-success:hover { background: var(--c-success); color: #fff; }
+
+/* Admin form */
+.admin-form {
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-md);
+  margin-top: var(--s-lg);
+}
+.admin-form .form-group label {
+  display: block;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  margin-bottom: var(--s-xs);
+}
+.admin-form .form-group .required { color: var(--c-error); }
+.admin-form .form-group input,
+.admin-form .form-group select {
+  width: 100%;
+  padding: var(--s-sm) var(--s-md);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+}
+.admin-form .form-group.has-error input,
+.admin-form .form-group.has-error select { border-color: var(--c-error); }
+.admin-form .field-error { color: var(--c-error); font-size: var(--fs-sm); margin-top: var(--s-xs); display: block; }
+.form-actions { display: flex; gap: var(--s-sm); margin-top: var(--s-sm); }

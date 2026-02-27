@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Controller;
 
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use App\Tests\AuthenticatedWebTestCase;
 
-class FormControllerTest extends WebTestCase
+class FormControllerTest extends AuthenticatedWebTestCase
 {
     public function testIndexPageRendersSuccessfully(): void
     {
-        $client = static::createClient();
+        $client = static::createAuthenticatedClient();
         $client->request('GET', '/');
 
         $this->assertResponseIsSuccessful();
@@ -19,7 +19,7 @@ class FormControllerTest extends WebTestCase
 
     public function testIndexPageContainsAllFormLinks(): void
     {
-        $client = static::createClient();
+        $client = static::createAuthenticatedClient();
         $crawler = $client->request('GET', '/');
 
         $this->assertResponseIsSuccessful();
@@ -32,7 +32,7 @@ class FormControllerTest extends WebTestCase
      */
     public function testFormPageRendersSuccessfully(string $slug, string $expectedTitle): void
     {
-        $client = static::createClient();
+        $client = static::createAuthenticatedClient();
         $client->request('GET', '/forms/' . $slug);
 
         $this->assertResponseIsSuccessful();
@@ -54,7 +54,7 @@ class FormControllerTest extends WebTestCase
 
     public function testFormPageHasEvidenceFormWithDataEvent(): void
     {
-        $client = static::createClient();
+        $client = static::createAuthenticatedClient();
         $crawler = $client->request('GET', '/forms/rz-provision');
 
         $this->assertResponseIsSuccessful();
@@ -65,7 +65,7 @@ class FormControllerTest extends WebTestCase
 
     public function testFormPageHasFormStatusDiv(): void
     {
-        $client = static::createClient();
+        $client = static::createAuthenticatedClient();
         $crawler = $client->request('GET', '/forms/rz-provision');
 
         $this->assertResponseIsSuccessful();
@@ -74,7 +74,7 @@ class FormControllerTest extends WebTestCase
 
     public function testFormPageHasAssetIdField(): void
     {
-        $client = static::createClient();
+        $client = static::createAuthenticatedClient();
         $crawler = $client->request('GET', '/forms/rz-provision');
 
         $this->assertResponseIsSuccessful();
@@ -83,7 +83,7 @@ class FormControllerTest extends WebTestCase
 
     public function testUnknownFormSlugReturns404(): void
     {
-        $client = static::createClient();
+        $client = static::createAuthenticatedClient();
         $client->request('GET', '/forms/nonexistent');
 
         $this->assertResponseStatusCodeSame(404);
@@ -91,7 +91,7 @@ class FormControllerTest extends WebTestCase
 
     public function testRetireFormHasConditionalRequiredField(): void
     {
-        $client = static::createClient();
+        $client = static::createAuthenticatedClient();
         $crawler = $client->request('GET', '/forms/rz-retire');
 
         $this->assertResponseIsSuccessful();
@@ -101,7 +101,7 @@ class FormControllerTest extends WebTestCase
 
     public function testAccessCleanupFormHasConditionalRequiredField(): void
     {
-        $client = static::createClient();
+        $client = static::createAuthenticatedClient();
         $crawler = $client->request('GET', '/forms/admin-access-cleanup');
 
         $this->assertResponseIsSuccessful();

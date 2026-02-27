@@ -58,6 +58,15 @@
     tenant_name: 'Mandant',
   };
 
+  // ── Auth redirect helper ──
+  function checkAuth(res) {
+    if (res.status === 401 || res.status === 403) {
+      window.location.href = '/login';
+      throw new Error('Sitzung abgelaufen');
+    }
+    return res;
+  }
+
   // ── NetBox Asset Lookup ──
   var NETBOX_FIELD_MAP = {
     serial_number: '#serial_number',
@@ -79,6 +88,7 @@
     var sel = form.querySelector('#tenant_id');
     if (!sel) return;
     fetch(API_BASE + '/tenants')
+      .then(checkAuth)
       .then(function (r) { return r.json(); })
       .then(function (list) {
         sel.innerHTML = '<option value="">– Bitte wählen –</option>';
@@ -100,6 +110,7 @@
     var sel = form.querySelector('#asset_owner, #owner_approval, #owner');
     if (!sel) return;
     fetch(API_BASE + '/contacts')
+      .then(checkAuth)
       .then(function (r) { return r.json(); })
       .then(function (list) {
         sel.innerHTML = '<option value="" data-contact-id="">– Bitte wählen –</option>';
@@ -142,6 +153,7 @@
     if (existingBadge) existingBadge.remove();
 
     fetch(API_BASE + '/asset-lookup?asset_id=' + encodeURIComponent(assetId))
+      .then(checkAuth)
       .then(function (res) { return res.json(); })
       .then(function (data) {
         if (!data.found) return;
@@ -369,6 +381,7 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     })
+      .then(checkAuth)
       .then(function (res) {
         return res.text().then(function (text) {
           try {

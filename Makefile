@@ -1,4 +1,4 @@
-.PHONY: help setup build up down restart logs status clean test stan lint lint-fix coverage migrate deploy
+.PHONY: help setup build up down restart logs status clean test stan lint lint-fix coverage migrate deploy create-admin
 
 COMPOSE = docker compose
 # compute absolute path once (avoid tricky escaping of $$(pwd))
@@ -51,6 +51,9 @@ status: ## Container-Status anzeigen
 
 migrate: ## Doctrine-Migrationen ausfuehren
 	$(COMPOSE) exec app php bin/console doctrine:migrations:migrate --no-interaction
+
+create-admin: ## Admin-Benutzer interaktiv anlegen
+	$(COMPOSE) exec app php bin/console app:create-admin
 
 test: ## PHPUnit-Tests ausfuehren
 	$(PHP) vendor/bin/phpunit --colors=always

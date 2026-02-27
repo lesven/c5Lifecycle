@@ -32,6 +32,9 @@ services:
     App\Domain\Repository\SubmissionLogRepositoryInterface:
         alias: App\Infrastructure\Persistence\DoctrineSubmissionLogRepository
 
+    App\Domain\Repository\UserRepositoryInterface:
+        alias: App\Infrastructure\Persistence\DoctrineUserRepository
+
     App\Domain\Repository\EvidenceMailSenderInterface:
         alias: App\Infrastructure\Mail\EvidenceMailSender
 
