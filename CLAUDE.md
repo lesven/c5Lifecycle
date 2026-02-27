@@ -19,6 +19,7 @@ make test               # Run PHPUnit tests (235+ tests)
 make test-unit          # Run only unit tests
 make test-integration   # Run only integration tests
 make stan               # PHPStan Level 8 analysis
+make insights           # PHP Insights code quality analysis
 make lint               # PHP-CS-Fixer dry-run
 make lint-fix           # Apply code style fixes
 make migrate            # Run Doctrine migrations
@@ -28,6 +29,7 @@ make coverage           # Generate coverage report
 composer install
 vendor/bin/phpunit
 vendor/bin/phpstan analyse
+vendor/bin/phpinsights
 vendor/bin/php-cs-fixer fix --dry-run
 ```
 

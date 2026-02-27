@@ -67,6 +67,9 @@ test-integration: ## Nur Integration-Tests
 stan: ## PHPStan statische Analyse (Level 6)
 	$(PHP) vendor/bin/phpstan analyse --memory-limit=256M
 
+insights: ## PHP Insights Code-Qualitäts-Analyse
+	$(PHP) vendor/bin/phpinsights
+
 lint: ## PHP-CS-Fixer Dry-Run
 	$(PHP) vendor/bin/php-cs-fixer fix --dry-run --diff
 

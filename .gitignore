@@ -17,6 +17,10 @@ backend/config/config.yaml
 .php-cs-fixer.cache
 phpstan-baseline.neon
 
+# Code quality tools reports (CI artifacts)
+.phpinsights.json
+/var/insights/
+
 # IDE
 .idea/
 .vscode/
