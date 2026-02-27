@@ -1,0 +1,109 @@
+{% extends 'form_base.html.twig' %}
+
+{% set form_title = 'Inbetriebnahme RZ-Asset' %}
+{% set form_icon = '🖥' %}
+{% set form_subtitle = 'C5 Evidence · RZ · Inbetriebnahme' %}
+{% set track_class = 'track-a' %}
+{% set track_label = 'Track A – RZ-Hardware' %}
+{% set badge_class = 'badge-a' %}
+{% set event_type = 'rz_provision' %}
+
+{% block form_fields %}
+    <fieldset class="form-section">
+      <legend>Asset-Stammdaten</legend>
+      <div class="field-group">
+        <label for="asset_id">Asset-ID / Inventarnummer <span class="required-marker">*</span></label>
+        <input type="text" id="asset_id" name="asset_id" required placeholder="z. B. SRV-042">
+      </div>
+      <div class="field-group">
+        <label for="device_type">Gerätetyp <span class="required-marker">*</span></label>
+        <select id="device_type" name="device_type" required>
+          <option value="">– Bitte wählen –</option>
+          <option>Server</option>
+          <option>Storage</option>
+          <option>Switch</option>
+          <option>Firewall</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label for="manufacturer">Hersteller <span class="required-marker">*</span></label>
+        <input type="text" id="manufacturer" name="manufacturer" required>
+      </div>
+      <div class="field-group">
+        <label for="model">Modell <span class="required-marker">*</span></label>
+        <input type="text" id="model" name="model" required>
+      </div>
+      <div class="field-group">
+        <label for="serial_number">Seriennummer <span class="required-marker">*</span></label>
+        <input type="text" id="serial_number" name="serial_number" required>
+      </div>
+    </fieldset>
+
+    <fieldset class="form-section">
+      <legend>Standort & Zuordnung</legend>
+      <div class="field-group">
+        <label for="location">Standort (RZ + Rack/Position) <span class="required-marker">*</span></label>
+        <input type="text" id="location" name="location" required placeholder="z. B. RZ Haan Rack B-12">
+      </div>
+      <div class="field-group">
+        <label for="commission_date">Datum Inbetriebnahme <span class="required-marker">*</span></label>
+        <input type="date" id="commission_date" name="commission_date" required>
+      </div>
+      <div class="field-group">
+        <label for="asset_owner">Asset Owner (Name/Rolle) <span class="required-marker">*</span></label>
+        <select id="asset_owner" name="asset_owner" required>
+          <option value="">– Wird geladen … –</option>
+        </select>
+        <input type="hidden" id="contact_id" name="contact_id">
+      </div>
+      <div class="field-group">
+        <label for="service">Zugehöriger Service/Plattform <span class="required-marker">*</span></label>
+        <input type="text" id="service" name="service" required>
+      </div>
+      <div class="field-group">
+        <label for="criticality">Kritikalität <span class="required-marker">*</span></label>
+        <select id="criticality" name="criticality" required>
+          <option value="">– Bitte wählen –</option>
+          <option>hoch</option>
+          <option>mittel</option>
+          <option>niedrig</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label for="change_ref">Change-/Ticket-Referenz <span class="required-marker">*</span></label>
+        <input type="text" id="change_ref" name="change_ref" required>
+      </div>
+      <div class="field-group">
+        <label for="tenant_id">Mandant</label>
+        <select id="tenant_id" name="tenant_id">
+          <option value="">– Wird geladen … –</option>
+        </select>
+        <input type="hidden" id="tenant_name" name="tenant_name">
+      </div>
+    </fieldset>
+
+    <fieldset class="form-section">
+      <legend>Betriebsbereitschaft</legend>
+      <div class="field-checkbox">
+        <label class="checkbox-label">
+          <input type="checkbox" name="monitoring_active" value="1" required>
+          <span>Monitoring aktiv</span>
+          <span class="required-marker">*</span>
+        </label>
+      </div>
+      <div class="field-checkbox">
+        <label class="checkbox-label">
+          <input type="checkbox" name="patch_process" value="1" required>
+          <span>Patch/Firmware-Prozess definiert</span>
+          <span class="required-marker">*</span>
+        </label>
+      </div>
+      <div class="field-checkbox">
+        <label class="checkbox-label">
+          <input type="checkbox" name="access_controlled" value="1" required>
+          <span>Zugriff nur über berechtigte Admin-Gruppen</span>
+          <span class="required-marker">*</span>
+        </label>
+      </div>
+    </fieldset>
+{% endblock %}

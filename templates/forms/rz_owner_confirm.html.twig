@@ -1,0 +1,69 @@
+{% extends 'form_base.html.twig' %}
+
+{% set form_title = 'Owner-Betriebsbestätigung' %}
+{% set form_icon = '✅' %}
+{% set form_subtitle = 'C5 Evidence · RZ · Betriebsbestätigung' %}
+{% set track_class = 'track-a' %}
+{% set track_label = 'Track A – RZ-Hardware' %}
+{% set badge_class = 'badge-a' %}
+{% set event_type = 'rz_owner_confirm' %}
+
+{% block form_fields %}
+    <fieldset class="form-section">
+      <legend>Asset & Owner</legend>
+      <div class="field-group">
+        <label for="asset_id">Asset-ID <span class="required-marker">*</span></label>
+        <input type="text" id="asset_id" name="asset_id" required>
+      </div>
+      <div class="field-group">
+        <label for="owner">Owner (Name/Rolle) <span class="required-marker">*</span></label>
+        <select id="owner" name="owner" required>
+          <option value="">– Wird geladen … –</option>
+        </select>
+        <input type="hidden" id="contact_id" name="contact_id">
+      </div>
+      <div class="field-group">
+        <label for="confirm_date">Datum <span class="required-marker">*</span></label>
+        <input type="date" id="confirm_date" name="confirm_date" required>
+      </div>
+      <div class="field-group">
+        <label for="tenant_id">Mandant</label>
+        <select id="tenant_id" name="tenant_id">
+          <option value="">– Wird geladen … –</option>
+        </select>
+        <input type="hidden" id="tenant_name" name="tenant_name">
+      </div>
+    </fieldset>
+
+    <fieldset class="form-section">
+      <legend>Bestätigungen</legend>
+      <div class="field-checkbox">
+        <label class="checkbox-label">
+          <input type="checkbox" name="purpose_bound" value="1" required>
+          <span>Zweckgebundener Betrieb</span>
+          <span class="required-marker">*</span>
+        </label>
+      </div>
+      <div class="field-checkbox">
+        <label class="checkbox-label">
+          <input type="checkbox" name="change_process" value="1" required>
+          <span>Changes nur via Change-Prozess</span>
+          <span class="required-marker">*</span>
+        </label>
+      </div>
+      <div class="field-checkbox">
+        <label class="checkbox-label">
+          <input type="checkbox" name="admin_access_controlled" value="1" required>
+          <span>Admin-Zugriff kontrolliert</span>
+          <span class="required-marker">*</span>
+        </label>
+      </div>
+      <div class="field-checkbox">
+        <label class="checkbox-label">
+          <input type="checkbox" name="lifecycle_managed" value="1" required>
+          <span>Lifecycle aktiv gemanagt</span>
+          <span class="required-marker">*</span>
+        </label>
+      </div>
+    </fieldset>
+{% endblock %}

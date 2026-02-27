@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}C5 Evidence Tool{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ asset('css/style.css') }}">
+</head>
+<body>
+
+<nav class="topbar">
+  <a class="topbar-logo" href="{{ path('app_index') }}">C5 <span>Evidence</span></a>
+  <span class="topbar-sep">|</span>
+  <span class="topbar-subtitle">Asset Lifecycle Management</span>
+</nav>
+
+{% block body %}{% endblock %}
+
+{% block javascripts %}{% endblock %}
+</body>
+</html>

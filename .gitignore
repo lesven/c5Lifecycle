@@ -1,4 +1,31 @@
+# Prototype backup
+_prototype/
+
+# Old backend
 backend/vendor/
 backend/.phpunit.cache/
 backend/logs/*.log
 backend/config/config.yaml
+
+# Symfony
+/var/
+/vendor/
+.env.local
+.env.local.php
+.env.*.local
+.phpunit.cache/
+.php-cs-fixer.cache
+phpstan-baseline.neon
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml

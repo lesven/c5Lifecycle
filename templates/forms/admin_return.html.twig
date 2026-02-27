@@ -1,0 +1,52 @@
+{% extends 'form_base.html.twig' %}
+
+{% set form_title = 'Rückgabe Admin-Endgerät' %}
+{% set form_icon = '📦' %}
+{% set form_subtitle = 'C5 Evidence · ADM · Rückgabe' %}
+{% set track_class = 'track-b' %}
+{% set track_label = 'Track B – Admin-Endgeräte' %}
+{% set badge_class = 'badge-b' %}
+{% set event_type = 'admin_return' %}
+
+{% block form_fields %}
+    <fieldset class="form-section">
+      <legend>Rückgabedaten</legend>
+      <div class="field-group">
+        <label for="asset_id">Asset-ID <span class="required-marker">*</span></label>
+        <input type="text" id="asset_id" name="asset_id" required>
+      </div>
+      <div class="field-group">
+        <label for="admin_user">Admin-User (Name/ID) <span class="required-marker">*</span></label>
+        <input type="text" id="admin_user" name="admin_user" required>
+      </div>
+      <div class="field-group">
+        <label for="return_date">Rückgabedatum <span class="required-marker">*</span></label>
+        <input type="date" id="return_date" name="return_date" required>
+      </div>
+      <div class="field-group">
+        <label for="return_reason">Rückgabegrund <span class="required-marker">*</span></label>
+        <select id="return_reason" name="return_reason" required>
+          <option value="">– Bitte wählen –</option>
+          <option>Rollenwechsel</option>
+          <option>Austritt</option>
+          <option>Ersatz</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label for="condition">Zustand <span class="required-marker">*</span></label>
+        <select id="condition" name="condition" required>
+          <option value="">– Bitte wählen –</option>
+          <option>OK</option>
+          <option>Defekt</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label for="accessories_complete">Zubehör vollständig <span class="required-marker">*</span></label>
+        <select id="accessories_complete" name="accessories_complete" required>
+          <option value="">– Bitte wählen –</option>
+          <option>Ja</option>
+          <option>Nein</option>
+        </select>
+      </div>
+    </fieldset>
+{% endblock %}

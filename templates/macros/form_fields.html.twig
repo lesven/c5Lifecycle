@@ -1,0 +1,75 @@
+{% macro text_field(name, label, required, placeholder) %}
+<div class="field-group">
+  <label for="{{ name }}">{{ label }}{% if required %} <span class="required-marker">*</span>{% endif %}</label>
+  <input type="text" id="{{ name }}" name="{{ name }}"{% if required %} required{% endif %}{% if placeholder %} placeholder="{{ placeholder }}"{% endif %}>
+</div>
+{% endmacro %}
+
+{% macro date_field(name, label, required) %}
+<div class="field-group">
+  <label for="{{ name }}">{{ label }}{% if required %} <span class="required-marker">*</span>{% endif %}</label>
+  <input type="date" id="{{ name }}" name="{{ name }}"{% if required %} required{% endif %}>
+</div>
+{% endmacro %}
+
+{% macro select_field(name, label, options, required, placeholder) %}
+<div class="field-group">
+  <label for="{{ name }}">{{ label }}{% if required %} <span class="required-marker">*</span>{% endif %}</label>
+  <select id="{{ name }}" name="{{ name }}"{% if required %} required{% endif %}>
+    <option value="">{{ placeholder|default('– Bitte wählen –') }}</option>
+    {% for option in options %}
+    <option{% if option.value is defined %} value="{{ option.value }}"{% endif %}>{{ option.label|default(option) }}</option>
+    {% endfor %}
+  </select>
+</div>
+{% endmacro %}
+
+{% macro checkbox_field(name, label, required) %}
+<div class="field-checkbox">
+  <label class="checkbox-label">
+    <input type="checkbox" name="{{ name }}" value="1"{% if required %} required{% endif %}>
+    <span>{{ label }}</span>
+    {% if required %}<span class="required-marker">*</span>{% endif %}
+  </label>
+</div>
+{% endmacro %}
+
+{% macro radio_group(name, options, required) %}
+<div class="radio-group">
+  {% for option in options %}
+  <div class="field-checkbox">
+    <label class="checkbox-label">
+      <input type="radio" name="{{ name }}" value="{{ option }}"{% if required and loop.first %} required{% endif %}>
+      <span>{{ option }}</span>
+    </label>
+  </div>
+  {% endfor %}
+</div>
+{% endmacro %}
+
+{% macro contact_select(name, label, required) %}
+<div class="field-group">
+  <label for="{{ name }}">{{ label }}{% if required %} <span class="required-marker">*</span>{% endif %}</label>
+  <select id="{{ name }}" name="{{ name }}"{% if required %} required{% endif %}>
+    <option value="">– Wird geladen … –</option>
+  </select>
+  <input type="hidden" id="contact_id" name="contact_id">
+</div>
+{% endmacro %}
+
+{% macro tenant_select() %}
+<div class="field-group">
+  <label for="tenant_id">Mandant</label>
+  <select id="tenant_id" name="tenant_id">
+    <option value="">– Wird geladen … –</option>
+  </select>
+  <input type="hidden" id="tenant_name" name="tenant_name">
+</div>
+{% endmacro %}
+
+{% macro conditional_text_field(name, label, condition, placeholder) %}
+<div class="field-group" id="{{ name }}_group">
+  <label for="{{ name }}">{{ label }} <span class="required-marker">*</span></label>
+  <input type="text" id="{{ name }}" name="{{ name }}" data-conditional-required="{{ condition }}"{% if placeholder %} placeholder="{{ placeholder }}"{% endif %}>
+</div>
+{% endmacro %}

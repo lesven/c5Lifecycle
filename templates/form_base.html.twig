@@ -1,0 +1,31 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ form_title }} – C5 Evidence{% endblock %}
+
+{% block body %}
+<main class="page-wrapper {{ track_class }}">
+  <a class="back-link" href="{{ path('app_index') }}">← Zurück zur Übersicht</a>
+
+  <div class="form-header">
+    <span class="form-icon">{{ form_icon }}</span>
+    <div class="form-header-text">
+      <span class="form-badge {{ badge_class }}">{{ track_label }}</span>
+      <h1>{{ form_title }}</h1>
+      <p class="form-subtitle">{{ form_subtitle }}</p>
+    </div>
+  </div>
+
+  <form id="evidence-form" data-event="{{ event_type }}" novalidate>
+    {% block form_fields %}{% endblock %}
+
+    <div class="form-actions">
+      <button type="submit" class="btn-submit">Evidence senden</button>
+    </div>
+    <div id="form-status" class="submit-status hidden"></div>
+  </form>
+</main>
+{% endblock %}
+
+{% block javascripts %}
+<script src="{{ asset('js/app.js') }}"></script>
+{% endblock %}

@@ -1,28 +1,31 @@
-.PHONY: help setup build up down restart logs logs-backend status clean config test test-build
+.PHONY: help setup build up down restart logs status clean test stan lint lint-fix coverage migrate
 
 COMPOSE = docker compose
+# compute absolute path once (avoid tricky escaping of $$(pwd))
+PWD := $(shell pwd)
+# helper image for running arbitrary PHP commands on the host tree
+PHP = docker run --rm -v "$(PWD):/app" -w /app php:8.4-cli-alpine
+# use official Composer image since the app container doesn't include composer
+COMPOSER = docker run --rm -v "$(PWD):/app" -w /app composer:2
 
 help: ## Hilfe anzeigen
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
 		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
 
-setup: config build up ## Ersteinrichtung: Config anlegen, bauen, starten
-
-config: ## Config aus Template erzeugen (überschreibt nicht)
-	@if [ ! -f backend/config/config.yaml ]; then \
-		cp backend/config/config.yaml.example backend/config/config.yaml; \
-		echo "backend/config/config.yaml angelegt — bitte SMTP/Jira-Daten eintragen!"; \
-	else \
-		echo "backend/config/config.yaml existiert bereits."; \
-	fi
+setup: build up migrate ## Ersteinrichtung: bauen, starten, migrieren
 
 build: ## Docker-Images bauen
 	$(COMPOSE) build
 
-up: config ## Container starten
+up: ## Container starten
 	$(COMPOSE) up -d
 	@echo ""
-	@echo "C5 Evidence Tool läuft unter http://localhost:$${APP_PORT:-8080}"
+	@echo "C5 Evidence Tool laeuft unter http://localhost:$${APP_PORT:-8080}"
+
+up-dev: ## Container starten
+	$(COMPOSE) --profile dev up -d
+	@echo ""
+	@echo "C5 Evidence Tool laeuft unter http://localhost:$${APP_PORT:-8080}"
 
 down: ## Container stoppen
 	$(COMPOSE) down
@@ -30,21 +33,49 @@ down: ## Container stoppen
 restart: ## Container neu starten
 	$(COMPOSE) restart
 
+composer-install: ## Composer-Abhängigkeiten installieren (setzt composer.json voraus)
+	$(COMPOSER) install --no-interaction --prefer-dist
+
+composer-update: ## Composer-Abhängigkeiten aktualisieren (setzt composer.json voraus)	
+	$(COMPOSER) update
+
+# generic helper offering arbitrary composer commands
+composer: ## Führe einen beliebigen Composer-Befehl aus. Nutze ARGS="<command>"
+	$(COMPOSER) $(ARGS)
+
 logs: ## Alle Logs anzeigen (live)
 	$(COMPOSE) logs -f
-
-logs-backend: ## Nur Backend-Logs (live)
-	$(COMPOSE) logs -f backend
 
 status: ## Container-Status anzeigen
 	$(COMPOSE) ps
 
-test-build: ## Test-Image bauen
-	$(COMPOSE) --profile test build test
+migrate: ## Doctrine-Migrationen ausfuehren
+	$(COMPOSE) exec app php bin/console doctrine:migrations:migrate --no-interaction
 
-test: test-build ## PHPUnit-Tests im Docker-Container ausführen
-	$(COMPOSE) --profile test run --rm test
+test: ## PHPUnit-Tests ausfuehren
+	$(PHP) vendor/bin/phpunit --colors=always
+
+test-unit: ## Nur Unit-Tests
+	$(PHP) vendor/bin/phpunit tests/Unit --colors=always
+
+test-integration: ## Nur Integration-Tests
+	$(PHP) vendor/bin/phpunit tests/Integration --colors=always
+
+stan: ## PHPStan statische Analyse (Level 6)
+	$(PHP) vendor/bin/phpstan analyse --memory-limit=256M
+
+lint: ## PHP-CS-Fixer Dry-Run
+	$(PHP) vendor/bin/php-cs-fixer fix --dry-run --diff
+
+lint-fix: ## PHP-CS-Fixer anwenden
+	$(PHP) vendor/bin/php-cs-fixer fix
+
+phpmd: ## PHP Mess Detector (phpmd) ausfuehren
+	$(PHP) vendor/bin/phpmd src,tests text cleancode,codesize,controversial,unusedcode
+
+coverage: ## PHPUnit mit Coverage-Report
+	$(PHP) php -dpcov.enabled=1 vendor/bin/phpunit --coverage-html=var/coverage --colors=always
 
 clean: ## Container, Images und Volumes entfernen
-	$(COMPOSE) --profile test down -v --rmi local
-	@echo "Aufgeräumt."
+	$(COMPOSE) down -v --rmi local
+	@echo "Aufgeraeumt."

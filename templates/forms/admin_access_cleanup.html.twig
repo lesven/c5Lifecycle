@@ -1,0 +1,59 @@
+{% extends 'form_base.html.twig' %}
+
+{% set form_title = 'Privileged Access Cleanup (IAM)' %}
+{% set form_icon = '🔒' %}
+{% set form_subtitle = 'C5 Evidence · ADM · Access Cleanup' %}
+{% set track_class = 'track-b' %}
+{% set track_label = 'Track B – Admin-Endgeräte' %}
+{% set badge_class = 'badge-b' %}
+{% set event_type = 'admin_access_cleanup' %}
+
+{% block form_fields %}
+    <fieldset class="form-section">
+      <legend>Zuordnung</legend>
+      <div class="field-group">
+        <label for="asset_id">Asset-ID <span class="required-marker">*</span></label>
+        <input type="text" id="asset_id" name="asset_id" required>
+      </div>
+      <div class="field-group">
+        <label for="admin_user">Admin-User (Name/ID) <span class="required-marker">*</span></label>
+        <input type="text" id="admin_user" name="admin_user" required>
+      </div>
+      <div class="field-group">
+        <label for="cleanup_date">Datum <span class="required-marker">*</span></label>
+        <input type="date" id="cleanup_date" name="cleanup_date" required>
+      </div>
+    </fieldset>
+
+    <fieldset class="form-section">
+      <legend>Durchgeführte Maßnahmen</legend>
+      <div class="field-checkbox">
+        <label class="checkbox-label">
+          <input type="checkbox" name="account_removed" value="1" required>
+          <span>Admin-Account entfernt/angepasst</span>
+          <span class="required-marker">*</span>
+        </label>
+      </div>
+      <div class="field-checkbox">
+        <label class="checkbox-label">
+          <input type="checkbox" name="keys_revoked" value="1" required>
+          <span>Keys/Zertifikate revoked</span>
+          <span class="required-marker">*</span>
+        </label>
+      </div>
+      <div class="field-checkbox">
+        <label class="checkbox-label">
+          <input type="checkbox" name="device_wiped" value="1">
+          <span>Gerät wiped oder reprovisioniert</span>
+        </label>
+      </div>
+    </fieldset>
+
+    <fieldset class="form-section">
+      <legend>Nachverfolgung</legend>
+      <div class="field-group">
+        <label for="ticket_ref">Ticket-Referenz <span class="required-marker">*</span></label>
+        <input type="text" id="ticket_ref" name="ticket_ref" data-conditional-required="device_wiped:unchecked" placeholder="Pflicht wenn Wipe nicht abgeschlossen">
+      </div>
+    </fieldset>
+{% endblock %}
