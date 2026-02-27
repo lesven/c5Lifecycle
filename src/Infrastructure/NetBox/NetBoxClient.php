@@ -70,6 +70,24 @@ final class NetBoxClient implements NetBoxClientInterface
         return $response['results'] ?? [];
     }
 
+    public function getRegions(string $requestId): array
+    {
+        $response = $this->get('/api/dcim/regions/', ['ordering' => 'name', 'limit' => 1000], $requestId);
+        return $response['results'] ?? [];
+    }
+
+    public function getSiteGroups(string $requestId): array
+    {
+        $response = $this->get('/api/dcim/site-groups/', ['ordering' => 'name', 'limit' => 1000], $requestId);
+        return $response['results'] ?? [];
+    }
+
+    public function getSites(string $requestId): array
+    {
+        $response = $this->get('/api/dcim/sites/', ['ordering' => 'name', 'limit' => 1000], $requestId);
+        return $response['results'] ?? [];
+    }
+
     public function findContactAssignment(int $deviceId, int $contactId, int $roleId, string $requestId): ?array
     {
         $params = [

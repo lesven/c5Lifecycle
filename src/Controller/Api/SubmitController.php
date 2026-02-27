@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Controller\Api;
 
 use App\Application\UseCase\SubmitEvidenceUseCase;
+use App\Infrastructure\Persistence\Entity\User;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -13,6 +15,7 @@ final class SubmitController
 {
     public function __construct(
         private readonly SubmitEvidenceUseCase $submitEvidence,
+        private readonly Security $security,
     ) {
     }
 
@@ -29,7 +32,13 @@ final class SubmitController
             ], 400);
         }
 
-        $result = $this->submitEvidence->execute($eventType, $data);
+        $submittedBy = null;
+        $user = $this->security->getUser();
+        if ($user instanceof User) {
+            $submittedBy = $user->getDisplayName() . ' (' . $user->getEmail() . ')';
+        }
+
+        $result = $this->submitEvidence->execute($eventType, $data, $submittedBy);
 
         if (!$result->success) {
             $payload = [

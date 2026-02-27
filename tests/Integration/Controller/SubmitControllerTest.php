@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Controller;
 
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use App\Tests\AuthenticatedWebTestCase;
 
-class SubmitControllerTest extends WebTestCase
+class SubmitControllerTest extends AuthenticatedWebTestCase
 {
     public function testSubmitWithUnknownEventTypeReturns404(): void
     {
-        $client = static::createClient();
+        $client = static::createAuthenticatedClient();
         $client->request('POST', '/api/submit/nonexistent', [], [], [
             'CONTENT_TYPE' => 'application/json',
         ], json_encode(['asset_id' => 'TEST']));
@@ -22,7 +22,7 @@ class SubmitControllerTest extends WebTestCase
 
     public function testSubmitWithInvalidJsonReturns400(): void
     {
-        $client = static::createClient();
+        $client = static::createAuthenticatedClient();
         $client->request('POST', '/api/submit/rz_provision', [], [], [
             'CONTENT_TYPE' => 'application/json',
         ], 'not json');
@@ -34,7 +34,7 @@ class SubmitControllerTest extends WebTestCase
 
     public function testSubmitWithMissingFieldsReturns422(): void
     {
-        $client = static::createClient();
+        $client = static::createAuthenticatedClient();
         $client->request('POST', '/api/submit/rz_provision', [], [], [
             'CONTENT_TYPE' => 'application/json',
         ], json_encode(['asset_id' => 'SRV-001']));
@@ -47,7 +47,7 @@ class SubmitControllerTest extends WebTestCase
 
     public function testSubmitConvertsDashToUnderscore(): void
     {
-        $client = static::createClient();
+        $client = static::createAuthenticatedClient();
         $client->request('POST', '/api/submit/rz-provision', [], [], [
             'CONTENT_TYPE' => 'application/json',
         ], json_encode(['asset_id' => 'SRV-001']));

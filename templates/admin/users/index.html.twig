@@ -1,0 +1,70 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Benutzerverwaltung – C5 Evidence Tool{% endblock %}
+
+{% block body %}
+<main class="admin-main">
+  <div class="admin-header">
+    <h1>Benutzerverwaltung</h1>
+    <a href="{{ path('admin_users_new') }}" class="btn-primary">+ Neuer Benutzer</a>
+  </div>
+
+  {% for message in app.flashes('success') %}
+    <div class="flash flash-success">{{ message }}</div>
+  {% endfor %}
+  {% for message in app.flashes('error') %}
+    <div class="flash flash-error">{{ message }}</div>
+  {% endfor %}
+
+  <div class="admin-table-wrapper">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>E-Mail</th>
+          <th>Rolle</th>
+          <th>Status</th>
+          <th>Erstellt</th>
+          <th>Aktionen</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+        <tr class="{{ not user.active ? 'row-inactive' }}">
+          <td>{{ user.displayName }}</td>
+          <td>{{ user.email }}</td>
+          <td>
+            <span class="role-badge {{ user.admin ? 'role-admin' : 'role-user' }}">
+              {{ user.admin ? 'Admin' : 'Benutzer' }}
+            </span>
+          </td>
+          <td>
+            <span class="status-badge {{ user.active ? 'status-active' : 'status-inactive' }}">
+              {{ user.active ? 'Aktiv' : 'Inaktiv' }}
+            </span>
+          </td>
+          <td>{{ user.createdAt|date('d.m.Y H:i') }}</td>
+          <td class="actions-cell">
+            <a href="{{ path('admin_users_edit', {id: user.id}) }}" class="btn-sm btn-secondary">Bearbeiten</a>
+            <form method="post" action="{{ path('admin_users_toggle_active', {id: user.id}) }}" class="inline-form">
+              <button type="submit" class="btn-sm {{ user.active ? 'btn-danger' : 'btn-success' }}"
+                      onclick="return confirm('{{ user.active ? 'Benutzer wirklich deaktivieren?' : 'Benutzer wieder aktivieren?' }}')">
+                {{ user.active ? 'Deaktivieren' : 'Aktivieren' }}
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6" class="empty-row">Keine Benutzer vorhanden.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="admin-footer">
+    <a href="{{ path('app_index') }}" class="btn-secondary">← Zurück zur Übersicht</a>
+  </div>
+</main>
+{% endblock %}

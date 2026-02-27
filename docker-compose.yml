@@ -82,8 +82,6 @@ services:
     image: axllent/mailpit:latest
     ports:
       - "${MAILPIT_UI_PORT:-18025}:8025"
-    profiles:
-      - dev
     restart: unless-stopped
 
 volumes:

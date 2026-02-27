@@ -13,6 +13,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Index(columns: ['event_type'], name: 'idx_event_type')]
 #[ORM\Index(columns: ['asset_id'], name: 'idx_asset_id')]
 #[ORM\Index(columns: ['submitted_at'], name: 'idx_submitted_at')]
+#[ORM\Index(columns: ['submitted_by'], name: 'idx_submitted_by')]
 class SubmissionLog
 {
     #[ORM\Id]
@@ -44,6 +45,9 @@ class SubmissionLog
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private DateTimeImmutable $submittedAt;
+
+    #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
+    private ?string $submittedBy = null;
 
     public function __construct(
         string $requestId,
@@ -116,5 +120,15 @@ class SubmissionLog
     public function getSubmittedAt(): DateTimeImmutable
     {
         return $this->submittedAt;
+    }
+
+    public function getSubmittedBy(): ?string
+    {
+        return $this->submittedBy;
+    }
+
+    public function setSubmittedBy(?string $submittedBy): void
+    {
+        $this->submittedBy = $submittedBy;
     }
 }

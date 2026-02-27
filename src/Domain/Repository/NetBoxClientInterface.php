@@ -78,4 +78,25 @@ interface NetBoxClientInterface
      * @return array<string, mixed>|null
      */
     public function createContactAssignment(int $deviceId, int $contactId, int $roleId, string $requestId): ?array;
+
+    /**
+     * Get all regions.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getRegions(string $requestId): array;
+
+    /**
+     * Get all site groups.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getSiteGroups(string $requestId): array;
+
+    /**
+     * Get all sites.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getSites(string $requestId): array;
 }

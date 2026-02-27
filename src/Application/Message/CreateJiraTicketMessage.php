@@ -13,6 +13,7 @@ final readonly class CreateJiraTicketMessage
         public string $eventType,
         public EventDefinition $eventMeta,
         public array $data,
+        public ?string $submittedBy = null,
     ) {
     }
 }

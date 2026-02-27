@@ -14,7 +14,12 @@ final class EvidenceMailBuilder
         'manufacturer' => 'Hersteller',
         'model' => 'Modell',
         'serial_number' => 'Seriennummer',
-        'location' => 'Standort',
+        'region_id' => 'Region',
+        'region_name' => 'Region (Name)',
+        'site_group_id' => 'Standortgruppe',
+        'site_group_name' => 'Standortgruppe (Name)',
+        'site_id' => 'Standort',
+        'site_name' => 'Standort (Name)',
         'commission_date' => 'Datum Inbetriebnahme',
         'asset_owner' => 'Asset Owner',
         'service' => 'Service/Plattform',
@@ -60,9 +65,9 @@ final class EvidenceMailBuilder
         'tenant_name' => 'Mandant',
     ];
 
-    private const SKIP_FIELDS = ['tenant_id'];
+    private const SKIP_FIELDS = ['tenant_id', 'region_id', 'site_group_id', 'site_id'];
 
-    public function build(EventDefinition $event, array $data, string $requestId): string
+    public function build(EventDefinition $event, array $data, string $requestId, ?string $submittedBy = null): string
     {
         $lines = [];
         $lines[] = '═══════════════════════════════════════════';
@@ -93,6 +98,13 @@ final class EvidenceMailBuilder
         }
 
         $lines[] = '';
+
+        if ($submittedBy !== null) {
+            $lines[] = '───────────────────────────────────────────';
+            $lines[] = str_pad('Eingetragen von (System):', 38) . $submittedBy;
+            $lines[] = '';
+        }
+
         $lines[] = '───────────────────────────────────────────';
         $lines[] = 'Diese E-Mail wurde automatisch vom C5 Evidence Tool erstellt.';
         $lines[] = 'Request-ID: ' . $requestId;

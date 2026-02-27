@@ -9,6 +9,7 @@ use App\Application\UseCase\SendEvidenceMailUseCase;
 use App\Application\UseCase\SubmitEvidenceUseCase;
 use App\Application\UseCase\SyncNetBoxUseCase;
 use App\Application\Validator\EventDataValidator;
+use App\Domain\Repository\SubmissionLogRepositoryInterface;
 use App\Domain\Service\EventRegistry;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -21,10 +22,12 @@ class SubmitEvidenceUseCaseTest extends TestCase
         ?SendEvidenceMailUseCase $sendMail = null,
         ?CreateJiraTicketUseCase $createJira = null,
         ?SyncNetBoxUseCase $syncNetBox = null,
+        ?SubmissionLogRepositoryInterface $submissionLogRepository = null,
     ): SubmitEvidenceUseCase {
         $sendMail ??= $this->createMock(SendEvidenceMailUseCase::class);
         $createJira ??= $this->createMock(CreateJiraTicketUseCase::class);
         $syncNetBox ??= $this->createMock(SyncNetBoxUseCase::class);
+        $submissionLogRepository ??= $this->createMock(SubmissionLogRepositoryInterface::class);
 
         // Configure default mock returns
         if ($sendMail instanceof MockObject) {
@@ -47,6 +50,7 @@ class SubmitEvidenceUseCaseTest extends TestCase
             $createJira,
             $syncNetBox,
             new NullLogger(),
+            $submissionLogRepository,
         );
     }
 
@@ -59,7 +63,9 @@ class SubmitEvidenceUseCaseTest extends TestCase
             'manufacturer' => 'Dell',
             'model' => 'R740',
             'serial_number' => 'ABC',
-            'location' => 'DC-1',
+            'region_id' => '1',
+            'site_group_id' => '2',
+            'site_id' => '3',
             'commission_date' => '2024-01-15',
             'asset_owner' => 'Owner',
             'service' => 'SVC',
@@ -113,7 +119,9 @@ class SubmitEvidenceUseCaseTest extends TestCase
             'manufacturer' => 'Dell',
             'model' => 'R740',
             'serial_number' => 'ABC',
-            'location' => 'DC-1',
+            'region_id' => '1',
+            'site_group_id' => '2',
+            'site_id' => '3',
             'commission_date' => '2024-01-15',
             'asset_owner' => 'Owner',
             'service' => 'SVC',
@@ -143,7 +151,9 @@ class SubmitEvidenceUseCaseTest extends TestCase
             'manufacturer' => 'Dell',
             'model' => 'R740',
             'serial_number' => 'ABC',
-            'location' => 'DC-1',
+            'region_id' => '1',
+            'site_group_id' => '2',
+            'site_id' => '3',
             'commission_date' => '2024-01-15',
             'asset_owner' => 'Owner',
             'service' => 'SVC',

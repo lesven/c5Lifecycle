@@ -28,7 +28,7 @@ class SendEvidenceMailUseCase
     public function execute(EvidenceSubmission $submission): array
     {
         $subject = $this->eventRegistry->buildSubject($submission->eventType, $submission->assetId());
-        $body = $this->mailBuilder->build($submission->eventMeta, $submission->data, $submission->requestId);
+        $body = $this->mailBuilder->build($submission->eventMeta, $submission->data, $submission->requestId, $submission->submittedBy);
         $recipients = $this->config->getEvidenceRecipients($submission->track());
 
         $this->mailSender->send($recipients, $subject, $body, $submission->requestId);

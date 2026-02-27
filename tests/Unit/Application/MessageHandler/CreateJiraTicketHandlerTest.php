@@ -66,4 +66,32 @@ class CreateJiraTicketHandlerTest extends TestCase
         $handler = new CreateJiraTicketHandler($useCase, new NullLogger());
         $handler($message);
     }
+
+    public function testHandlerPassesSubmittedByToSubmission(): void
+    {
+        $message = new CreateJiraTicketMessage(
+            requestId: 'req-sub',
+            eventType: 'rz_provision',
+            eventMeta: new EventDefinition(
+                track: 'rz_assets',
+                label: 'RZ-Bereitstellung',
+                category: 'RZ',
+                subjectType: 'Inbetriebnahme',
+                requiredFields: [],
+            ),
+            data: ['asset_id' => 'SRV-010'],
+            submittedBy: 'Max Mustermann (max@company.de)',
+        );
+
+        $useCase = $this->createMock(CreateJiraTicketUseCase::class);
+        $useCase->expects($this->once())
+            ->method('execute')
+            ->with($this->callback(function (EvidenceSubmission $sub) {
+                return $sub->submittedBy === 'Max Mustermann (max@company.de)';
+            }))
+            ->willReturn('PROJ-99');
+
+        $handler = new CreateJiraTicketHandler($useCase, new NullLogger());
+        $handler($message);
+    }
 }

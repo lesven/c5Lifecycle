@@ -7,8 +7,10 @@ namespace App\Application\UseCase;
 use App\Application\DTO\EvidenceSubmission;
 use App\Application\DTO\SubmissionResult;
 use App\Application\Validator\EventDataValidator;
+use App\Domain\Repository\SubmissionLogRepositoryInterface;
 use App\Domain\Service\EventRegistry;
 use App\Domain\ValueObject\RequestId;
+use App\Infrastructure\Persistence\Entity\SubmissionLog;
 use Psr\Log\LoggerInterface;
 
 final class SubmitEvidenceUseCase
@@ -20,17 +22,18 @@ final class SubmitEvidenceUseCase
         private readonly CreateJiraTicketUseCase $createJira,
         private readonly SyncNetBoxUseCase $syncNetBox,
         private readonly LoggerInterface $evidenceLogger,
+        private readonly SubmissionLogRepositoryInterface $submissionLogRepository,
     ) {
     }
 
-    public function execute(string $eventType, array $data): SubmissionResult
+    public function execute(string $eventType, array $data, ?string $submittedBy = null): SubmissionResult
     {
         $result = new SubmissionResult();
         $requestId = RequestId::generate()->toString();
         $result->requestId = $requestId;
         $result->eventType = $eventType;
 
-        $this->evidenceLogger->info('Submit request', ['request_id' => $requestId, 'event' => $eventType]);
+        $this->evidenceLogger->info('Submit request', ['request_id' => $requestId, 'event' => $eventType, 'submitted_by' => $submittedBy]);
 
         // 1. Validate event type
         if (!$this->eventRegistry->exists($eventType)) {
@@ -60,7 +63,7 @@ final class SubmitEvidenceUseCase
             return $result;
         }
 
-        $submission = new EvidenceSubmission($eventType, $requestId, $event, $data);
+        $submission = new EvidenceSubmission($eventType, $requestId, $event, $data, $submittedBy);
 
         // 3. Send evidence email (mandatory, synchronous)
         try {
@@ -95,6 +98,22 @@ final class SubmitEvidenceUseCase
         $result->netboxErrorTrace = $netboxResult['error_trace'];
 
         $result->success = true;
+
+        // 6. Persist submission log
+        try {
+            $log = new SubmissionLog($requestId, $eventType, $submission->assetId(), $data);
+            $log->setMailSent(true);
+            $log->setJiraTicket($result->jiraTicket);
+            $log->setNetboxSynced($result->netboxSynced);
+            $log->setSubmittedBy($submittedBy);
+            $this->submissionLogRepository->save($log);
+        } catch (\Throwable $e) {
+            $this->evidenceLogger->warning('SubmissionLog speichern fehlgeschlagen', [
+                'request_id' => $requestId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
         return $result;
     }
 }

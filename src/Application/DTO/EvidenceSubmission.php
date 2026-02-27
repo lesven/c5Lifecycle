@@ -13,6 +13,7 @@ final readonly class EvidenceSubmission
         public string $requestId,
         public EventDefinition $eventMeta,
         public array $data,
+        public ?string $submittedBy = null,
     ) {
     }
 

@@ -15,6 +15,7 @@ final readonly class SyncNetBoxMessage
         public array $data,
         public string $emailBody,
         public string $evidenceTo,
+        public ?string $submittedBy = null,
     ) {
     }
 }

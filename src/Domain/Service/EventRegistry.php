@@ -54,8 +54,9 @@ final class EventRegistry
                 category: 'RZ',
                 subjectType: 'Inbetriebnahme',
                 requiredFields: [
-                    'asset_id', 'device_type', 'manufacturer', 'model', 'serial_number',
-                    'location', 'commission_date', 'asset_owner', 'service', 'criticality',
+                    'asset_id', 'device_type',
+                    'region_id', 'site_group_id', 'site_id',
+                    'commission_date', 'asset_owner', 'criticality',
                     'change_ref', 'monitoring_active', 'patch_process', 'access_controlled',
                 ],
             ),
@@ -84,7 +85,7 @@ final class EventRegistry
                 category: 'ADM',
                 subjectType: 'Inbetriebnahme',
                 requiredFields: [
-                    'asset_id', 'device_type', 'manufacturer', 'model', 'serial_number',
+                    'asset_id', 'device_type',
                     'commission_date', 'admin_user', 'security_owner', 'purpose',
                     'disk_encryption', 'mfa_active', 'edr_active', 'patch_process', 'no_private_use',
                 ],

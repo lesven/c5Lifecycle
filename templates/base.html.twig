@@ -14,6 +14,17 @@
   <a class="topbar-logo" href="{{ path('app_index') }}">C5 <span>Evidence</span></a>
   <span class="topbar-sep">|</span>
   <span class="topbar-subtitle">Asset Lifecycle Management</span>
+
+  {% if app.user %}
+  <div class="topbar-user">
+    {% if is_granted('ROLE_ADMIN') %}
+      <a href="{{ path('admin_users_index') }}" class="topbar-admin-link" title="Benutzerverwaltung">Benutzer</a>
+      <span class="topbar-sep">|</span>
+    {% endif %}
+    <span class="topbar-username">{{ app.user.displayName }}</span>
+    <a href="{{ path('app_logout') }}" class="topbar-logout" title="Abmelden">Abmelden</a>
+  </div>
+  {% endif %}
 </nav>
 
 {% block body %}{% endblock %}
