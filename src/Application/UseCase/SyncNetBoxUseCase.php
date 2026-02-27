@@ -8,9 +8,9 @@ use App\Application\DTO\EvidenceSubmission;
 use App\Domain\Repository\NetBoxClientInterface;
 use App\Domain\Service\CustomFieldMapper;
 use App\Domain\Service\JournalBuilder;
+use App\Domain\Repository\EvidenceConfigInterface;
 use App\Domain\Service\StatusMapper;
 use App\Domain\ValueObject\EventType;
-use App\Infrastructure\Config\EvidenceConfig;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -21,7 +21,7 @@ class SyncNetBoxUseCase
         private readonly StatusMapper $statusMapper,
         private readonly CustomFieldMapper $customFieldMapper,
         private readonly JournalBuilder $journalBuilder,
-        private readonly EvidenceConfig $config,
+        private readonly EvidenceConfigInterface $config,
         private readonly LoggerInterface $netboxLogger,
     ) {
     }

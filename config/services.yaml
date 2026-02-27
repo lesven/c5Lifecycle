@@ -1,5 +1,6 @@
 parameters:
     c5.config_path: '%kernel.project_dir%/config/c5_evidence.yaml'
+    c5.event_definitions_path: '%kernel.project_dir%/config/event_definitions.yaml'
 
 services:
     _defaults:
@@ -22,12 +23,21 @@ services:
         arguments:
             $path: '%c5.config_path%'
 
+    # EventRegistry: loaded from external YAML definitions
+    App\Domain\Service\EventRegistry:
+        factory: ['App\Infrastructure\Config\EventRegistryFactory', 'create']
+        arguments:
+            $path: '%c5.event_definitions_path%'
+
 # Explicitly register FormController if auto-loading fails
     App\Controller\FormController:
         autowire: true
         autoconfigure: true
         public: true
         tags: ['controller.service_arguments']
+
+    App\Domain\Repository\EvidenceConfigInterface:
+        alias: App\Infrastructure\Config\EvidenceConfig
 
     App\Domain\Repository\SubmissionLogRepositoryInterface:
         alias: App\Infrastructure\Persistence\DoctrineSubmissionLogRepository

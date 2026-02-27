@@ -1,0 +1,122 @@
+# C5 Evidence Tool – Event-Definitionen
+# Definiert alle 7 Lifecycle-Events mit Pflichtfeldern und konditionalen Regeln.
+# Änderungen hier wirken sich auf Validierung, Mail-Builder und API aus.
+
+events:
+  rz_provision:
+    track: rz_assets
+    label: "Inbetriebnahme RZ-Asset"
+    category: RZ
+    subject_type: "Inbetriebnahme"
+    required_fields:
+      - asset_id
+      - device_type
+      - region_id
+      - site_group_id
+      - site_id
+      - commission_date
+      - asset_owner
+      - criticality
+      - change_ref
+      - monitoring_active
+      - patch_process
+      - access_controlled
+
+  rz_retire:
+    track: rz_assets
+    label: "Außerbetriebnahme RZ-Asset"
+    category: RZ
+    subject_type: "Außerbetriebnahme"
+    required_fields:
+      - asset_id
+      - retire_date
+      - reason
+      - owner_approval
+      - followup
+      - data_handling
+    conditional_rules:
+      data_handling_ref:
+        when:
+          field: data_handling
+          operator: "not_in"
+          value: ["", "Nicht relevant"]
+        then: "Pflichtfeld (Data Handling ≠ Nicht relevant)"
+
+  rz_owner_confirm:
+    track: rz_assets
+    label: "Owner-Betriebsbestätigung"
+    category: RZ
+    subject_type: "Betriebsbestätigung"
+    required_fields:
+      - asset_id
+      - owner
+      - confirm_date
+      - purpose_bound
+      - change_process
+      - admin_access_controlled
+      - lifecycle_managed
+
+  admin_provision:
+    track: admin_devices
+    label: "Inbetriebnahme Admin-Endgerät"
+    category: ADM
+    subject_type: "Inbetriebnahme"
+    required_fields:
+      - asset_id
+      - device_type
+      - commission_date
+      - admin_user
+      - security_owner
+      - purpose
+      - disk_encryption
+      - mfa_active
+      - edr_active
+      - patch_process
+      - no_private_use
+
+  admin_user_commitment:
+    track: admin_devices
+    label: "Verpflichtung Admin-User"
+    category: ADM
+    subject_type: "Verpflichtung"
+    required_fields:
+      - asset_id
+      - admin_user
+      - commitment_date
+      - admin_tasks_only
+      - no_mail_office
+      - no_credential_sharing
+      - report_loss
+      - return_on_change
+
+  admin_return:
+    track: admin_devices
+    label: "Rückgabe Admin-Endgerät"
+    category: ADM
+    subject_type: "Rückgabe"
+    required_fields:
+      - asset_id
+      - admin_user
+      - return_date
+      - return_reason
+      - condition
+      - accessories_complete
+
+  admin_access_cleanup:
+    track: admin_devices
+    label: "Privileged Access Cleanup"
+    category: ADM
+    subject_type: "Access Cleanup"
+    required_fields:
+      - asset_id
+      - admin_user
+      - cleanup_date
+      - account_removed
+      - keys_revoked
+    conditional_rules:
+      ticket_ref:
+        when:
+          field: device_wiped
+          operator: "empty"
+          value: null
+        then: "Pflichtfeld (Wipe nicht abgeschlossen)"

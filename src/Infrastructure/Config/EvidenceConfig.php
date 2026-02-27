@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Config;
 
+use App\Domain\Repository\EvidenceConfigInterface;
 use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 
-final readonly class EvidenceConfig
+final readonly class EvidenceConfig implements EvidenceConfigInterface
 {
     private function __construct(
         private array $data,
@@ -25,7 +26,39 @@ final readonly class EvidenceConfig
             throw new RuntimeException('Invalid config file format');
         }
 
-        return new self($data);
+        $config = new self($data);
+        $config->validate();
+
+        return $config;
+    }
+
+    /**
+     * Validate that all required configuration keys are present.
+     *
+     * @throws RuntimeException if required keys are missing
+     */
+    private function validate(): void
+    {
+        $required = [
+            'smtp.from_address',
+            'smtp.from_name',
+            'evidence.rz_assets.to',
+            'evidence.admin_devices.to',
+        ];
+
+        $missing = [];
+        foreach ($required as $key) {
+            $value = $this->get($key);
+            if ($value === null || $value === '') {
+                $missing[] = $key;
+            }
+        }
+
+        if ($missing !== []) {
+            throw new RuntimeException(
+                'Fehlende Pflicht-Konfiguration in c5_evidence.yaml: ' . implode(', ', $missing)
+            );
+        }
     }
 
     public function get(string $key, mixed $default = null): mixed

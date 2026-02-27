@@ -1,797 +1,96 @@
 /**
- * C5 Evidence Tool – Shared Form Logic
- * Handles validation, conditional required, submit, summary display
+ * C5 Evidence Tool – Application Initializer
+ * Loads after c5-labels.js, c5-validation.js, c5-asset-lookup.js,
+ * c5-submit.js, c5-summary.js and wires everything together.
  */
 (function () {
   'use strict';
 
-  // ── Field label map for summary display ──
-  const FIELD_LABELS = {
-    asset_id: 'Asset-ID',
-    device_type: 'Gerätetyp',
-    manufacturer: 'Hersteller',
-    model: 'Modell',
-    serial_number: 'Seriennummer',
-    location: 'Standort',
-    region_id: 'Region',
-    region_name: 'Region',
-    site_group_id: 'Standortgruppe',
-    site_group_name: 'Standortgruppe',
-    site_id: 'Standort',
-    site_name: 'Standort',
-    commission_date: 'Datum Inbetriebnahme',
-    asset_owner: 'Asset Owner',
-    service: 'Service/Plattform',
-    criticality: 'Kritikalität',
-    change_ref: 'Change-/Ticket-Referenz',
-    monitoring_active: 'Monitoring aktiv',
-    patch_process: 'Patch/Firmware-Prozess definiert',
-    access_controlled: 'Zugriff über berechtigte Admin-Gruppen',
-    retire_date: 'Datum Stilllegung',
-    reason: 'Grund',
-    owner_approval: 'Freigabe durch Owner',
-    followup: 'Folgeweg',
-    data_handling: 'Data Handling',
-    data_handling_ref: 'Nachweisreferenz',
-    owner: 'Owner',
-    confirm_date: 'Datum',
-    purpose_bound: 'Zweckgebundener Betrieb',
-    change_process: 'Changes nur via Change-Prozess',
-    admin_access_controlled: 'Admin-Zugriff kontrolliert',
-    lifecycle_managed: 'Lifecycle aktiv gemanagt',
-    admin_user: 'Admin-User',
-    security_owner: 'Security Owner',
-    purpose: 'Zweck / Privileged Role',
-    disk_encryption: 'Disk Encryption aktiv',
-    mfa_active: 'MFA aktiv',
-    edr_active: 'EDR/AV aktiv',
-    no_private_use: 'Keine private Nutzung',
-    commitment_date: 'Datum',
-    admin_tasks_only: 'Nur Admin-Tätigkeiten',
-    no_mail_office: 'Kein Mail/Office/Surfing',
-    no_credential_sharing: 'Keine Weitergabe von Credentials',
-    report_loss: 'Verlust sofort melden',
-    return_on_change: 'Rückgabe bei Rollenwechsel/Austritt',
-    return_date: 'Rückgabedatum',
-    return_reason: 'Rückgabegrund',
-    condition: 'Zustand',
-    accessories_complete: 'Zubehör vollständig',
-    cleanup_date: 'Datum',
-    account_removed: 'Admin-Account entfernt/angepasst',
-    keys_revoked: 'Keys/Zertifikate revoked',
-    device_wiped: 'Gerät wiped oder reprovisioniert',
-    ticket_ref: 'Ticket-Referenz',
-    tenant_name: 'Mandant',
-  };
+  window.C5 = window.C5 || {};
+
+  // ── Backend API base URL ──
+  C5.apiBase = (function () {
+    var meta = document.querySelector('meta[name="api-base"]');
+    return meta ? meta.content : '/api';
+  })();
 
   // ── Auth redirect helper ──
-  function checkAuth(res) {
+  C5.checkAuth = function (res) {
     if (res.status === 401 || res.status === 403) {
       window.location.href = '/login';
       throw new Error('Sitzung abgelaufen');
     }
     return res;
-  }
-
-  // ── NetBox Asset Lookup ──
-  var NETBOX_FIELD_MAP = {
-    serial_number: '#serial_number',
-    manufacturer: '#manufacturer',
-    model: '#model',
-    device_type: '#device_type',
-    site_id: '#site_id',
-    site_group_id: '#site_group_id',
-    region_id: '#region_id',
-    tenant_id: '#tenant_id',
-  };
-  var NETBOX_CUSTOM_FIELD_MAP = {
-    asset_owner: '#asset_owner',
-    service: '#service',
-    criticality: '#criticality',
-    admin_user: '#admin_user',
-    security_owner: '#security_owner',
   };
 
-  // ── Location dropdowns (Region → Standortgruppe → Standort) ──
-  var _locationData = null; // { regions, siteGroups, sites } – cached after first load
-
-  function loadLocations(form) {
-    if (!form.querySelector('#region_id')) return;
-
-    var loadingHint = form.querySelector('#location-loading');
-    var errorHint = form.querySelector('#location-error');
-    var submitBtn = form.querySelector('.btn-submit');
-
-    if (loadingHint) loadingHint.classList.remove('hidden');
-
-    Promise.all([
-      fetch(API_BASE + '/locations/regions').then(checkAuth).then(function (r) { return r.json(); }),
-      fetch(API_BASE + '/locations/site-groups').then(checkAuth).then(function (r) { return r.json(); }),
-      fetch(API_BASE + '/locations/sites').then(checkAuth).then(function (r) { return r.json(); }),
-    ])
-      .then(function (results) {
-        if (loadingHint) loadingHint.classList.add('hidden');
-
-        // Check for error responses (503 etc.)
-        if (!Array.isArray(results[0]) || !Array.isArray(results[1]) || !Array.isArray(results[2])) {
-          throw new Error('Ungültige Antwort von NetBox');
-        }
-
-        _locationData = {
-          regions: results[0],
-          siteGroups: results[1],
-          sites: results[2],
-        };
-
-        // Populate regions
-        var regionSel = form.querySelector('#region_id');
-        regionSel.innerHTML = '<option value="">– Bitte wählen –</option>';
-        _locationData.regions.forEach(function (r) {
-          var o = document.createElement('option');
-          o.value = String(r.id);
-          o.textContent = r.name;
-          regionSel.appendChild(o);
-        });
-
-        filterSiteGroups(form);
-        filterSites(form);
-      })
-      .catch(function () {
-        if (loadingHint) loadingHint.classList.add('hidden');
-        if (errorHint) errorHint.classList.remove('hidden');
-        if (submitBtn) submitBtn.disabled = true;
-        // Mark selects as non-functional
-        ['#region_id', '#site_group_id', '#site_id'].forEach(function (sel) {
-          var el = form.querySelector(sel);
-          if (el) {
-            el.innerHTML = '<option value="">– Nicht verfügbar –</option>';
-            el.disabled = true;
-          }
-        });
-      });
-  }
-
-  function filterSiteGroups(form) {
-    if (!_locationData) return;
-    var regionSel = form.querySelector('#region_id');
-    var groupSel = form.querySelector('#site_group_id');
-    if (!regionSel || !groupSel) return;
-
-    var selectedRegionId = regionSel.value ? Number(regionSel.value) : null;
-    var prevGroupVal = groupSel.value;
-
-    // Determine which site-groups have at least one site in the selected region.
-    // If no region is selected, all site-groups are visible.
-    var visibleGroupIds = null;
-    if (selectedRegionId !== null) {
-      var sitesInRegion = _locationData.sites.filter(function (s) {
-        return s.region_id === selectedRegionId;
-      });
-      visibleGroupIds = {};
-      sitesInRegion.forEach(function (s) {
-        if (s.site_group_id !== null && s.site_group_id !== undefined) {
-          visibleGroupIds[s.site_group_id] = true;
-        }
-      });
-    }
-
-    groupSel.innerHTML = '<option value="">– Bitte wählen –</option>';
-    _locationData.siteGroups
-      .filter(function (g) {
-        return visibleGroupIds === null || visibleGroupIds[g.id] === true;
-      })
-      .forEach(function (g) {
-        var o = document.createElement('option');
-        o.value = String(g.id);
-        o.textContent = g.name;
-        groupSel.appendChild(o);
-      });
-
-    // Restore previous selection if still valid
-    if (prevGroupVal) groupSel.value = prevGroupVal;
-    if (!groupSel.value) groupSel.selectedIndex = 0;
-
-    filterSites(form);
-    syncLocationNames(form);
-  }
-
-  function filterSites(form) {
-    if (!_locationData) return;
-    var groupSel = form.querySelector('#site_group_id');
-    var siteSel = form.querySelector('#site_id');
-    if (!groupSel || !siteSel) return;
-
-    var selectedGroupId = groupSel.value ? Number(groupSel.value) : null;
-    var prevSiteVal = siteSel.value;
-
-    siteSel.innerHTML = '<option value="">– Bitte wählen –</option>';
-    _locationData.sites
-      .filter(function (s) {
-        return selectedGroupId === null || s.site_group_id === selectedGroupId || !selectedGroupId;
-      })
-      .forEach(function (s) {
-        var o = document.createElement('option');
-        o.value = String(s.id);
-        o.textContent = s.name;
-        siteSel.appendChild(o);
-      });
-
-    // Restore previous selection if still valid
-    if (prevSiteVal) siteSel.value = prevSiteVal;
-    if (!siteSel.value) siteSel.selectedIndex = 0;
-
-    syncLocationNames(form);
-  }
-
-  function syncLocationNames(form) {
-    if (!_locationData) return;
-    var pairs = [
-      { selId: '#region_id', inputId: '#region_name', list: 'regions' },
-      { selId: '#site_group_id', inputId: '#site_group_name', list: 'siteGroups' },
-      { selId: '#site_id', inputId: '#site_name', list: 'sites' },
-    ];
-    pairs.forEach(function (p) {
-      var sel = form.querySelector(p.selId);
-      var inp = form.querySelector(p.inputId);
-      if (!sel || !inp) return;
-      var opt = sel.options[sel.selectedIndex];
-      inp.value = (opt && opt.value) ? opt.text : '';
-    });
-  }
-
-  function loadTenants(form) {
-    var sel = form.querySelector('#tenant_id');
-    if (!sel) return;
-    fetch(API_BASE + '/tenants')
-      .then(checkAuth)
-      .then(function (r) { return r.json(); })
-      .then(function (list) {
-        sel.innerHTML = '<option value="">– Bitte wählen –</option>';
-        list.forEach(function (t) {
-          var o = document.createElement('option');
-          o.value = String(t.id);
-          o.textContent = t.name;
-          sel.appendChild(o);
-        });
-        // Re-sync name after options loaded (in case asset lookup already ran)
-        syncTenantName(form);
-      })
-      .catch(function () {
-        sel.innerHTML = '<option value="">– Nicht verfügbar –</option>';
-      });
-  }
-
-  function loadContacts(form) {
-    var sel = form.querySelector('#asset_owner, #owner_approval, #owner');
-    if (!sel) return;
-    fetch(API_BASE + '/contacts')
-      .then(checkAuth)
-      .then(function (r) { return r.json(); })
-      .then(function (list) {
-        sel.innerHTML = '<option value="" data-contact-id="">– Bitte wählen –</option>';
-        list.forEach(function (c) {
-          var o = document.createElement('option');
-          o.value = c.name;
-          o.textContent = c.name;
-          o.setAttribute('data-contact-id', String(c.id));
-          sel.appendChild(o);
-        });
-        // Sync contact_id if a value is already selected (e.g. from asset lookup)
-        syncContactId(form);
-      })
-      .catch(function () {
-        sel.innerHTML = '<option value="">– Nicht verfügbar –</option>';
-      });
-  }
-
-  function syncContactId(form) {
-    var sel = form.querySelector('#asset_owner, #owner_approval, #owner');
-    var inp = form.querySelector('#contact_id');
-    if (!sel || !inp) return;
-    var opt = sel.options[sel.selectedIndex];
-    inp.value = (opt && opt.getAttribute('data-contact-id')) || '';
-  }
-
-  function syncTenantName(form) {
-    var sel = form.querySelector('#tenant_id');
-    var inp = form.querySelector('#tenant_name');
-    if (!sel || !inp) return;
-    var opt = sel.options[sel.selectedIndex];
-    inp.value = (opt && opt.value) ? opt.text : '';
-  }
-
-  function performAssetLookup(assetId, form) {
-    if (!assetId || assetId.trim() === '') return;
-
-    // Remove existing badge
-    var existingBadge = form.querySelector('.netbox-badge');
-    if (existingBadge) existingBadge.remove();
-
-    fetch(API_BASE + '/asset-lookup?asset_id=' + encodeURIComponent(assetId))
-      .then(checkAuth)
-      .then(function (res) { return res.json(); })
-      .then(function (data) {
-        if (!data.found) return;
-
-        // Prefill only empty fields
-        Object.keys(NETBOX_FIELD_MAP).forEach(function (key) {
-          var el = form.querySelector(NETBOX_FIELD_MAP[key]);
-          if (el && !el.value && data[key]) {
-            if (el.tagName === 'SELECT') {
-              setSelectValue(el, data[key]);
-            } else {
-              el.value = data[key];
-            }
-          }
-        });
-
-        // Sync tenant name from selected option
-        syncTenantName(form);
-
-        // Re-apply location cascade if location data is already loaded
-        if (_locationData && form.querySelector('#region_id')) {
-          filterSiteGroups(form);
-          filterSites(form);
-        }
-        syncLocationNames(form);
-
-        // Prefill custom fields
-        if (data.custom_fields) {
-          Object.keys(NETBOX_CUSTOM_FIELD_MAP).forEach(function (key) {
-            var el = form.querySelector(NETBOX_CUSTOM_FIELD_MAP[key]);
-            if (el && !el.value && data.custom_fields[key]) {
-              if (el.tagName === 'SELECT') {
-                setSelectValue(el, data.custom_fields[key]);
-              } else {
-                el.value = data.custom_fields[key];
-              }
-            }
-          });
-        }
-
-        // Show NetBox badge
-        showNetBoxBadge(form, data.status);
-      })
-      .catch(function () {
-        // Silently ignore lookup errors
-      });
-  }
-
-  function setSelectValue(selectEl, value) {
-    var options = selectEl.options;
-    for (var i = 0; i < options.length; i++) {
-      if (options[i].value === value || options[i].text === value) {
-        selectEl.selectedIndex = i;
-        return;
-      }
-    }
-  }
-
-  function showNetBoxBadge(form, status) {
-    var assetField = form.querySelector('[name="asset_id"]');
-    if (!assetField) return;
-    var group = assetField.closest('.field-group');
-    if (!group) return;
-
-    var badge = document.createElement('span');
-    badge.className = 'netbox-badge';
-    badge.textContent = 'NetBox: ' + (status || 'gefunden');
-    group.appendChild(badge);
-  }
-
-  // ── Backend API base URL ──
-  const API_BASE = getApiBase();
-
-  function getApiBase() {
-    // If served via PHP dev server, use same origin
-    // Otherwise use configurable base (default: backend/public)
-    var meta = document.querySelector('meta[name="api-base"]');
-    if (meta) return meta.content;
-    return '/api';
-  }
-
-  // ── Conditional required logic ──
-  function evaluateConditionalRequired(form) {
-    var fields = form.querySelectorAll('[data-conditional-required]');
-    fields.forEach(function (field) {
-      var rule = field.getAttribute('data-conditional-required');
-      var required = false;
-
-      if (rule.indexOf(':unchecked') !== -1) {
-        // field is required when a checkbox is NOT checked
-        var checkName = rule.replace(':unchecked', '');
-        var checkbox = form.querySelector('[name="' + checkName + '"]');
-        required = checkbox && !checkbox.checked;
-      } else if (rule.indexOf(':!') !== -1) {
-        // field is required when radio/select != value
-        var parts = rule.split(':!');
-        var radioName = parts[0];
-        var excludeVal = parts[1];
-        var selected = form.querySelector('[name="' + radioName + '"]:checked')
-          || form.querySelector('select[name="' + radioName + '"]');
-        if (selected) {
-          required = selected.value !== excludeVal;
-        } else {
-          // nothing selected yet — not required
-          required = false;
-        }
-      }
-
-      if (required) {
-        field.setAttribute('required', '');
-        field.closest('.field-group').classList.remove('hidden');
-      } else {
-        field.removeAttribute('required');
-        // Don't hide — just remove required
-      }
-    });
-  }
-
-  // ── Validation ──
-  function validateForm(form) {
-    // First evaluate conditional required fields
-    evaluateConditionalRequired(form);
-
-    // Clear previous errors
-    form.querySelectorAll('.field-error').forEach(function (el) {
-      el.classList.remove('field-error');
-      var msg = el.querySelector('.field-error-msg');
-      if (msg) msg.remove();
-    });
-
-    var firstError = null;
-    var valid = true;
-
-    // Validate text/select/date inputs
-    var inputs = form.querySelectorAll('input[required], select[required]');
-    inputs.forEach(function (input) {
-      if (input.type === 'checkbox') return; // handled below
-      if (input.type === 'radio') return; // handled below
-      if (!input.value || input.value.trim() === '') {
-        markFieldError(input);
-        valid = false;
-        if (!firstError) firstError = input;
-      }
-    });
-
-    // Validate required checkboxes
-    var checkboxes = form.querySelectorAll('input[type="checkbox"][required]');
-    checkboxes.forEach(function (cb) {
-      if (!cb.checked) {
-        var wrapper = cb.closest('.field-checkbox');
-        if (wrapper) wrapper.classList.add('field-error');
-        valid = false;
-        if (!firstError) firstError = cb;
-      }
-    });
-
-    // Validate required radio groups
-    var radioGroups = {};
-    form.querySelectorAll('input[type="radio"][required]').forEach(function (r) {
-      radioGroups[r.name] = true;
-    });
-    Object.keys(radioGroups).forEach(function (name) {
-      var checked = form.querySelector('input[name="' + name + '"]:checked');
-      if (!checked) {
-        var radios = form.querySelectorAll('input[name="' + name + '"]');
-        radios.forEach(function (r) {
-          var wrapper = r.closest('.field-checkbox');
-          if (wrapper) wrapper.classList.add('field-error');
-        });
-        valid = false;
-        if (!firstError) firstError = radios[0];
-      }
-    });
-
-    if (firstError) {
-      firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      firstError.focus();
-    }
-
-    return valid;
-  }
-
-  function markFieldError(input) {
-    var group = input.closest('.field-group');
-    if (group) {
-      group.classList.add('field-error');
-      if (!group.querySelector('.field-error-msg')) {
-        var msg = document.createElement('div');
-        msg.className = 'field-error-msg';
-        msg.textContent = 'Pflichtfeld';
-        group.appendChild(msg);
-      }
-    }
-  }
-
-  // ── Collect form data ──
-  function collectFormData(form) {
-    var data = {};
-    var elements = form.elements;
-    for (var i = 0; i < elements.length; i++) {
-      var el = elements[i];
-      if (!el.name) continue;
-      if (el.type === 'checkbox') {
-        if (data[el.name] === undefined) {
-          data[el.name] = el.checked;
-        }
-      } else if (el.type === 'radio') {
-        if (el.checked) data[el.name] = el.value;
-      } else if (el.type === 'submit') {
-        continue;
-      } else {
-        data[el.name] = el.value;
-      }
-    }
-    return data;
-  }
-
-  // ── Submit to backend ──
-  function submitForm(form) {
-    var eventType = form.getAttribute('data-event');
-    var data = collectFormData(form);
-    var statusEl = document.getElementById('form-status');
-    var submitBtn = form.querySelector('.btn-submit');
-
-    // Disable button during submit
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Sende …';
-    statusEl.classList.add('hidden');
-
-    fetch(API_BASE + '/submit/' + eventType, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    })
-      .then(checkAuth)
-      .then(function (res) {
-        return res.text().then(function (text) {
-          try {
-            var body = JSON.parse(text);
-            return { status: res.status, body: body };
-          } catch (e) {
-            throw new Error('Ungültige Server-Antwort (HTTP ' + res.status + ')');
-          }
-        });
-      })
-      .then(function (result) {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Evidence senden';
-
-        if (result.body.success) {
-          showSuccess(statusEl, result.body);
-          showSummary(data, result.body);
-        } else {
-          showError(statusEl, result.body.error || 'Unbekannter Fehler', result.body.request_id);
-        }
-      })
-      .catch(function (err) {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Evidence senden';
-        showError(statusEl, 'Verbindung zum Server fehlgeschlagen: ' + err.message);
-      });
-  }
-
-  // ── Success / Error feedback ──
-  function showSuccess(el, result) {
-    el.className = 'submit-status success';
-    var text = 'Evidence-Mail versendet.';
-    if (result.jira_ticket) {
-      text += ' · Jira-Ticket: ' + result.jira_ticket;
-    }
-    if (result.netbox_synced && result.netbox_status) {
-      if (result.netbox_status === 'journal_created') {
-        text += ' · NetBox: Journal Entry erstellt';
-      } else {
-        text += ' · NetBox-Status aktualisiert: ' + result.netbox_status;
-      }
-    }
-    text += ' · Request-ID: ' + result.request_id;
-    el.textContent = text;
-    el.classList.remove('hidden');
-
-    // Show NetBox warning if sync failed (include error message / optional trace)
-    if (result.netbox_error) {
-      var warning = document.createElement('div');
-      warning.className = 'submit-status warning';
-      warning.innerHTML = '<strong>NetBox-Synchronisation fehlgeschlagen:</strong> ' + escapeHtml(result.netbox_error);
-      if (result.netbox_error_trace) {
-        var pre = document.createElement('pre');
-        pre.className = 'netbox-trace';
-        pre.textContent = result.netbox_error_trace;
-        warning.appendChild(pre);
-      }
-      el.parentNode.insertBefore(warning, el.nextSibling);
-    }
-  }
-
-  function showError(el, message, requestId) {
-    el.className = 'submit-status error';
-    var text = message;
-    if (requestId) text += ' · Request-ID: ' + requestId;
-    el.textContent = text;
-    el.classList.remove('hidden');
-  }
-
-  // ── Summary overlay (FR-07) ──
-  function showSummary(data, result) {
-    // Remove existing overlay
-    var existing = document.querySelector('.summary-overlay');
-    if (existing) existing.remove();
-
-    var overlay = document.createElement('div');
-    overlay.className = 'summary-overlay';
-
-    var panel = document.createElement('div');
-    panel.className = 'summary-panel';
-
-    var h2 = document.createElement('h2');
-    h2.textContent = 'Evidence-Zusammenfassung';
-    panel.appendChild(h2);
-
-    // Request-ID info
-    var info = document.createElement('p');
-    info.style.cssText = 'font-size:.8125rem;color:#5f6672;margin-bottom:1rem;';
-    info.textContent = 'Request-ID: ' + result.request_id;
-    if (result.jira_ticket) info.textContent += ' · Jira: ' + result.jira_ticket;
-    if (result.netbox_synced && result.netbox_status) {
-      if (result.netbox_status === 'journal_created') {
-        info.textContent += ' · NetBox: Journal Entry erstellt';
-      } else {
-        info.textContent += ' · NetBox: ' + result.netbox_status;
-      }
-    }
-    if (result.netbox_error) {
-      info.textContent += ' · NetBox-Sync fehlgeschlagen';
-      // Append human-readable error details to the summary
-      var errDiv = document.createElement('div');
-      errDiv.className = 'summary-netbox-error';
-      errDiv.textContent = result.netbox_error;
-      panel.insertBefore(errDiv, table);
-      if (result.netbox_error_trace) {
-        var tracePre = document.createElement('pre');
-        tracePre.className = 'summary-netbox-trace';
-        tracePre.textContent = result.netbox_error_trace;
-        panel.insertBefore(tracePre, table);
-      }
-    }
-    panel.appendChild(info);
-
-    // Table of all submitted fields
-    var table = document.createElement('table');
-    table.className = 'summary-table';
-    Object.keys(data).forEach(function (key) {
-      var val = data[key];
-      if (val === '' || val === undefined) return;
-      var tr = document.createElement('tr');
-      var th = document.createElement('th');
-      th.textContent = FIELD_LABELS[key] || key;
-      var td = document.createElement('td');
-      if (typeof val === 'boolean') {
-        td.textContent = val ? 'Ja' : 'Nein';
-      } else {
-        td.textContent = val;
-      }
-      tr.appendChild(th);
-      tr.appendChild(td);
-      table.appendChild(tr);
-    });
-    panel.appendChild(table);
-
-    // Close button
-    var actions = document.createElement('div');
-    actions.className = 'summary-actions';
-    var closeBtn = document.createElement('button');
-    closeBtn.className = 'btn-secondary';
-    closeBtn.textContent = 'Schließen';
-    closeBtn.type = 'button';
-    closeBtn.addEventListener('click', function () {
-      overlay.remove();
-    });
-    var newBtn = document.createElement('button');
-    newBtn.className = 'btn-secondary';
-    newBtn.textContent = 'Neues Formular';
-    newBtn.type = 'button';
-    newBtn.addEventListener('click', function () {
-      overlay.remove();
-      document.getElementById('evidence-form').reset();
-      document.getElementById('form-status').classList.add('hidden');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-    actions.appendChild(newBtn);
-    actions.appendChild(closeBtn);
-    panel.appendChild(actions);
-
-    overlay.appendChild(panel);
-    document.body.appendChild(overlay);
-
-    // Close on overlay click
-    overlay.addEventListener('click', function (e) {
-      if (e.target === overlay) overlay.remove();
-    });
-  }
-
-  // small helper to escape HTML when inserting server-provided text
-  function escapeHtml(str) {
+  // ── HTML escape helper ──
+  C5.escapeHtml = function (str) {
     return String(str)
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
-  }
+  };
 
   // ── Init ──
   document.addEventListener('DOMContentLoaded', function () {
     var form = document.getElementById('evidence-form');
     if (!form) return;
 
+    // Load labels from backend (async, silent fallback)
+    if (typeof C5.loadLabelsFromApi === 'function') {
+      C5.loadLabelsFromApi();
+    }
+
     // Set today's date as default for all date inputs
     var today = new Date();
-    var year = today.getFullYear();
-    var month = String(today.getMonth() + 1).padStart(2, '0');
-    var day = String(today.getDate()).padStart(2, '0');
-    var todayStr = year + '-' + month + '-' + day;
-    var dateInputs = form.querySelectorAll('input[type="date"]');
-    dateInputs.forEach(function (input) {
-      if (!input.value) {
-        input.value = todayStr;
-      }
+    var todayStr = today.getFullYear() + '-'
+      + String(today.getMonth() + 1).padStart(2, '0') + '-'
+      + String(today.getDate()).padStart(2, '0');
+    form.querySelectorAll('input[type="date"]').forEach(function (input) {
+      if (!input.value) input.value = todayStr;
     });
 
     // Update conditional required on change
     form.addEventListener('change', function () {
-      evaluateConditionalRequired(form);
+      C5.evaluateConditionalRequired(form);
     });
+    C5.evaluateConditionalRequired(form);
 
-    // Initial evaluation
-    evaluateConditionalRequired(form);
-
-    // Load tenants dropdown if present
-    loadTenants(form);
-
-    // Load contacts dropdown if present
-    loadContacts(form);
-
-    // Load location dropdowns (Region / Standortgruppe / Standort) if present
-    loadLocations(form);
+    // Load dropdowns
+    C5.loadTenants(form);
+    C5.loadContacts(form);
+    C5.loadLocations(form);
 
     // Cascade: Region → Standortgruppe → Standort
     var regionSel = form.querySelector('#region_id');
     if (regionSel) {
       regionSel.addEventListener('change', function () {
-        filterSiteGroups(form);
-        filterSites(form);
-        syncLocationNames(form);
+        C5.filterSiteGroups(form);
+        C5.filterSites(form);
       });
     }
     var siteGroupSel = form.querySelector('#site_group_id');
     if (siteGroupSel) {
       siteGroupSel.addEventListener('change', function () {
-        filterSites(form);
-        syncLocationNames(form);
-      });
-    }
-    var siteSel = form.querySelector('#site_id');
-    if (siteSel) {
-      siteSel.addEventListener('change', function () {
-        syncLocationNames(form);
+        C5.filterSites(form);
       });
     }
 
-    // Sync tenant_name hidden field when dropdown changes
+    // Sync tenant_name when dropdown changes
     var tenantSel = form.querySelector('#tenant_id');
     if (tenantSel) {
       tenantSel.addEventListener('change', function () {
-        syncTenantName(form);
+        C5.syncTenantName(form);
       });
     }
 
-    // Sync contact_id hidden field when contact dropdown changes
+    // Sync contact_id when contact dropdown changes
     var contactSel = form.querySelector('#asset_owner, #owner_approval, #owner');
     if (contactSel) {
       contactSel.addEventListener('change', function () {
-        syncContactId(form);
+        C5.syncContactId(form);
       });
     }
 
@@ -799,19 +98,19 @@
     var assetIdField = form.querySelector('[name="asset_id"]');
     if (assetIdField) {
       assetIdField.addEventListener('blur', function () {
-        performAssetLookup(assetIdField.value, form);
+        C5.performAssetLookup(assetIdField.value, form);
       });
     }
 
     // Handle submit
     form.addEventListener('submit', function (e) {
       e.preventDefault();
-      if (validateForm(form)) {
-        submitForm(form);
+      if (C5.validateForm(form)) {
+        C5.submitForm(form);
       }
     });
 
-    // Clear field error on input
+    // Clear field errors on input
     form.addEventListener('input', function (e) {
       var group = e.target.closest('.field-group');
       if (group) {

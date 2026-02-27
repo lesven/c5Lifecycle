@@ -15,10 +15,10 @@ All documentation and UI text is in **German**.
 make setup              # Build, start, migrate
 make up                 # Start all containers
 make down               # Stop all containers
-make test               # Run PHPUnit tests (150 tests)
+make test               # Run PHPUnit tests (235+ tests)
 make test-unit          # Run only unit tests
 make test-integration   # Run only integration tests
-make stan               # PHPStan Level 6 analysis
+make stan               # PHPStan Level 8 analysis
 make lint               # PHP-CS-Fixer dry-run
 make lint-fix           # Apply code style fixes
 make migrate            # Run Doctrine migrations
@@ -38,24 +38,27 @@ vendor/bin/php-cs-fixer fix --dry-run
 ```
 src/
 ├── Controller/           # Symfony controllers (API + Form)
-│   ├── Api/              # 5 JSON API endpoints
+│   ├── Api/              # 7 JSON API endpoints (submit, asset-lookup, tenants, contacts,
+│   │                       locations, health, field-labels)
 │   └── FormController    # Twig form rendering
 ├── Domain/               # Pure business logic — no framework deps
-│   ├── ValueObject/      # EventType, Track (enums), RequestId
+│   ├── ValueObject/      # EventType, Track (enums), RequestId, EventDefinition
 │   ├── Service/          # EventRegistry, StatusMapper, CustomFieldMapper,
-│   │                       DeviceTransformer, JournalBuilder, EvidenceMailBuilder
-│   └── Repository/       # Interfaces only
+│   │                       DeviceTransformer, JournalBuilder, EvidenceMailBuilder,
+│   │                       FieldLabelRegistry
+│   └── Repository/       # Interfaces only (incl. EvidenceConfigInterface)
 ├── Application/          # Use cases, DTOs, validators
 │   ├── DTO/              # EvidenceSubmission, SubmissionResult
-│   ├── UseCase/          # SubmitEvidence, SendMail, CreateJira, SyncNetBox, LookupAsset
-│   ├── Validator/        # EventDataValidator
+│   ├── UseCase/          # SubmitEvidence (pipeline), SendMail, CreateJira, SyncNetBox, LookupAsset
+│   │   └── Step/         # Pipeline steps: SendMailStep, CreateJiraStep, SyncNetBoxStep, PersistLogStep
+│   ├── Validator/        # EventDataValidator (declarative conditional rules)
 │   ├── Message/          # Async messages (Jira, NetBox)
 │   └── MessageHandler/   # Symfony Messenger handlers
 ├── Infrastructure/       # Framework implementations
 │   ├── NetBox/           # NetBoxClient (HttpClient)
 │   ├── Jira/             # JiraClient (HttpClient)
 │   ├── Mail/             # EvidenceMailSender (Symfony Mailer)
-│   ├── Config/           # EvidenceConfig (YAML-based)
+│   ├── Config/           # EvidenceConfig, EventDefinitionLoader, EventRegistryFactory
 │   └── Persistence/      # Doctrine entities + repositories
 ├── EventListener/        # RequestIdListener (UUID on every response)
 └── Kernel.php
@@ -74,12 +77,16 @@ src/
 
 | Service | Purpose |
 |---------|---------|
-| `EventRegistry` | Defines all 7 lifecycle events with required fields |
-| `EvidenceConfig` | Readonly DTO from `config/c5_evidence.yaml` |
+| `EventRegistry` | Defines all 7 lifecycle events (loaded from `config/event_definitions.yaml`) |
+| `FieldLabelRegistry` | Single source of truth for field labels (German) |
+| `EvidenceConfigInterface` | Domain interface for config access (implemented by `EvidenceConfig`) |
+| `EvidenceConfig` | Readonly DTO from `config/c5_evidence.yaml` with boot-time validation |
+| `EventDefinitionLoader` | Parses YAML event definitions into `EventDefinition` value objects |
+| `SubmitEvidenceUseCase` | Pipeline pattern: iterates `SubmissionStepInterface[]` steps |
+| `EventDataValidator` | Validates form data using declarative conditional rules from YAML |
 | `NetBoxClient` | HTTP client for NetBox API (scoped Symfony HttpClient) |
 | `JiraClient` | HTTP client for Jira API (scoped Symfony HttpClient) |
 | `EvidenceMailSender` | Sends evidence emails via Symfony Mailer |
-| `EventDataValidator` | Validates form data including conditional fields |
 
 ### API Endpoints
 
@@ -91,6 +98,7 @@ src/
 | GET | `/api/asset-lookup` | `AssetLookupController` |
 | GET | `/api/tenants` | `TenantsController` |
 | GET | `/api/contacts` | `ContactsController` |
+| GET | `/api/field-labels` | `FieldLabelsController` |
 | GET | `/api/health` | `HealthController` |
 
 ### Async Processing
@@ -119,16 +127,17 @@ vendor/bin/phpunit tests/Integration       # Controller WebTestCase tests
 vendor/bin/phpunit --filter testMethodName  # Single test method
 ```
 
-150 tests covering:
-- Domain services (EventRegistry, StatusMapper, CustomFieldMapper, DeviceTransformer, JournalBuilder, EvidenceMailBuilder)
-- Application use cases and validators (SubmitEvidence, EventDataValidator)
-- Infrastructure clients (NetBoxClient, JiraClient, EvidenceMailSender — mock-based)
+235+ tests covering:
+- Domain services (EventRegistry, StatusMapper, CustomFieldMapper, DeviceTransformer, JournalBuilder, EvidenceMailBuilder, FieldLabelRegistry)
+- Application use cases and validators (SubmitEvidence pipeline, EventDataValidator with conditional rules)
+- Pipeline steps (SendMailStep, CreateJiraStep, SyncNetBoxStep, PersistLogStep)
+- Infrastructure (EvidenceConfig validation, EventDefinitionLoader, NetBoxClient, JiraClient, EvidenceMailSender — mock-based)
 - Message handlers (CreateJiraTicketHandler, SyncNetBoxHandler)
 - Controller integration tests (Health, Submit, Form rendering)
 
 ## Important Constraints
 
-- **No JavaScript frameworks** — vanilla JS only (`public/js/app.js`)
+- **No JavaScript frameworks** — vanilla JS, modularized (`public/js/c5-*.js` + `app.js`)
 - **No build process** — direct file serving
 - **German UI/docs** — all user-facing text in German
 - **Evidence-first** — email delivery is mandatory, never optional

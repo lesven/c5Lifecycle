@@ -6,6 +6,7 @@ namespace App\Tests\Unit\Domain\Service;
 
 use App\Domain\Service\EventRegistry;
 use App\Domain\ValueObject\EventDefinition;
+use App\Tests\EventRegistryFixture;
 use PHPUnit\Framework\TestCase;
 
 class EventRegistryTest extends TestCase
@@ -25,7 +26,7 @@ class EventRegistryTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->registry = new EventRegistry();
+        $this->registry = EventRegistryFixture::create();
     }
 
     public function testExistsReturnsTrueForAllKnownEvents(): void

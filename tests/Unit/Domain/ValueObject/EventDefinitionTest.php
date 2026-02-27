@@ -41,27 +41,6 @@ class EventDefinitionTest extends TestCase
         $this->assertTrue($reflection->isReadOnly());
     }
 
-    public function testToArrayReturnsLegacyFormat(): void
-    {
-        $definition = new EventDefinition(
-            track: 'rz_assets',
-            label: 'Außerbetriebnahme RZ-Asset',
-            category: 'RZ',
-            subjectType: 'Außerbetriebnahme',
-            requiredFields: ['asset_id', 'retire_date', 'reason'],
-        );
-
-        $array = $definition->toArray();
-
-        $this->assertSame([
-            'track' => 'rz_assets',
-            'label' => 'Außerbetriebnahme RZ-Asset',
-            'category' => 'RZ',
-            'subject_type' => 'Außerbetriebnahme',
-            'required_fields' => ['asset_id', 'retire_date', 'reason'],
-        ], $array);
-    }
-
     public function testEmptyRequiredFields(): void
     {
         $definition = new EventDefinition(
@@ -87,5 +66,40 @@ class EventDefinitionTest extends TestCase
 
         $this->assertStringContainsString('ß', $definition->label);
         $this->assertStringContainsString('ß', $definition->subjectType);
+    }
+
+    public function testConditionalRulesDefaultEmpty(): void
+    {
+        $definition = new EventDefinition(
+            track: 'test',
+            label: 'Test',
+            category: 'TST',
+            subjectType: 'Test',
+            requiredFields: [],
+        );
+
+        $this->assertSame([], $definition->conditionalRules);
+    }
+
+    public function testConditionalRulesAssigned(): void
+    {
+        $rules = [
+            'data_handling_ref' => [
+                'when' => ['field' => 'data_handling', 'operator' => 'not_in', 'value' => ['', 'Nicht relevant']],
+                'then' => 'Pflichtfeld (Data Handling ≠ Nicht relevant)',
+            ],
+        ];
+
+        $definition = new EventDefinition(
+            track: 'rz_assets',
+            label: 'Außerbetriebnahme RZ-Asset',
+            category: 'RZ',
+            subjectType: 'Außerbetriebnahme',
+            requiredFields: ['asset_id'],
+            conditionalRules: $rules,
+        );
+
+        $this->assertSame($rules, $definition->conditionalRules);
+        $this->assertArrayHasKey('data_handling_ref', $definition->conditionalRules);
     }
 }

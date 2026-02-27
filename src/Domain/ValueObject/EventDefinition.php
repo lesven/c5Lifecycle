@@ -13,11 +13,12 @@ namespace App\Domain\ValueObject;
 final readonly class EventDefinition
 {
     /**
-     * @param string   $track          Track identifier (e.g. 'rz_assets', 'admin_devices')
-     * @param string   $label          Human readable label (German)
-     * @param string   $category       Short category code ('RZ' or 'ADM')
-     * @param string   $subjectType    Subject type for mail subject (e.g. 'Inbetriebnahme')
-     * @param string[] $requiredFields List of required form field names
+     * @param string   $track            Track identifier (e.g. 'rz_assets', 'admin_devices')
+     * @param string   $label            Human readable label (German)
+     * @param string   $category         Short category code ('RZ' or 'ADM')
+     * @param string   $subjectType      Subject type for mail subject (e.g. 'Inbetriebnahme')
+     * @param string[] $requiredFields   List of required form field names
+     * @param array<string, array{when: array{field: string, operator: string, value: mixed}, then: string}> $conditionalRules Declarative conditional-required rules
      */
     public function __construct(
         public string $track,
@@ -25,22 +26,7 @@ final readonly class EventDefinition
         public string $category,
         public string $subjectType,
         public array $requiredFields,
+        public array $conditionalRules = [],
     ) {
-    }
-
-    /**
-     * @deprecated Bridge method for legacy code that still expects arrays.
-     *             Will be removed once all callers are migrated.
-     * @return array{track: string, label: string, category: string, subject_type: string, required_fields: string[]}
-     */
-    public function toArray(): array
-    {
-        return [
-            'track' => $this->track,
-            'label' => $this->label,
-            'category' => $this->category,
-            'subject_type' => $this->subjectType,
-            'required_fields' => $this->requiredFields,
-        ];
     }
 }

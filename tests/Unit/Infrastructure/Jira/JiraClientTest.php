@@ -27,6 +27,9 @@ evidence:
   rz_assets:
     to: test@example.com
     cc: []
+  admin_devices:
+    to: test-admin@example.com
+    cc: []
 jira:
   enabled: true
   base_url: https://jira.test

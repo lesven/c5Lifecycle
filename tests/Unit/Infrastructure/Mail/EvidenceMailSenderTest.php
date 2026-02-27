@@ -27,6 +27,9 @@ evidence:
   rz_assets:
     to: rz@company.de
     cc: []
+  admin_devices:
+    to: admin@company.de
+    cc: []
 ');
         $config = EvidenceConfig::fromYamlFile($configPath);
         unlink($configPath);

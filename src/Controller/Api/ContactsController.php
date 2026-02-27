@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller\Api;
 
-use App\Infrastructure\Config\EvidenceConfig;
+use App\Domain\Repository\EvidenceConfigInterface;
 use App\Infrastructure\NetBox\NetBoxClient;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -15,7 +15,7 @@ final class ContactsController
 {
     public function __construct(
         private readonly NetBoxClient $netBoxClient,
-        private readonly EvidenceConfig $config,
+        private readonly EvidenceConfigInterface $config,
         private readonly LoggerInterface $netboxLogger,
     ) {
     }

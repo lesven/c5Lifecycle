@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace App\Application\UseCase;
 
 use App\Application\DTO\EvidenceSubmission;
+use App\Domain\Repository\EvidenceConfigInterface;
 use App\Domain\Repository\JiraClientInterface;
-use App\Infrastructure\Config\EvidenceConfig;
 
 class CreateJiraTicketUseCase
 {
     public function __construct(
         private readonly JiraClientInterface $jiraClient,
-        private readonly EvidenceConfig $config,
+        private readonly EvidenceConfigInterface $config,
     ) {
     }
 

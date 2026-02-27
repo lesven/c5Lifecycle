@@ -7,8 +7,8 @@ namespace App\Application\UseCase;
 use App\Application\DTO\EvidenceSubmission;
 use App\Domain\Repository\EvidenceMailSenderInterface;
 use App\Domain\Service\EventRegistry;
+use App\Domain\Repository\EvidenceConfigInterface;
 use App\Domain\Service\EvidenceMailBuilder;
-use App\Infrastructure\Config\EvidenceConfig;
 
 class SendEvidenceMailUseCase
 {
@@ -16,7 +16,7 @@ class SendEvidenceMailUseCase
         private readonly EvidenceMailBuilder $mailBuilder,
         private readonly EvidenceMailSenderInterface $mailSender,
         private readonly EventRegistry $eventRegistry,
-        private readonly EvidenceConfig $config,
+        private readonly EvidenceConfigInterface $config,
     ) {
     }
 

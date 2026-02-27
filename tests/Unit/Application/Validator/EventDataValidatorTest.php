@@ -6,6 +6,7 @@ namespace App\Tests\Unit\Application\Validator;
 
 use App\Application\Validator\EventDataValidator;
 use App\Domain\Service\EventRegistry;
+use App\Tests\EventRegistryFixture;
 use PHPUnit\Framework\TestCase;
 
 class EventDataValidatorTest extends TestCase
@@ -16,7 +17,7 @@ class EventDataValidatorTest extends TestCase
     protected function setUp(): void
     {
         $this->validator = new EventDataValidator();
-        $this->registry = new EventRegistry();
+        $this->registry = EventRegistryFixture::create();
     }
 
     public function testValidateReturnsEmptyForValidRzProvision(): void

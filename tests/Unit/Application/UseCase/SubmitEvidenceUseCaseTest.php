@@ -11,6 +11,7 @@ use App\Application\UseCase\SyncNetBoxUseCase;
 use App\Application\Validator\EventDataValidator;
 use App\Domain\Repository\SubmissionLogRepositoryInterface;
 use App\Domain\Service\EventRegistry;
+use App\Tests\EventRegistryFixture;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -44,7 +45,7 @@ class SubmitEvidenceUseCaseTest extends TestCase
         }
 
         return new SubmitEvidenceUseCase(
-            new EventRegistry(),
+            EventRegistryFixture::create(),
             new EventDataValidator(),
             $sendMail,
             $createJira,
