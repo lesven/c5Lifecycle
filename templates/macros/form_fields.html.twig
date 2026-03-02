@@ -73,3 +73,30 @@
   <input type="text" id="{{ name }}" name="{{ name }}" data-conditional-required="{{ condition }}"{% if placeholder %} placeholder="{{ placeholder }}"{% endif %}>
 </div>
 {% endmacro %}
+
+{# A select whose options are populated via AJAX (shows loading placeholder). #}
+{% macro dynamic_select(name, label, required) %}
+<div class="field-group">
+  <label for="{{ name }}">{{ label }}{% if required %} <span class="required-marker">*</span>{% endif %}</label>
+  <select id="{{ name }}" name="{{ name }}"{% if required %} required{% endif %}>
+    <option value="">– Wird geladen … –</option>
+  </select>
+</div>
+{% endmacro %}
+
+{#
+  A select whose options are populated via AJAX, with an associated hidden field
+  that stores the human-readable name. Used for location cascades.
+  - prefix 'region'     → select id/name='region_id',     hidden id/name='region_name'
+  - prefix 'site_group' → select id/name='site_group_id', hidden id/name='site_group_name'
+  - prefix 'site'       → select id/name='site_id',       hidden id/name='site_name'
+#}
+{% macro named_select(prefix, label, required, placeholder) %}
+<div class="field-group">
+  <label for="{{ prefix }}_id">{{ label }}{% if required %} <span class="required-marker">*</span>{% endif %}</label>
+  <select id="{{ prefix }}_id" name="{{ prefix }}_id"{% if required %} required{% endif %}>
+    <option value="">{{ placeholder|default('– Wird geladen … –') }}</option>
+  </select>
+  <input type="hidden" id="{{ prefix }}_name" name="{{ prefix }}_name">
+</div>
+{% endmacro %}

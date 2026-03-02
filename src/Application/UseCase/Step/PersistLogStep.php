@@ -10,12 +10,14 @@ use App\Application\UseCase\SubmissionStepInterface;
 use App\Domain\Repository\SubmissionLogRepositoryInterface;
 use App\Infrastructure\Persistence\Entity\SubmissionLog;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 
 /**
  * Pipeline step: Persist submission log to database.
  *
  * This step is non-critical — failures are logged but don't abort the submission.
  */
+#[AutoconfigureTag('c5.submission_step', ['priority' => 10])]
 final class PersistLogStep implements SubmissionStepInterface
 {
     public function __construct(
@@ -30,7 +32,7 @@ final class PersistLogStep implements SubmissionStepInterface
             $log = new SubmissionLog(
                 $submission->requestId,
                 $submission->eventType,
-                $submission->assetId(),
+                $submission->assetId()->value,
                 $submission->data,
             );
             $log->setMailSent(true);
@@ -44,5 +46,17 @@ final class PersistLogStep implements SubmissionStepInterface
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+
+    public function getStepName(): string
+    {
+        return 'Persistence';
+    }
+
+    public function handleFailure(SubmissionResult $result, \Throwable $e): void
+    {
+        // PersistLogStep catches all errors internally; this is a safety fallback only.
+        $result->error = 'Interner Fehler: ' . $e->getMessage();
+        $result->httpStatus = 500;
     }
 }

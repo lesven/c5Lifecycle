@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\NetBox;
 
 use App\Domain\Repository\NetBoxClientInterface;
+use App\Infrastructure\Http\ApiResponseParser;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -161,21 +162,6 @@ final class NetBoxClient implements NetBoxClientInterface
 
     private function handleResponse(ResponseInterface $response, string $requestId): ?array
     {
-        $statusCode = $response->getStatusCode();
-
-        if ($statusCode < 200 || $statusCode >= 300) {
-            $body = $response->getContent(false);
-            $this->netboxLogger->error('NetBox API error', [
-                'request_id' => $requestId,
-                'http_code' => $statusCode,
-                'response' => $body,
-            ]);
-            throw new RuntimeException("NetBox API error (HTTP {$statusCode}): " . ($body ?: 'no response'));
-        }
-
-        $content = $response->getContent();
-        $result = json_decode($content, true);
-
-        return is_array($result) ? $result : null;
+        return ApiResponseParser::parse($response, 'NetBox', $requestId, $this->netboxLogger);
     }
 }

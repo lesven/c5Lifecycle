@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Infrastructure\Config;
 
 use App\Infrastructure\Config\EvidenceConfig;
+use App\Domain\ValueObject\JiraRule;
+use App\Domain\ValueObject\NetBoxSyncRule;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
@@ -157,7 +159,7 @@ jira_rules:
         $config = EvidenceConfig::fromYamlFile($path);
         unlink($path);
 
-        $this->assertSame('none', $config->getJiraRule('rz_retire'));
+        $this->assertSame(JiraRule::None, $config->getJiraRule('rz_retire'));
     }
 
     public function testNetBoxSyncRuleReturnsNoneWhenDisabled(): void
@@ -179,6 +181,6 @@ netbox:
         $config = EvidenceConfig::fromYamlFile($path);
         unlink($path);
 
-        $this->assertSame('none', $config->getNetBoxSyncRule('rz_provision'));
+        $this->assertSame(NetBoxSyncRule::None, $config->getNetBoxSyncRule('rz_provision'));
     }
 }

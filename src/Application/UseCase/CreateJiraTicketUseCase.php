@@ -7,6 +7,7 @@ namespace App\Application\UseCase;
 use App\Application\DTO\EvidenceSubmission;
 use App\Domain\Repository\EvidenceConfigInterface;
 use App\Domain\Repository\JiraClientInterface;
+use App\Domain\ValueObject\JiraRule;
 
 class CreateJiraTicketUseCase
 {
@@ -26,7 +27,7 @@ class CreateJiraTicketUseCase
     {
         $jiraRule = $this->config->getJiraRule($submission->eventType);
 
-        if ($jiraRule === 'none') {
+        if ($jiraRule === JiraRule::None) {
             return null;
         }
 
@@ -37,7 +38,7 @@ class CreateJiraTicketUseCase
                 $submission->requestId
             );
         } catch (\Throwable $e) {
-            if ($jiraRule === 'required') {
+            if ($jiraRule === JiraRule::Required) {
                 throw $e;
             }
             // optional: swallow error

@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domain\Repository;
 
+use App\Domain\ValueObject\JiraRule;
+use App\Domain\ValueObject\NetBoxErrorMode;
+use App\Domain\ValueObject\NetBoxSyncRule;
+
 /**
  * Configuration repository for C5 evidence settings.
  *
@@ -17,18 +21,15 @@ interface EvidenceConfigInterface
      */
     public function getEvidenceRecipients(string $track): array;
 
-    /** Get Jira rule for an event type: 'none', 'optional', 'required' */
-    public function getJiraRule(string $eventType): string;
+    public function getJiraRule(string $eventType): JiraRule;
 
     public function isJiraEnabled(): bool;
 
     public function isNetBoxEnabled(): bool;
 
-    /** Get NetBox sync rule: 'update_status', 'journal_only', 'none' */
-    public function getNetBoxSyncRule(string $eventType): string;
+    public function getNetBoxSyncRule(string $eventType): NetBoxSyncRule;
 
-    /** Get NetBox error handling mode: 'warn' or 'fail' */
-    public function getNetBoxOnError(): string;
+    public function getNetBoxOnError(): NetBoxErrorMode;
 
     public function isNetBoxDebug(): bool;
 

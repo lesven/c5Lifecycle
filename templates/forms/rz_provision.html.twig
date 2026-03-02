@@ -8,121 +8,41 @@
 {% set badge_class = 'badge-a' %}
 {% set event_type = 'rz_provision' %}
 
+{% import 'macros/form_fields.html.twig' as f %}
+
 {% block form_fields %}
     <fieldset class="form-section">
       <legend>Asset-Stammdaten</legend>
-      <div class="field-group">
-        <label for="asset_id">Asset-ID / Inventarnummer <span class="required-marker">*</span></label>
-        <input type="text" id="asset_id" name="asset_id" required placeholder="z. B. SRV-042">
-      </div>
-      <div class="field-group">
-        <label for="device_type">Gerätetyp <span class="required-marker">*</span></label>
-        <select id="device_type" name="device_type" required>
-          <option value="">– Wird geladen … –</option>
-        </select>
-      </div>
-      <div class="field-group">
-        <label for="manufacturer">Hersteller</label>
-        <input type="text" id="manufacturer" name="manufacturer">
-      </div>
-      <div class="field-group">
-        <label for="model">Modell</label>
-        <input type="text" id="model" name="model">
-      </div>
-      <div class="field-group">
-        <label for="serial_number">Seriennummer</label>
-        <input type="text" id="serial_number" name="serial_number">
-      </div>
+      {{ f.text_field('asset_id', 'Asset-ID / Inventarnummer', true, 'z. B. SRV-042') }}
+      {{ f.dynamic_select('device_type', 'Gerätetyp', true) }}
+      {{ f.text_field('manufacturer', 'Hersteller', false) }}
+      {{ f.text_field('model', 'Modell', false) }}
+      {{ f.text_field('serial_number', 'Seriennummer', false) }}
     </fieldset>
 
     <fieldset class="form-section">
-      <legend>Standort & Zuordnung</legend>
+      <legend>Standort &amp; Zuordnung</legend>
       <div id="location-loading" class="field-group location-loading-hint hidden">
         <span class="loading-text">Standort-Daten werden geladen …</span>
       </div>
       <div id="location-error" class="field-group location-error-hint hidden">
         <span class="error-text">⚠ Standort-Daten konnten nicht geladen werden (NetBox nicht erreichbar). Das Formular kann nicht eingereicht werden.</span>
       </div>
-      <div class="field-group">
-        <label for="region_id">Region <span class="required-marker">*</span></label>
-        <select id="region_id" name="region_id" required>
-          <option value="">– Wird geladen … –</option>
-        </select>
-        <input type="hidden" id="region_name" name="region_name">
-      </div>
-      <div class="field-group">
-        <label for="site_group_id">Standortgruppe <span class="required-marker">*</span></label>
-        <select id="site_group_id" name="site_group_id" required>
-          <option value="">– Bitte zuerst Region wählen –</option>
-        </select>
-        <input type="hidden" id="site_group_name" name="site_group_name">
-      </div>
-      <div class="field-group">
-        <label for="site_id">Standort <span class="required-marker">*</span></label>
-        <select id="site_id" name="site_id" required>
-          <option value="">– Bitte zuerst Standortgruppe wählen –</option>
-        </select>
-        <input type="hidden" id="site_name" name="site_name">
-      </div>
-      <div class="field-group">
-        <label for="commission_date">Datum Inbetriebnahme <span class="required-marker">*</span></label>
-        <input type="date" id="commission_date" name="commission_date" required>
-      </div>
-      <div class="field-group">
-        <label for="asset_owner">Asset Owner (Name/Rolle) <span class="required-marker">*</span></label>
-        <select id="asset_owner" name="asset_owner" required>
-          <option value="">– Wird geladen … –</option>
-        </select>
-        <input type="hidden" id="contact_id" name="contact_id">
-      </div>
-      <div class="field-group">
-        <label for="service">Zugehöriger Service/Plattform</label>
-        <input type="text" id="service" name="service">
-      </div>
-      <div class="field-group">
-        <label for="criticality">Kritikalität <span class="required-marker">*</span></label>
-        <select id="criticality" name="criticality" required>
-          <option value="">– Bitte wählen –</option>
-          <option>hoch</option>
-          <option>mittel</option>
-          <option>niedrig</option>
-        </select>
-      </div>
-      <div class="field-group">
-        <label for="change_ref">Change-/Ticket-Referenz <span class="required-marker">*</span></label>
-        <input type="text" id="change_ref" name="change_ref" required>
-      </div>
-      <div class="field-group">
-        <label for="tenant_id">Mandant</label>
-        <select id="tenant_id" name="tenant_id">
-          <option value="">– Wird geladen … –</option>
-        </select>
-        <input type="hidden" id="tenant_name" name="tenant_name">
-      </div>
+      {{ f.named_select('region', 'Region', true) }}
+      {{ f.named_select('site_group', 'Standortgruppe', true, '– Bitte zuerst Region wählen –') }}
+      {{ f.named_select('site', 'Standort', true, '– Bitte zuerst Standortgruppe wählen –') }}
+      {{ f.date_field('commission_date', 'Datum Inbetriebnahme', true) }}
+      {{ f.contact_select('asset_owner', 'Asset Owner (Name/Rolle)', true) }}
+      {{ f.text_field('service', 'Zugehöriger Service/Plattform', false) }}
+      {{ f.select_field('criticality', 'Kritikalität', ['hoch', 'mittel', 'niedrig'], true) }}
+      {{ f.text_field('change_ref', 'Change-/Ticket-Referenz', true) }}
+      {{ f.tenant_select() }}
     </fieldset>
 
     <fieldset class="form-section">
       <legend>Betriebsbereitschaft</legend>
-      <div class="field-checkbox">
-        <label class="checkbox-label">
-          <input type="checkbox" name="monitoring_active" value="1" required>
-          <span>Monitoring aktiv</span>
-          <span class="required-marker">*</span>
-        </label>
-      </div>
-      <div class="field-checkbox">
-        <label class="checkbox-label">
-          <input type="checkbox" name="patch_process" value="1" required>
-          <span>Patch/Firmware-Prozess definiert</span>
-          <span class="required-marker">*</span>
-        </label>
-      </div>
-      <div class="field-checkbox">
-        <label class="checkbox-label">
-          <input type="checkbox" name="access_controlled" value="1" required>
-          <span>Zugriff nur über berechtigte Admin-Gruppen</span>
-          <span class="required-marker">*</span>
-        </label>
-      </div>
+      {{ f.checkbox_field('monitoring_active', 'Monitoring aktiv', true) }}
+      {{ f.checkbox_field('patch_process', 'Patch/Firmware-Prozess definiert', true) }}
+      {{ f.checkbox_field('access_controlled', 'Zugriff nur über berechtigte Admin-Gruppen', true) }}
     </fieldset>
 {% endblock %}

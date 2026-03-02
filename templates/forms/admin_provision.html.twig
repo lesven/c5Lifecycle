@@ -8,85 +8,28 @@
 {% set badge_class = 'badge-b' %}
 {% set event_type = 'admin_provision' %}
 
+{% import 'macros/form_fields.html.twig' as f %}
+
 {% block form_fields %}
     <fieldset class="form-section">
       <legend>Gerätedaten</legend>
-      <div class="field-group">
-        <label for="asset_id">Asset-ID <span class="required-marker">*</span></label>
-        <input type="text" id="asset_id" name="asset_id" required>
-      </div>
-      <div class="field-group">
-        <label for="device_type">Gerätetyp <span class="required-marker">*</span></label>
-        <select id="device_type" name="device_type" required>
-          <option value="">– Wird geladen … –</option>
-        </select>
-      </div>
-      <div class="field-group">
-        <label for="manufacturer">Hersteller</label>
-        <input type="text" id="manufacturer" name="manufacturer">
-      </div>
-      <div class="field-group">
-        <label for="model">Modell</label>
-        <input type="text" id="model" name="model">
-      </div>
-      <div class="field-group">
-        <label for="serial_number">Seriennummer</label>
-        <input type="text" id="serial_number" name="serial_number">
-      </div>
-      <div class="field-group">
-        <label for="commission_date">Datum Inbetriebnahme <span class="required-marker">*</span></label>
-        <input type="date" id="commission_date" name="commission_date" required>
-      </div>
-      <div class="field-group">
-        <label for="admin_user">Zugewiesener Admin-User (Name + Mail/ID) <span class="required-marker">*</span></label>
-        <input type="text" id="admin_user" name="admin_user" required>
-      </div>
-      <div class="field-group">
-        <label for="security_owner">Security Owner (Name/Rolle) <span class="required-marker">*</span></label>
-        <input type="text" id="security_owner" name="security_owner" required>
-      </div>
-      <div class="field-group">
-        <label for="purpose">Zweck / Privileged Role <span class="required-marker">*</span></label>
-        <input type="text" id="purpose" name="purpose" required placeholder="z. B. Firewall Admin">
-      </div>
+      {{ f.text_field('asset_id', 'Asset-ID', true) }}
+      {{ f.dynamic_select('device_type', 'Gerätetyp', true) }}
+      {{ f.text_field('manufacturer', 'Hersteller', false) }}
+      {{ f.text_field('model', 'Modell', false) }}
+      {{ f.text_field('serial_number', 'Seriennummer', false) }}
+      {{ f.date_field('commission_date', 'Datum Inbetriebnahme', true) }}
+      {{ f.text_field('admin_user', 'Zugewiesener Admin-User (Name + Mail/ID)', true) }}
+      {{ f.text_field('security_owner', 'Security Owner (Name/Rolle)', true) }}
+      {{ f.text_field('purpose', 'Zweck / Privileged Role', true, 'z. B. Firewall Admin') }}
     </fieldset>
 
     <fieldset class="form-section">
       <legend>Baseline Hardening</legend>
-      <div class="field-checkbox">
-        <label class="checkbox-label">
-          <input type="checkbox" name="disk_encryption" value="1" required>
-          <span>Disk Encryption aktiv</span>
-          <span class="required-marker">*</span>
-        </label>
-      </div>
-      <div class="field-checkbox">
-        <label class="checkbox-label">
-          <input type="checkbox" name="mfa_active" value="1" required>
-          <span>MFA aktiv</span>
-          <span class="required-marker">*</span>
-        </label>
-      </div>
-      <div class="field-checkbox">
-        <label class="checkbox-label">
-          <input type="checkbox" name="edr_active" value="1" required>
-          <span>EDR/AV aktiv</span>
-          <span class="required-marker">*</span>
-        </label>
-      </div>
-      <div class="field-checkbox">
-        <label class="checkbox-label">
-          <input type="checkbox" name="patch_process" value="1" required>
-          <span>Patch-Prozess aktiv</span>
-          <span class="required-marker">*</span>
-        </label>
-      </div>
-      <div class="field-checkbox">
-        <label class="checkbox-label">
-          <input type="checkbox" name="no_private_use" value="1" required>
-          <span>Keine private Nutzung</span>
-          <span class="required-marker">*</span>
-        </label>
-      </div>
+      {{ f.checkbox_field('disk_encryption', 'Disk Encryption aktiv', true) }}
+      {{ f.checkbox_field('mfa_active', 'MFA aktiv', true) }}
+      {{ f.checkbox_field('edr_active', 'EDR/AV aktiv', true) }}
+      {{ f.checkbox_field('patch_process', 'Patch-Prozess aktiv', true) }}
+      {{ f.checkbox_field('no_private_use', 'Keine private Nutzung', true) }}
     </fieldset>
 {% endblock %}

@@ -8,62 +8,22 @@
 {% set badge_class = 'badge-a' %}
 {% set event_type = 'rz_owner_confirm' %}
 
+{% import 'macros/form_fields.html.twig' as f %}
+
 {% block form_fields %}
     <fieldset class="form-section">
-      <legend>Asset & Owner</legend>
-      <div class="field-group">
-        <label for="asset_id">Asset-ID <span class="required-marker">*</span></label>
-        <input type="text" id="asset_id" name="asset_id" required>
-      </div>
-      <div class="field-group">
-        <label for="owner">Owner (Name/Rolle) <span class="required-marker">*</span></label>
-        <select id="owner" name="owner" required>
-          <option value="">– Wird geladen … –</option>
-        </select>
-        <input type="hidden" id="contact_id" name="contact_id">
-      </div>
-      <div class="field-group">
-        <label for="confirm_date">Datum <span class="required-marker">*</span></label>
-        <input type="date" id="confirm_date" name="confirm_date" required>
-      </div>
-      <div class="field-group">
-        <label for="tenant_id">Mandant</label>
-        <select id="tenant_id" name="tenant_id">
-          <option value="">– Wird geladen … –</option>
-        </select>
-        <input type="hidden" id="tenant_name" name="tenant_name">
-      </div>
+      <legend>Asset &amp; Owner</legend>
+      {{ f.text_field('asset_id', 'Asset-ID', true) }}
+      {{ f.contact_select('owner', 'Owner (Name/Rolle)', true) }}
+      {{ f.date_field('confirm_date', 'Datum', true) }}
+      {{ f.tenant_select() }}
     </fieldset>
 
     <fieldset class="form-section">
       <legend>Bestätigungen</legend>
-      <div class="field-checkbox">
-        <label class="checkbox-label">
-          <input type="checkbox" name="purpose_bound" value="1" required>
-          <span>Zweckgebundener Betrieb</span>
-          <span class="required-marker">*</span>
-        </label>
-      </div>
-      <div class="field-checkbox">
-        <label class="checkbox-label">
-          <input type="checkbox" name="change_process" value="1" required>
-          <span>Changes nur via Change-Prozess</span>
-          <span class="required-marker">*</span>
-        </label>
-      </div>
-      <div class="field-checkbox">
-        <label class="checkbox-label">
-          <input type="checkbox" name="admin_access_controlled" value="1" required>
-          <span>Admin-Zugriff kontrolliert</span>
-          <span class="required-marker">*</span>
-        </label>
-      </div>
-      <div class="field-checkbox">
-        <label class="checkbox-label">
-          <input type="checkbox" name="lifecycle_managed" value="1" required>
-          <span>Lifecycle aktiv gemanagt</span>
-          <span class="required-marker">*</span>
-        </label>
-      </div>
+      {{ f.checkbox_field('purpose_bound', 'Zweckgebundener Betrieb', true) }}
+      {{ f.checkbox_field('change_process', 'Changes nur via Change-Prozess', true) }}
+      {{ f.checkbox_field('admin_access_controlled', 'Admin-Zugriff kontrolliert', true) }}
+      {{ f.checkbox_field('lifecycle_managed', 'Lifecycle aktiv gemanagt', true) }}
     </fieldset>
 {% endblock %}
