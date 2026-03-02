@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\UseCase;
 
-use App\Domain\Repository\NetBoxClientInterface;
 use App\Domain\Repository\EvidenceConfigInterface;
+use App\Domain\Repository\NetBoxClientInterface;
 use App\Domain\Service\DeviceTransformer;
 use Psr\Log\LoggerInterface;
 

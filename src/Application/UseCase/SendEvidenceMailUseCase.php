@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Application\UseCase;
 
 use App\Application\DTO\EvidenceSubmission;
+use App\Domain\Repository\EvidenceConfigInterface;
 use App\Domain\Repository\EvidenceMailSenderInterface;
 use App\Domain\Service\EventRegistry;
-use App\Domain\Repository\EvidenceConfigInterface;
 use App\Domain\Service\EvidenceMailBuilder;
 
 class SendEvidenceMailUseCase

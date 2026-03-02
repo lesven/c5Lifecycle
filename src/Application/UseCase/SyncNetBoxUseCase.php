@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Application\UseCase;
 
 use App\Application\DTO\EvidenceSubmission;
+use App\Domain\Repository\EvidenceConfigInterface;
 use App\Domain\Repository\NetBoxClientInterface;
 use App\Domain\Service\CustomFieldMapper;
 use App\Domain\Service\JournalBuilder;
-use App\Domain\Repository\EvidenceConfigInterface;
 use App\Domain\Service\StatusMapper;
 use App\Domain\ValueObject\EventType;
 use Psr\Log\LoggerInterface;
