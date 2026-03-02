@@ -26,30 +26,50 @@
  *   C5.syncTenantName   – Hidden-Input #tenant_name mit Dropdown-Text synchronisieren
  *   C5.syncContactId    – Hidden-Input #contact_id mit data-contact-id synchronisieren
  *
- * REFACTORING NOTE (Phase 3-D): filterSiteGroups/filterSites/syncTenantName/syncContactId
- * sollen in Folge-Phasen durch Custom-Events intern gemacht werden.
+ * REFACTORING NOTE (Phase 3-D, ausstehend): filterSiteGroups/filterSites/syncTenantName/syncContactId
+ * könnten durch Custom-Events intern gemacht werden. Erfordert Browser-Regressionstests
+ * aller 7 Formulare – vorgemerkt für separates Feature-Branch-Ticket.
+ *
+ * REFACTORING STAND: Phase 1 (Doku), 2 (Tests), 3-A (Bugs), 3-B (AbortController),
+ * 3-C (Modul-Promise/WeakMap), 4 (Aufräumen) abgeschlossen.
  */
 (function () {
   'use strict';
 
   window.C5 = window.C5 || {};
 
+  /**
+   * Bildet NetBox-API-Felder auf DOM-Selektoren ab.
+   * @type {Object.<string, string>}  key: NetBox-Feldname, value: CSS-Selektor (ID)
+   *
+   * Sonderfälle in performAssetLookup:
+   *   device_type – erst nach dem Laden der Gerätetypen setzen (_deviceTypesPromises)
+   *   region_id / site_group_id / site_id – kaskadiert nach _locationsPromise setzen
+   */
   var NETBOX_FIELD_MAP = {
     serial_number: '#serial_number',
-    manufacturer: '#manufacturer',
-    model: '#model',
-    device_type: '#device_type',
-    site_id: '#site_id',
+    manufacturer:  '#manufacturer',
+    model:         '#model',
+    device_type:   '#device_type',
+    site_id:       '#site_id',
     site_group_id: '#site_group_id',
-    region_id: '#region_id',
-    tenant_id: '#tenant_id',
+    region_id:     '#region_id',
+    tenant_id:     '#tenant_id',
   };
 
+  /**
+   * Bildet NetBox-Custom-Fields auf DOM-Selektoren ab.
+   * @type {Object.<string, string>}  key: Custom-Field-Key, value: CSS-Selektor
+   *
+   * Die Selektoren können comma-separated sein (z. B. '#asset_owner, #owner_approval')
+   * und werden via querySelectorAll ausgewertet, sodass alle passenden Elemente
+   * befüllt werden (Fixes 3-A.2).
+   */
   var NETBOX_CUSTOM_FIELD_MAP = {
-    asset_owner: '#asset_owner, #owner_approval',
-    service: '#service',
-    criticality: '#criticality',
-    admin_user: '#admin_user',
+    asset_owner:    '#asset_owner, #owner_approval',
+    service:        '#service',
+    criticality:    '#criticality',
+    admin_user:     '#admin_user',
     security_owner: '#security_owner',
   };
 

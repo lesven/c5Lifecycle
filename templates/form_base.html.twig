@@ -27,6 +27,19 @@
 {% endblock %}
 
 {% block javascripts %}
+{#
+  LADEREIHENFOLGE (explizit, Abhängigkeitsrichtung: ↓):
+    1. c5-labels.js       – C5.getLabel, C5.getAllLabels, C5.loadLabelsFromApi
+    2. c5-validation.js   – C5.evaluateConditionalRequired, C5.validateForm
+    3. c5-asset-lookup.js – C5.load*, C5.performAssetLookup, C5.filter*, C5.sync*
+                            (konsumiert app.js-Symbole aus window.C5, setzt aber auf
+                            Callbacks nach DOMContentLoaded, daher kein Circular-Deadlock)
+    4. c5-submit.js       – C5.collectFormData, C5.submitForm
+    5. c5-summary.js      – C5.showSummary
+    6. app.js             – C5.apiBase, C5.checkAuth, C5.show/hideSpinner,
+                            C5.begin/endLoad; DOMContentLoaded-Init
+  ACHTUNG: Reihenfolge nicht ändern ohne c5-asset-lookup.js-Header zu aktualisieren!
+#}
 <script src="{{ asset('js/c5-labels.js') }}"></script>
 <script src="{{ asset('js/c5-validation.js') }}"></script>
 <script src="{{ asset('js/c5-asset-lookup.js') }}"></script>

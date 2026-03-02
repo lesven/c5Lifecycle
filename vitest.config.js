@@ -12,7 +12,7 @@ export default defineConfig({
       // Nur c5-asset-lookup.js tracken – das ist die zu refaktorierende Datei
       include: ['public/js/c5-asset-lookup.js'],
       thresholds: {
-        branches: 70,
+        branches: 85,  // Phase 4.4: von 70% auf 85% angehoben
       },
       reporter: ['text', 'html'],
       reportsDirectory: './.coverage-js',
