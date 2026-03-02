@@ -183,7 +183,8 @@
     siteSel.innerHTML = '<option value="">– Bitte wählen –</option>';
     _locationData.sites
       .filter(function (s) {
-        return selectedGroupId === null || s.site_group_id === selectedGroupId || !selectedGroupId;
+        // Dritte Bedingung "|| !selectedGroupId" war unerreichbar (selectedGroupId === null deckt das ab)
+        return selectedGroupId === null || s.site_group_id === selectedGroupId;
       })
       .forEach(function (s) {
         var o = document.createElement('option');
@@ -257,32 +258,40 @@
   // ── Contacts ──
 
   C5.loadContacts = function (form) {
-    var sel = form.querySelector('#asset_owner, #owner_approval, #owner');
-    if (!sel) return;
-    sel.disabled = true;
-    C5.showSpinner(sel);
+    // querySelectorAll statt querySelector: alle passenden Kontakt-Dropdowns befüllen,
+    // nicht nur das erste im DOM (3-A.3)
+    var sels = form.querySelectorAll('#asset_owner, #owner_approval, #owner');
+    if (!sels.length) return;
+    sels.forEach(function (sel) {
+      sel.disabled = true;
+      C5.showSpinner(sel);
+    });
     C5.beginLoad(form);
     fetch(C5.apiBase + '/contacts')
       .then(C5.checkAuth)
       .then(function (r) { return r.json(); })
       .then(function (list) {
-        sel.innerHTML = '<option value="" data-contact-id="">– Bitte wählen –</option>';
-        list.forEach(function (c) {
-          var o = document.createElement('option');
-          o.value = c.name;
-          o.textContent = c.name;
-          o.setAttribute('data-contact-id', String(c.id));
-          sel.appendChild(o);
+        sels.forEach(function (sel) {
+          sel.innerHTML = '<option value="" data-contact-id="">– Bitte wählen –</option>';
+          list.forEach(function (c) {
+            var o = document.createElement('option');
+            o.value = c.name;
+            o.textContent = c.name;
+            o.setAttribute('data-contact-id', String(c.id));
+            sel.appendChild(o);
+          });
+          sel.disabled = false;
+          C5.hideSpinner(sel);
         });
         C5.syncContactId(form);
-        sel.disabled = false;
-        C5.hideSpinner(sel);
         C5.endLoad(form);
       })
       .catch(function () {
-        sel.innerHTML = '<option value="">– Nicht verfügbar –</option>';
-        sel.disabled = false;
-        C5.hideSpinner(sel);
+        sels.forEach(function (sel) {
+          sel.innerHTML = '<option value="">– Nicht verfügbar –</option>';
+          sel.disabled = false;
+          C5.hideSpinner(sel);
+        });
         C5.endLoad(form);
       });
   };
@@ -415,15 +424,18 @@
         }
 
         if (data.custom_fields) {
+          // querySelectorAll statt querySelector: Comma-Selektoren in der Map können mehrere
+          // Elemente treffen (z. B. '#asset_owner, #owner_approval') – alle befüllen (3-A.2)
           Object.keys(NETBOX_CUSTOM_FIELD_MAP).forEach(function (key) {
-            var el = form.querySelector(NETBOX_CUSTOM_FIELD_MAP[key]);
-            if (el && !el.value && data.custom_fields[key]) {
-              if (el.tagName === 'SELECT') {
-                setSelectValue(el, data.custom_fields[key]);
-              } else {
-                el.value = data.custom_fields[key];
+            form.querySelectorAll(NETBOX_CUSTOM_FIELD_MAP[key]).forEach(function (el) {
+              if (!el.value && data.custom_fields[key]) {
+                if (el.tagName === 'SELECT') {
+                  setSelectValue(el, data.custom_fields[key]);
+                } else {
+                  el.value = data.custom_fields[key];
+                }
               }
-            }
+            });
           });
           C5.syncContactId(form);
         }

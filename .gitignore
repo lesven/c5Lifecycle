@@ -37,4 +37,4 @@ docker-compose.override.yml
 # JS-Testinfrastruktur (dev-only)
 node_modules/
 package-lock.json
-var/coverage-js/
+.coverage-js/

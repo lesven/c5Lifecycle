@@ -15,7 +15,7 @@ export default defineConfig({
         branches: 70,
       },
       reporter: ['text', 'html'],
-      reportsDirectory: './var/coverage-js',
+      reportsDirectory: './.coverage-js',
     },
   },
 })

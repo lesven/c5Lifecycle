@@ -1,17 +1,19 @@
 /**
  * c5-asset-lookup-flow.test.js
  *
- * Phase 2 Baseline-Tests – Vollständige Flow-Tests mit geladenen Standortdaten
+ * Phase 2 + 3-A Baseline- und Regressions-Tests mit geladenen Standortdaten
  *
- * Abgedeckte Pfade (Tasks 2.3a, 2.3b, 2.3d, 2.3e):
+ * Abgedeckte Pfade (Tasks 2.3a, 2.3b, 2.3d, 2.3e, 3-A.1, 3-A.2, 3-A.3):
  *   - loadLocations: Erfolg → Dropdowns befüllt, Spinner weg
  *   - loadLocations: Fehler → Dropdowns disabled, Submit-Button disabled
  *   - filterSiteGroups: Region ausgewählt → nur passende Site-Groups sichtbar
- *   - filterSites: Site-Group ausgewählt → nur passende Sites sichtbar
+ *   - filterSites: Site-Group ausgewählt → nur passende Sites sichtbar (3-A.1: keine doppelte Bedingung)
  *   - filterSites: kein Site-Group → alle Sites sichtbar
  *   - performAssetLookup: data.found === false → keine Felder befüllt
  *   - performAssetLookup: Netzwerkfehler → kein Absturz, kein Badge
  *   - performAssetLookup: data.found === true → Felder vorausgefüllt
+ *   - performAssetLookup: custom_fields via querySelectorAll (3-A.2)
+ *   - loadContacts: querySelectorAll befüllt alle Kontakt-Dropdowns (3-A.3)
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
@@ -337,5 +339,143 @@ describe('performAssetLookup – Treffer mit Feldern', () => {
 
     // Bereits befülltes Feld wird nicht überschrieben
     expect(form.querySelector('#serial_number').value).toBe('VORHANDENER-WERT')
+  })
+})
+
+// ── 3-A.1: filterSites – keine doppelte Bedingung ───────────────────────────────────
+
+describe('filterSites – 3-A.1: keine unerreichbare Doppelbedingung', () => {
+  let form
+
+  beforeEach(async () => {
+    form = makeLocationForm()
+    global.fetch = vi.fn()
+      .mockResolvedValueOnce(makeJsonResponse(REGIONS))
+      .mockResolvedValueOnce(makeJsonResponse(SITE_GROUPS))
+      .mockResolvedValueOnce(makeJsonResponse(SITES))
+    C5.loadLocations(form)
+    await form._locationsPromise
+    form.querySelector('#region_id').value = '1'
+    C5.filterSiteGroups(form)
+  })
+
+  it('zeigt bei site_group_id=null-Sites alle an wenn keine Gruppe gewählt', () => {
+    // selectedGroupId === null → alle Sites, äquivalentes Verhalten wie vorher
+    form.querySelector('#site_group_id').value = ''
+    C5.filterSites(form)
+    const ids = Array.from(form.querySelector('#site_id').options)
+      .filter(o => o.value !== '').map(o => o.value)
+    expect(ids).toContain('100')  // Site Alpha (group 10)
+    expect(ids).toContain('101')  // Site Beta  (group 11)
+    expect(ids).toContain('102')  // Site Gamma (group null)
+  })
+
+  it('filtert bei gewählter Gruppe korrekt ohne die entfernte Doppelbedingung', () => {
+    form.querySelector('#site_group_id').value = '10'
+    C5.filterSites(form)
+    const ids = Array.from(form.querySelector('#site_id').options)
+      .filter(o => o.value !== '').map(o => o.value)
+    // Nur Site Alpha gehört zu Gruppe 10
+    expect(ids).toEqual(['100'])
+  })
+})
+
+// ── 3-A.2: performAssetLookup – querySelectorAll für NETBOX_CUSTOM_FIELD_MAP ───────────
+
+describe('performAssetLookup – 3-A.2: custom_fields querySelectorAll', () => {
+  it('setzt asset_owner-Feld über CUSTOM_FIELD_MAP-Selector', async () => {
+    const form = makeAssetLookupForm(`
+      <div class="field-group"><select id="asset_owner"><option value=""></option><option value="Alice">Alice</option></select></div>
+    `)
+    global.fetch = vi.fn().mockResolvedValue(makeJsonResponse({
+      found: true,
+      status: 'active',
+      custom_fields: { asset_owner: 'Alice' },
+    }))
+
+    C5.performAssetLookup('SRV-0001', form)
+    await vi.waitFor(() => {
+      expect(form.querySelector('#asset_owner').value).toBe('Alice')
+    })
+  })
+
+  it('setzt owner_approval wenn asset_owner nicht im DOM ist', async () => {
+    // Die CUSTOM_FIELD_MAP-Zeile für asset_owner lautet '#asset_owner, #owner_approval'
+    // Mit querySelectorAll wird #owner_approval getroffen wenn #asset_owner fehlt
+    const form = makeAssetLookupForm(`
+      <div class="field-group"><select id="owner_approval"><option value=""></option><option value="Bob">Bob</option></select></div>
+    `)
+    global.fetch = vi.fn().mockResolvedValue(makeJsonResponse({
+      found: true,
+      status: 'active',
+      custom_fields: { asset_owner: 'Bob' },
+    }))
+
+    C5.performAssetLookup('SRV-0001', form)
+    await vi.waitFor(() => {
+      expect(form.querySelector('#owner_approval').value).toBe('Bob')
+    })
+  })
+})
+
+// ── 3-A.3: loadContacts – querySelectorAll befüllt alle Dropdowns ─────────────────
+
+describe('loadContacts – 3-A.3: querySelectorAll', () => {
+  const KONTAKTE = [
+    { id: 1, name: 'Alice' },
+    { id: 2, name: 'Bob' },
+  ]
+
+  it('befüllt #asset_owner mit den API-Kontakten', async () => {
+    const form = makeForm(`
+      <div class="field-group"><select id="asset_owner"></select></div>
+      <input id="contact_id" type="hidden" />
+    `)
+    global.fetch = vi.fn().mockResolvedValue(makeJsonResponse(KONTAKTE))
+
+    C5.loadContacts(form)
+    await vi.waitFor(() => {
+      expect(form.querySelector('#asset_owner').options.length).toBeGreaterThan(1)
+    })
+    const opts = Array.from(form.querySelector('#asset_owner').options).map(o => o.value)
+    expect(opts).toContain('Alice')
+    expect(opts).toContain('Bob')
+  })
+
+  it('befüllt #owner_approval wenn kein #asset_owner vorhanden ist', async () => {
+    const form = makeForm(`
+      <div class="field-group"><select id="owner_approval"></select></div>
+      <input id="contact_id" type="hidden" />
+    `)
+    global.fetch = vi.fn().mockResolvedValue(makeJsonResponse(KONTAKTE))
+
+    C5.loadContacts(form)
+    await vi.waitFor(() => {
+      expect(form.querySelector('#owner_approval').options.length).toBeGreaterThan(1)
+    })
+    const opts = Array.from(form.querySelector('#owner_approval').options).map(o => o.value)
+    expect(opts).toContain('Alice')
+  })
+
+  it('gibt sofort zurück wenn kein Kontakt-Selektor im DOM ist', () => {
+    const form = makeForm('<input type="text" />')
+    global.fetch = vi.fn()
+    C5.loadContacts(form)
+    expect(global.fetch).not.toHaveBeenCalled()
+  })
+
+  it('setzt alle Dropdowns auf Nicht-verfügbar bei API-Fehler', async () => {
+    const form = makeForm(`
+      <div class="field-group"><select id="asset_owner"></select></div>
+      <input id="contact_id" type="hidden" />
+    `)
+    global.fetch = vi.fn().mockRejectedValue(new Error('API kaputt'))
+
+    C5.loadContacts(form)
+    await vi.waitFor(() => {
+      const sel = form.querySelector('#asset_owner')
+      expect(sel.options[0].value).toBe('')
+      expect(sel.disabled).toBe(false)
+    })
   })
 })
