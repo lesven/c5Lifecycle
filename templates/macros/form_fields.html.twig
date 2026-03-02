@@ -75,12 +75,15 @@
 {% endmacro %}
 
 {# A select whose options are populated via AJAX (shows loading placeholder). #}
-{% macro dynamic_select(name, label, required) %}
+{% macro dynamic_select(name, label, required, withIdField) %}
 <div class="field-group">
   <label for="{{ name }}">{{ label }}{% if required %} <span class="required-marker">*</span>{% endif %}</label>
   <select id="{{ name }}" name="{{ name }}"{% if required %} required{% endif %}>
     <option value="">– Wird geladen … –</option>
   </select>
+  {% if withIdField %}
+  <input type="hidden" id="{{ name }}_id" name="{{ name }}_id">
+  {% endif %}
 </div>
 {% endmacro %}
 

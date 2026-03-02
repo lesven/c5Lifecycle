@@ -108,7 +108,10 @@ class SyncNetBoxUseCase
 
                 $manufacturer = trim((string) ($data['manufacturer'] ?? ''));
                 $model = trim((string) ($data['model'] ?? ''));
-                if ($model !== '') {
+                // Bevorzuge explizite device_type_id aus dem Formular, falls vorhanden
+                if (isset($data['device_type_id']) && (int) $data['device_type_id'] > 0) {
+                    $patchData['device_type'] = (int) $data['device_type_id'];
+                } elseif ($model !== '') {
                     try {
                         $deviceType = $this->netBoxClient->findDeviceTypeByModel($manufacturer, $model, $requestId);
                         if ($deviceType !== null) {
@@ -167,7 +170,10 @@ class SyncNetBoxUseCase
         $assetTag = trim((string) ($data['asset_id'] ?? ''));
 
         $deviceTypeId = 0;
-        if ($model !== '') {
+        // Bevorzuge explizite device_type_id aus dem Formular, falls vorhanden
+        if (isset($data['device_type_id']) && (int) $data['device_type_id'] > 0) {
+            $deviceTypeId = (int) $data['device_type_id'];
+        } elseif ($model !== '') {
             $deviceType = $this->netBoxClient->findDeviceTypeByModel($manufacturer, $model, $requestId);
             if ($deviceType !== null) {
                 $deviceTypeId = (int) $deviceType['id'];

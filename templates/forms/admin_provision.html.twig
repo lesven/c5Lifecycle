@@ -14,7 +14,7 @@
     <fieldset class="form-section">
       <legend>Gerätedaten</legend>
       {{ f.text_field('asset_id', 'Asset-ID', true) }}
-      {{ f.dynamic_select('device_type', 'Gerätetyp', true) }}
+      {{ f.dynamic_select('device_type', 'Gerätetyp', true, true) }}
       {{ f.text_field('manufacturer', 'Hersteller', false) }}
       {{ f.text_field('model', 'Modell', false) }}
       {{ f.text_field('serial_number', 'Seriennummer', false) }}

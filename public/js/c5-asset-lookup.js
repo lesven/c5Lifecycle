@@ -1,31 +1,91 @@
 /**
  * C5 Evidence Tool – NetBox Asset Lookup & Location/Tenant/Contact Loading
+ *
+ * LOAD ORDER: Muss nach c5-labels.js / c5-validation.js, aber VOR app.js geladen werden.
+ * Alle tatsächlichen Aufrufe erfolgen in Callbacks (nach DOMContentLoaded), daher sind
+ * die app.js-Symbole zur Laufzeit immer definiert, auch wenn app.js später geladen wird.
+ *
+ * SYMBOLS CONSUMED FROM app.js (window.C5):
+ *   C5.apiBase       – Backend-API-Basispfad
+ *   C5.checkAuth     – 401/403 → Redirect nach /login
+ *   C5.showSpinner   – Spinner neben einem .field-group-Element einblenden
+ *   C5.hideSpinner   – Spinner wieder entfernen
+ *   C5.beginLoad     – Pending-Load-Zähler erhöhen (Submit-Button disabled)
+ *   C5.endLoad       – Pending-Load-Zähler senken (Submit-Button ggf. re-enabled)
+ *
+ * SYMBOLS EXPORTED TO window.C5 (öffentliche API, aufgerufen von app.js):
+ *   C5.loadLocations      – Regionen/Site-Groups/Sites laden und Dropdowns befüllen
+ *   C5.loadTenants        – Tenant-Dropdown befüllen
+ *   C5.loadContacts       – Kontakt-Dropdown befüllen
+ *   C5.loadDeviceTypes    – Gerätetyp-Dropdown befüllen
+ *   C5.performAssetLookup – NetBox-Lookup anhand Asset-ID, Felder vorausfüllen
+ *
+ * SYMBOLS EXPORTED TO window.C5 (Cascade-Helfer, direkt von app.js aufgerufen):
+ *   C5.filterSiteGroups – Site-Group-Dropdown auf gewählte Region filtern
+ *   C5.filterSites      – Site-Dropdown auf gewählte Site-Group filtern
+ *   C5.syncTenantName   – Hidden-Input #tenant_name mit Dropdown-Text synchronisieren
+ *   C5.syncContactId    – Hidden-Input #contact_id mit data-contact-id synchronisieren
+ *
+ * REFACTORING NOTE (Phase 3-D, ausstehend): filterSiteGroups/filterSites/syncTenantName/syncContactId
+ * könnten durch Custom-Events intern gemacht werden. Erfordert Browser-Regressionstests
+ * aller 7 Formulare – vorgemerkt für separates Feature-Branch-Ticket.
+ *
+ * REFACTORING STAND: Phase 1 (Doku), 2 (Tests), 3-A (Bugs), 3-B (AbortController),
+ * 3-C (Modul-Promise/WeakMap), 4 (Aufräumen) abgeschlossen.
  */
 (function () {
   'use strict';
 
   window.C5 = window.C5 || {};
 
+  /**
+   * Bildet NetBox-API-Felder auf DOM-Selektoren ab.
+   * @type {Object.<string, string>}  key: NetBox-Feldname, value: CSS-Selektor (ID)
+   *
+   * Sonderfälle in performAssetLookup:
+   *   device_type – erst nach dem Laden der Gerätetypen setzen (_deviceTypesPromises)
+   *   region_id / site_group_id / site_id – kaskadiert nach _locationsPromise setzen
+   */
   var NETBOX_FIELD_MAP = {
     serial_number: '#serial_number',
-    manufacturer: '#manufacturer',
-    model: '#model',
-    device_type: '#device_type',
-    site_id: '#site_id',
+    manufacturer:  '#manufacturer',
+    model:         '#model',
+    device_type:   '#device_type',
+    site_id:       '#site_id',
     site_group_id: '#site_group_id',
-    region_id: '#region_id',
-    tenant_id: '#tenant_id',
+    region_id:     '#region_id',
+    tenant_id:     '#tenant_id',
   };
 
+  /**
+   * Bildet NetBox-Custom-Fields auf DOM-Selektoren ab.
+   * @type {Object.<string, string>}  key: Custom-Field-Key, value: CSS-Selektor
+   *
+   * Die Selektoren können comma-separated sein (z. B. '#asset_owner, #owner_approval')
+   * und werden via querySelectorAll ausgewertet, sodass alle passenden Elemente
+   * befüllt werden (Fixes 3-A.2).
+   */
   var NETBOX_CUSTOM_FIELD_MAP = {
-    asset_owner: '#asset_owner, #owner_approval',
-    service: '#service',
-    criticality: '#criticality',
-    admin_user: '#admin_user',
+    asset_owner:    '#asset_owner, #owner_approval',
+    service:        '#service',
+    criticality:    '#criticality',
+    admin_user:     '#admin_user',
     security_owner: '#security_owner',
   };
 
   var _locationData = null;
+
+  // Modul-Promise (3-C.1): wird genau einmal aufgelöst sobald loadLocations erfolgreich war.
+  // performAssetLookup wartet auf diesen Promise statt auf form._locationsPromise.
+  var _locationsResolve = null;
+  var _locationsPromise = new Promise(function (resolve) { _locationsResolve = resolve; });
+
+  // WeakMap (3-C.3): speichert den device-types-Promise formspezifisch ohne DOM-Mutation.
+  var _deviceTypesPromises = new WeakMap();
+
+  // Hält den AbortController des zuletzt gestarteten Asset-Lookups.
+  // Bei einem neuen Aufruf wird der vorherige Request abgebrochen (3-B).
+  var _pendingLookupAbort = null;
 
   // ── Location cascading dropdowns ──
 
@@ -48,7 +108,8 @@
     });
     C5.beginLoad(form);
 
-    form._locationsPromise = Promise.all([
+    // Lokale Variable – kein DOM-Property mehr (3-C.4)
+    Promise.all([
       fetch(C5.apiBase + '/locations/regions').then(C5.checkAuth).then(function (r) { return r.json(); }),
       fetch(C5.apiBase + '/locations/site-groups').then(C5.checkAuth).then(function (r) { return r.json(); }),
       fetch(C5.apiBase + '/locations/sites').then(C5.checkAuth).then(function (r) { return r.json(); }),
@@ -82,6 +143,12 @@
 
         C5.filterSiteGroups(form);
         C5.filterSites(form);
+
+        // Modul-Promise auflösen (3-C.1) – performAssetLookup kann jetzt location-Kaskade starten
+        if (_locationsResolve) {
+          _locationsResolve();
+          _locationsResolve = null;
+        }
       })
       .catch(function () {
         if (loadingHint) loadingHint.classList.add('hidden');
@@ -155,7 +222,8 @@
     siteSel.innerHTML = '<option value="">– Bitte wählen –</option>';
     _locationData.sites
       .filter(function (s) {
-        return selectedGroupId === null || s.site_group_id === selectedGroupId || !selectedGroupId;
+        // Dritte Bedingung "|| !selectedGroupId" war unerreichbar (selectedGroupId === null deckt das ab)
+        return selectedGroupId === null || s.site_group_id === selectedGroupId;
       })
       .forEach(function (s) {
         var o = document.createElement('option');
@@ -229,32 +297,40 @@
   // ── Contacts ──
 
   C5.loadContacts = function (form) {
-    var sel = form.querySelector('#asset_owner, #owner_approval, #owner');
-    if (!sel) return;
-    sel.disabled = true;
-    C5.showSpinner(sel);
+    // querySelectorAll statt querySelector: alle passenden Kontakt-Dropdowns befüllen,
+    // nicht nur das erste im DOM (3-A.3)
+    var sels = form.querySelectorAll('#asset_owner, #owner_approval, #owner');
+    if (!sels.length) return;
+    sels.forEach(function (sel) {
+      sel.disabled = true;
+      C5.showSpinner(sel);
+    });
     C5.beginLoad(form);
     fetch(C5.apiBase + '/contacts')
       .then(C5.checkAuth)
       .then(function (r) { return r.json(); })
       .then(function (list) {
-        sel.innerHTML = '<option value="" data-contact-id="">– Bitte wählen –</option>';
-        list.forEach(function (c) {
-          var o = document.createElement('option');
-          o.value = c.name;
-          o.textContent = c.name;
-          o.setAttribute('data-contact-id', String(c.id));
-          sel.appendChild(o);
+        sels.forEach(function (sel) {
+          sel.innerHTML = '<option value="" data-contact-id="">– Bitte wählen –</option>';
+          list.forEach(function (c) {
+            var o = document.createElement('option');
+            o.value = c.name;
+            o.textContent = c.name;
+            o.setAttribute('data-contact-id', String(c.id));
+            sel.appendChild(o);
+          });
+          sel.disabled = false;
+          C5.hideSpinner(sel);
         });
         C5.syncContactId(form);
-        sel.disabled = false;
-        C5.hideSpinner(sel);
         C5.endLoad(form);
       })
       .catch(function () {
-        sel.innerHTML = '<option value="">– Nicht verfügbar –</option>';
-        sel.disabled = false;
-        C5.hideSpinner(sel);
+        sels.forEach(function (sel) {
+          sel.innerHTML = '<option value="">– Nicht verfügbar –</option>';
+          sel.disabled = false;
+          C5.hideSpinner(sel);
+        });
         C5.endLoad(form);
       });
   };
@@ -268,6 +344,13 @@
   };
 
   // ── Device Types ──
+
+  function syncDeviceTypeId(form, sel) {
+    var idInput = form.querySelector('#device_type_id');
+    if (!idInput) return;
+    var opt = sel.options[sel.selectedIndex];
+    idInput.value = (opt && opt.value) ? (opt.getAttribute('data-device-type-id') || '') : '';
+  }
 
   C5.loadDeviceTypes = function (form) {
     var sel = form.querySelector('#device_type');
@@ -301,6 +384,10 @@
           o.setAttribute('data-device-type-id', String(dt.id));
           sel.appendChild(o);
         });
+        sel.addEventListener('change', function () {
+          syncDeviceTypeId(form, sel);
+        });
+        syncDeviceTypeId(form, sel);
         sel.disabled = false;
         C5.hideSpinner(sel);
         C5.endLoad(form);
@@ -312,13 +399,22 @@
         C5.endLoad(form);
       });
 
-    form._deviceTypesPromise = promise;
+    _deviceTypesPromises.set(form, promise);  // WeakMap statt form._deviceTypesPromise (3-C.3)
   };
 
   // ── Asset Lookup ──
 
   C5.performAssetLookup = function (assetId, form) {
     if (!assetId || assetId.trim() === '') return;
+
+    // Vorherigen Request abbrechen, falls noch aktiv (3-B)
+    if (_pendingLookupAbort) {
+      _pendingLookupAbort.abort();
+      _pendingLookupAbort = null;
+    }
+
+    var controller = new AbortController();
+    _pendingLookupAbort = controller;
 
     var existingBadge = form.querySelector('.netbox-badge');
     if (existingBadge) existingBadge.remove();
@@ -329,10 +425,11 @@
       C5.showSpinner(assetField, 'Asset wird gesucht …');
     }
 
-    fetch(C5.apiBase + '/asset-lookup?asset_id=' + encodeURIComponent(assetId))
+    fetch(C5.apiBase + '/asset-lookup?asset_id=' + encodeURIComponent(assetId), { signal: controller.signal })
       .then(C5.checkAuth)
       .then(function (res) { return res.json(); })
       .then(function (data) {
+        _pendingLookupAbort = null;
         if (!data.found) return;
 
         // Einfache Felder direkt setzen (Standortfelder werden kaskadiert nach dem Location-Load gesetzt)
@@ -352,10 +449,11 @@
 
         // Gerätetyp erst setzen, nachdem das Dropdown vollständig geladen ist
         if (data['device_type']) {
-          (form._deviceTypesPromise || Promise.resolve()).then(function () {
+          (_deviceTypesPromises.get(form) || Promise.resolve()).then(function () {  // WeakMap statt DOM-Property (3-C.3)
             var el = form.querySelector(NETBOX_FIELD_MAP['device_type']);
             if (el && !el.value) {
               setSelectValue(el, data['device_type']);
+              syncDeviceTypeId(form, el);
             }
           });
         }
@@ -364,7 +462,7 @@
 
         // Region, Standortgruppe und Standort kaskadiert setzen, sobald Standortdaten geladen sind
         if ((data.region_id || data.site_group_id || data.site_id) && form.querySelector('#region_id')) {
-          (form._locationsPromise || Promise.resolve()).then(function () {
+          _locationsPromise.then(function () {  // Modul-Promise statt DOM-Property (3-C.2)
             // 1. Region setzen
             if (data.region_id) {
               var regionSel = form.querySelector('#region_id');
@@ -387,22 +485,29 @@
         }
 
         if (data.custom_fields) {
+          // querySelectorAll statt querySelector: Comma-Selektoren in der Map können mehrere
+          // Elemente treffen (z. B. '#asset_owner, #owner_approval') – alle befüllen (3-A.2)
           Object.keys(NETBOX_CUSTOM_FIELD_MAP).forEach(function (key) {
-            var el = form.querySelector(NETBOX_CUSTOM_FIELD_MAP[key]);
-            if (el && !el.value && data.custom_fields[key]) {
-              if (el.tagName === 'SELECT') {
-                setSelectValue(el, data.custom_fields[key]);
-              } else {
-                el.value = data.custom_fields[key];
+            form.querySelectorAll(NETBOX_CUSTOM_FIELD_MAP[key]).forEach(function (el) {
+              if (!el.value && data.custom_fields[key]) {
+                if (el.tagName === 'SELECT') {
+                  setSelectValue(el, data.custom_fields[key]);
+                } else {
+                  el.value = data.custom_fields[key];
+                }
               }
-            }
+            });
           });
           C5.syncContactId(form);
         }
 
         showNetBoxBadge(form, data.status);
       })
-      .catch(function () { /* silently ignore lookup errors */ })
+      .catch(function (err) {
+        // AbortError ist erwartet (neuer Request hat den alten abgebrochen) – kein Nutzer-Feedback (3-B)
+        if (err && err.name === 'AbortError') return;
+        /* andere Fehler still ignorieren */
+      })
       .finally(function () {
         if (assetField) {
           assetField.readOnly = false;
