@@ -1,5 +1,33 @@
 /**
  * C5 Evidence Tool – NetBox Asset Lookup & Location/Tenant/Contact Loading
+ *
+ * LOAD ORDER: Muss nach c5-labels.js / c5-validation.js, aber VOR app.js geladen werden.
+ * Alle tatsächlichen Aufrufe erfolgen in Callbacks (nach DOMContentLoaded), daher sind
+ * die app.js-Symbole zur Laufzeit immer definiert, auch wenn app.js später geladen wird.
+ *
+ * SYMBOLS CONSUMED FROM app.js (window.C5):
+ *   C5.apiBase       – Backend-API-Basispfad
+ *   C5.checkAuth     – 401/403 → Redirect nach /login
+ *   C5.showSpinner   – Spinner neben einem .field-group-Element einblenden
+ *   C5.hideSpinner   – Spinner wieder entfernen
+ *   C5.beginLoad     – Pending-Load-Zähler erhöhen (Submit-Button disabled)
+ *   C5.endLoad       – Pending-Load-Zähler senken (Submit-Button ggf. re-enabled)
+ *
+ * SYMBOLS EXPORTED TO window.C5 (öffentliche API, aufgerufen von app.js):
+ *   C5.loadLocations      – Regionen/Site-Groups/Sites laden und Dropdowns befüllen
+ *   C5.loadTenants        – Tenant-Dropdown befüllen
+ *   C5.loadContacts       – Kontakt-Dropdown befüllen
+ *   C5.loadDeviceTypes    – Gerätetyp-Dropdown befüllen
+ *   C5.performAssetLookup – NetBox-Lookup anhand Asset-ID, Felder vorausfüllen
+ *
+ * SYMBOLS EXPORTED TO window.C5 (Cascade-Helfer, direkt von app.js aufgerufen):
+ *   C5.filterSiteGroups – Site-Group-Dropdown auf gewählte Region filtern
+ *   C5.filterSites      – Site-Dropdown auf gewählte Site-Group filtern
+ *   C5.syncTenantName   – Hidden-Input #tenant_name mit Dropdown-Text synchronisieren
+ *   C5.syncContactId    – Hidden-Input #contact_id mit data-contact-id synchronisieren
+ *
+ * REFACTORING NOTE (Phase 3-D): filterSiteGroups/filterSites/syncTenantName/syncContactId
+ * sollen in Folge-Phasen durch Custom-Events intern gemacht werden.
  */
 (function () {
   'use strict';

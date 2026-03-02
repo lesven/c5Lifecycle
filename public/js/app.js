@@ -1,7 +1,26 @@
 /**
  * C5 Evidence Tool – Application Initializer
- * Loads after c5-labels.js, c5-validation.js, c5-asset-lookup.js,
- * c5-submit.js, c5-summary.js and wires everything together.
+ *
+ * LOAD ORDER (form_base.html.twig):
+ *   1. c5-labels.js      – C5.getLabel, C5.getAllLabels, C5.loadLabelsFromApi
+ *   2. c5-validation.js  – C5.evaluateConditionalRequired, C5.validateForm
+ *   3. c5-asset-lookup.js– C5.load*, C5.performAssetLookup, C5.filter*, C5.sync*
+ *   4. c5-submit.js      – C5.collectFormData, C5.submitForm
+ *   5. c5-summary.js     – C5.showSummary
+ *   6. app.js            – Symbole aus app.js; DOMContentLoaded-Init (dieses File)
+ *
+ * FORMULAR-KOMPATIBILITÄTSMATRIX (welche load*-Funktion wird in welchem Form aktiv):
+ *   Form                   | loadLocations | loadTenants | loadContacts | loadDeviceTypes | AssetLookup
+ *   rz_provision           |      ✅       |      ✅     |  ✅ (#asset_owner)  |      ✅     |     ✅
+ *   rz_retire              |      –        |      ✅     |  ✅ (#owner_approval)|     –       |     ✅
+ *   rz_owner_confirm       |      –        |      –      |  ✅ (#owner)        |     –       |     ✅
+ *   admin_provision        |      –        |      –      |       –             |     ✅      |     ✅
+ *   admin_user_commitment  |      –        |      –      |       –             |     –       |     ✅
+ *   admin_return           |      –        |      –      |       –             |     –       |     ✅
+ *   admin_access_cleanup   |      –        |      –      |       –             |     –       |     ✅
+ *
+ * Alle load*-Funktionen prüfen selbst mit einem Early-Return ob ihr Ankerelement
+ * im DOM vorhanden ist. Dadurch kann app.js alle Funktionen bedingungslos aufrufen.
  */
 (function () {
   'use strict';
