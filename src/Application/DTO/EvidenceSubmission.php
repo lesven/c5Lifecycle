@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\DTO;
 
+use App\Domain\ValueObject\AssetId;
 use App\Domain\ValueObject\EventDefinition;
 
 final readonly class EvidenceSubmission
@@ -17,9 +18,9 @@ final readonly class EvidenceSubmission
     ) {
     }
 
-    public function assetId(): string
+    public function assetId(): AssetId
     {
-        return $this->data['asset_id'] ?? 'UNKNOWN';
+        return AssetId::from($this->data['asset_id'] ?? null);
     }
 
     public function track(): string

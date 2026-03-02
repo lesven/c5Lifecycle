@@ -7,6 +7,7 @@ namespace App\Infrastructure\Jira;
 use App\Domain\Repository\JiraClientInterface;
 use App\Domain\ValueObject\EventDefinition;
 use App\Infrastructure\Config\EvidenceConfig;
+use App\Infrastructure\Http\ApiResponseParser;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -56,19 +57,8 @@ final class JiraClient implements JiraClientInterface
             'json' => $payload,
         ]);
 
-        $statusCode = $response->getStatusCode();
-        if ($statusCode < 200 || $statusCode >= 300) {
-            $body = $response->getContent(false);
-            $this->jiraLogger->error('Jira API error', [
-                'request_id' => $requestId,
-                'http_code' => $statusCode,
-                'response' => $body,
-            ]);
-            throw new RuntimeException("Jira API error (HTTP {$statusCode}): " . ($body ?: 'no response'));
-        }
-
-        $result = $response->toArray();
-        if (!isset($result['key'])) {
+        $result = ApiResponseParser::parse($response, 'Jira', $requestId, $this->jiraLogger);
+        if ($result === null || !isset($result['key'])) {
             throw new RuntimeException('Jira response missing ticket key');
         }
 

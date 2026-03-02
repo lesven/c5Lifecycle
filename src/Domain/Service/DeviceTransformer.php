@@ -18,7 +18,7 @@ final class DeviceTransformer
             'serial_number' => $device['serial'] ?? '',
             'manufacturer' => $this->extractName($device['device_type']['manufacturer'] ?? null),
             'model' => $this->extractDisplay($device['device_type'] ?? null),
-            'device_type' => $this->extractDisplay($device['device_role'] ?? null),
+            'device_type' => $device['device_type']['model'] ?? $this->extractDisplay($device['device_type'] ?? null),
             'location' => $location,
             'site_id' => isset($device['site']['id']) ? (string) $device['site']['id'] : '',
             'site_name' => $device['site']['name'] ?? '',

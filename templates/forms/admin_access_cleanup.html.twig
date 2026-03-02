@@ -8,52 +8,25 @@
 {% set badge_class = 'badge-b' %}
 {% set event_type = 'admin_access_cleanup' %}
 
+{% import 'macros/form_fields.html.twig' as f %}
+
 {% block form_fields %}
     <fieldset class="form-section">
       <legend>Zuordnung</legend>
-      <div class="field-group">
-        <label for="asset_id">Asset-ID <span class="required-marker">*</span></label>
-        <input type="text" id="asset_id" name="asset_id" required>
-      </div>
-      <div class="field-group">
-        <label for="admin_user">Admin-User (Name/ID) <span class="required-marker">*</span></label>
-        <input type="text" id="admin_user" name="admin_user" required>
-      </div>
-      <div class="field-group">
-        <label for="cleanup_date">Datum <span class="required-marker">*</span></label>
-        <input type="date" id="cleanup_date" name="cleanup_date" required>
-      </div>
+      {{ f.text_field('asset_id', 'Asset-ID', true) }}
+      {{ f.text_field('admin_user', 'Admin-User (Name/ID)', true) }}
+      {{ f.date_field('cleanup_date', 'Datum', true) }}
     </fieldset>
 
     <fieldset class="form-section">
       <legend>Durchgeführte Maßnahmen</legend>
-      <div class="field-checkbox">
-        <label class="checkbox-label">
-          <input type="checkbox" name="account_removed" value="1" required>
-          <span>Admin-Account entfernt/angepasst</span>
-          <span class="required-marker">*</span>
-        </label>
-      </div>
-      <div class="field-checkbox">
-        <label class="checkbox-label">
-          <input type="checkbox" name="keys_revoked" value="1" required>
-          <span>Keys/Zertifikate revoked</span>
-          <span class="required-marker">*</span>
-        </label>
-      </div>
-      <div class="field-checkbox">
-        <label class="checkbox-label">
-          <input type="checkbox" name="device_wiped" value="1">
-          <span>Gerät wiped oder reprovisioniert</span>
-        </label>
-      </div>
+      {{ f.checkbox_field('account_removed', 'Admin-Account entfernt/angepasst', true) }}
+      {{ f.checkbox_field('keys_revoked', 'Keys/Zertifikate revoked', true) }}
+      {{ f.checkbox_field('device_wiped', 'Gerät wiped oder reprovisioniert', false) }}
     </fieldset>
 
     <fieldset class="form-section">
       <legend>Nachverfolgung</legend>
-      <div class="field-group">
-        <label for="ticket_ref">Ticket-Referenz <span class="required-marker">*</span></label>
-        <input type="text" id="ticket_ref" name="ticket_ref" data-conditional-required="device_wiped:unchecked" placeholder="Pflicht wenn Wipe nicht abgeschlossen">
-      </div>
+      {{ f.conditional_text_field('ticket_ref', 'Ticket-Referenz', 'device_wiped:unchecked', 'Pflicht wenn Wipe nicht abgeschlossen') }}
     </fieldset>
 {% endblock %}

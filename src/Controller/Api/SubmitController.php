@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller\Api;
 
 use App\Application\UseCase\SubmitEvidenceUseCase;
+use App\Domain\ValueObject\EventType;
 use App\Infrastructure\Persistence\Entity\User;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -22,7 +23,7 @@ final class SubmitController
     #[Route('/api/submit/{eventType}', name: 'api_submit', methods: ['POST'], requirements: ['eventType' => '[\w_-]+'])]
     public function __invoke(Request $request, string $eventType): JsonResponse
     {
-        $eventType = str_replace('-', '_', $eventType);
+        $eventType = EventType::normalize($eventType);
 
         $data = json_decode($request->getContent(), true);
         if (!is_array($data)) {

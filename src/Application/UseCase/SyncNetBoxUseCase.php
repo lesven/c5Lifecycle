@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace App\Application\UseCase;
 
 use App\Application\DTO\EvidenceSubmission;
+use App\Domain\Repository\EvidenceConfigInterface;
 use App\Domain\Repository\NetBoxClientInterface;
 use App\Domain\Service\CustomFieldMapper;
 use App\Domain\Service\JournalBuilder;
-use App\Domain\Repository\EvidenceConfigInterface;
 use App\Domain\Service\StatusMapper;
 use App\Domain\ValueObject\EventType;
+use App\Domain\ValueObject\LogContext;
+use App\Domain\ValueObject\NetBoxErrorMode;
+use App\Domain\ValueObject\NetBoxSyncRule;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -33,7 +36,7 @@ class SyncNetBoxUseCase
     {
         $syncRule = $this->config->getNetBoxSyncRule($submission->eventType);
 
-        if ($syncRule === 'none') {
+        if ($syncRule === NetBoxSyncRule::None) {
             return ['synced' => false, 'status' => null, 'error' => null, 'error_trace' => null];
         }
 
@@ -44,13 +47,9 @@ class SyncNetBoxUseCase
             $error = sprintf('%s: %s', get_class($e), $e->getMessage());
             $trace = $this->config->isNetBoxDebug() ? $e->getTraceAsString() : null;
 
-            $this->netboxLogger->error('NetBox sync failed', [
-                'request_id' => $submission->requestId,
-                'exception' => get_class($e),
-                'message' => $e->getMessage(),
-            ]);
+            $this->netboxLogger->error('NetBox sync failed', LogContext::for($submission->requestId)->withError($e)->toArray());
 
-            if ($this->config->getNetBoxOnError() === 'fail') {
+            if ($this->config->getNetBoxOnError() === NetBoxErrorMode::Fail) {
                 throw $e;
             }
 
@@ -58,7 +57,7 @@ class SyncNetBoxUseCase
         }
     }
 
-    private function syncDevice(EvidenceSubmission $submission, string $emailBody, string $evidenceTo, string $syncRule): array
+    private function syncDevice(EvidenceSubmission $submission, string $emailBody, string $evidenceTo, NetBoxSyncRule $syncRule): array
     {
         $data = $submission->data;
         $eventType = $submission->eventType;
@@ -87,7 +86,7 @@ class SyncNetBoxUseCase
             $patchData['tenant'] = $tenantId;
         }
 
-        if ($syncRule === 'update_status') {
+        if ($syncRule === NetBoxSyncRule::UpdateStatus) {
             $targetStatus = $this->statusMapper->getTargetStatus($eventType);
             if ($targetStatus !== null) {
                 $patchData['status'] = $targetStatus;
@@ -116,10 +115,7 @@ class SyncNetBoxUseCase
                             $patchData['device_type'] = (int) $deviceType['id'];
                         }
                     } catch (\Throwable $e) {
-                        $this->netboxLogger->warning('Device-Type-Lookup fehlgeschlagen (non-blocking)', [
-                            'request_id' => $requestId,
-                            'message' => $e->getMessage(),
-                        ]);
+                        $this->netboxLogger->warning('Device-Type-Lookup fehlgeschlagen (non-blocking)', LogContext::for($requestId)->withError($e)->toArray());
                     }
                 }
             }
@@ -156,7 +152,7 @@ class SyncNetBoxUseCase
             'comments' => $comments,
         ], $requestId);
 
-        if ($result['status'] === null && $syncRule === 'journal_only') {
+        if ($result['status'] === null && $syncRule === NetBoxSyncRule::JournalOnly) {
             $result['status'] = 'journal_created';
         }
 
@@ -215,11 +211,10 @@ class SyncNetBoxUseCase
             $postData['custom_fields'] = $customFields;
         }
 
-        $this->netboxLogger->info('NetBox Device-Anlage', [
-            'request_id' => $requestId,
-            'asset_tag' => $assetTag,
-            'event_type' => $eventType,
-        ]);
+        $this->netboxLogger->info('NetBox Device-Anlage', LogContext::for($requestId)
+            ->withEvent($eventType)
+            ->with('asset_tag', $assetTag)
+            ->toArray());
 
         return $this->netBoxClient->createDevice($postData, $requestId);
     }

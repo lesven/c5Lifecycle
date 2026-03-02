@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Infrastructure\Config;
 
 use App\Domain\Repository\EvidenceConfigInterface;
+use App\Domain\ValueObject\JiraRule;
+use App\Domain\ValueObject\NetBoxErrorMode;
+use App\Domain\ValueObject\NetBoxSyncRule;
 use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 
@@ -27,38 +30,9 @@ final readonly class EvidenceConfig implements EvidenceConfigInterface
         }
 
         $config = new self($data);
-        $config->validate();
+        EvidenceConfigValidator::assertValid([$config, 'get']);
 
         return $config;
-    }
-
-    /**
-     * Validate that all required configuration keys are present.
-     *
-     * @throws RuntimeException if required keys are missing
-     */
-    private function validate(): void
-    {
-        $required = [
-            'smtp.from_address',
-            'smtp.from_name',
-            'evidence.rz_assets.to',
-            'evidence.admin_devices.to',
-        ];
-
-        $missing = [];
-        foreach ($required as $key) {
-            $value = $this->get($key);
-            if ($value === null || $value === '') {
-                $missing[] = $key;
-            }
-        }
-
-        if ($missing !== []) {
-            throw new RuntimeException(
-                'Fehlende Pflicht-Konfiguration in c5_evidence.yaml: ' . implode(', ', $missing)
-            );
-        }
     }
 
     public function get(string $key, mixed $default = null): mixed
@@ -103,13 +77,13 @@ final readonly class EvidenceConfig implements EvidenceConfigInterface
         ];
     }
 
-    /** Get Jira rule for an event type: 'none', 'optional', 'required' */
-    public function getJiraRule(string $eventType): string
+    /** Get Jira rule for an event type */
+    public function getJiraRule(string $eventType): JiraRule
     {
         if (!$this->get('jira.enabled', false)) {
-            return 'none';
+            return JiraRule::None;
         }
-        return $this->get("jira_rules.{$eventType}", 'none');
+        return JiraRule::from($this->get("jira_rules.{$eventType}", 'none'));
     }
 
     public function isJiraEnabled(): bool
@@ -122,19 +96,19 @@ final readonly class EvidenceConfig implements EvidenceConfigInterface
         return (bool) $this->get('netbox.enabled', false);
     }
 
-    /** Get NetBox sync rule for an event type: 'update_status', 'journal_only', 'none' */
-    public function getNetBoxSyncRule(string $eventType): string
+    /** Get NetBox sync rule for an event type */
+    public function getNetBoxSyncRule(string $eventType): NetBoxSyncRule
     {
         if (!$this->isNetBoxEnabled()) {
-            return 'none';
+            return NetBoxSyncRule::None;
         }
-        return $this->get("netbox.sync_rules.{$eventType}", 'none');
+        return NetBoxSyncRule::from($this->get("netbox.sync_rules.{$eventType}", 'none'));
     }
 
-    /** Get NetBox error handling mode: 'warn' or 'fail' */
-    public function getNetBoxOnError(): string
+    /** Get NetBox error handling mode */
+    public function getNetBoxOnError(): NetBoxErrorMode
     {
-        return $this->get('netbox.on_error', 'warn');
+        return NetBoxErrorMode::from($this->get('netbox.on_error', 'warn'));
     }
 
     public function isNetBoxDebug(): bool

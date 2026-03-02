@@ -8,10 +8,12 @@ use App\Application\DTO\EvidenceSubmission;
 use App\Application\DTO\SubmissionResult;
 use App\Application\UseCase\SubmissionStepInterface;
 use App\Application\UseCase\SyncNetBoxUseCase;
+use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 
 /**
  * Pipeline step: Sync device state to NetBox.
  */
+#[AutoconfigureTag('c5.submission_step', ['priority' => 25])]
 final class SyncNetBoxStep implements SubmissionStepInterface
 {
     public function __construct(
@@ -29,5 +31,16 @@ final class SyncNetBoxStep implements SubmissionStepInterface
         $result->netboxStatus = $netboxResult['status'];
         $result->netboxError = $netboxResult['error'];
         $result->netboxErrorTrace = $netboxResult['error_trace'];
+    }
+
+    public function getStepName(): string
+    {
+        return 'NetBox';
+    }
+
+    public function handleFailure(SubmissionResult $result, \Throwable $e): void
+    {
+        $result->error = 'Interner Fehler: ' . $e->getMessage();
+        $result->httpStatus = 500;
     }
 }

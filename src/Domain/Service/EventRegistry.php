@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Service;
 
+use App\Domain\ValueObject\AssetId;
 use App\Domain\ValueObject\EventDefinition;
 use App\Domain\ValueObject\EventType;
 
@@ -35,7 +36,7 @@ final class EventRegistry
         return isset($this->definitions[$eventType]);
     }
 
-    public function buildSubject(string $eventType, string $assetId): string
+    public function buildSubject(string $eventType, AssetId|string $assetId): string
     {
         $event = $this->definitions[$eventType];
 

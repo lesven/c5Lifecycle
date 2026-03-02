@@ -6,11 +6,14 @@ namespace App\Tests\Unit\Application\UseCase;
 
 use App\Application\UseCase\CreateJiraTicketUseCase;
 use App\Application\UseCase\SendEvidenceMailUseCase;
+use App\Application\UseCase\Step\CreateJiraStep;
+use App\Application\UseCase\Step\PersistLogStep;
+use App\Application\UseCase\Step\SendMailStep;
+use App\Application\UseCase\Step\SyncNetBoxStep;
 use App\Application\UseCase\SubmitEvidenceUseCase;
 use App\Application\UseCase\SyncNetBoxUseCase;
 use App\Application\Validator\EventDataValidator;
 use App\Domain\Repository\SubmissionLogRepositoryInterface;
-use App\Domain\Service\EventRegistry;
 use App\Tests\EventRegistryFixture;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -30,7 +33,6 @@ class SubmitEvidenceUseCaseTest extends TestCase
         $syncNetBox ??= $this->createMock(SyncNetBoxUseCase::class);
         $submissionLogRepository ??= $this->createMock(SubmissionLogRepositoryInterface::class);
 
-        // Configure default mock returns
         if ($sendMail instanceof MockObject) {
             $sendMail->method('execute')->willReturn([
                 'subject' => 'Test Subject',
@@ -44,14 +46,18 @@ class SubmitEvidenceUseCaseTest extends TestCase
             ]);
         }
 
+        $steps = [
+            new SendMailStep($sendMail),
+            new CreateJiraStep($createJira),
+            new SyncNetBoxStep($syncNetBox),
+            new PersistLogStep($submissionLogRepository, new NullLogger()),
+        ];
+
         return new SubmitEvidenceUseCase(
             EventRegistryFixture::create(),
             new EventDataValidator(),
-            $sendMail,
-            $createJira,
-            $syncNetBox,
             new NullLogger(),
-            $submissionLogRepository,
+            $steps,
         );
     }
 

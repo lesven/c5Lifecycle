@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Infrastructure\Config;
 
 use App\Infrastructure\Config\EvidenceConfig;
+use App\Domain\ValueObject\JiraRule;
+use App\Domain\ValueObject\NetBoxSyncRule;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
@@ -20,7 +22,7 @@ class EvidenceConfigTest extends TestCase
 
     public function testFromYamlFileLoadsValidConfig(): void
     {
-        $path = $this->writeTempYaml("
+        $path = $this->writeTempYaml('
 smtp:
   from_address: test@example.com
   from_name: Test
@@ -29,7 +31,7 @@ evidence:
     to: rz@example.com
   admin_devices:
     to: admin@example.com
-");
+');
         $config = EvidenceConfig::fromYamlFile($path);
         unlink($path);
 
@@ -46,7 +48,7 @@ evidence:
 
     public function testFromYamlFileThrowsOnMissingSmtpFromAddress(): void
     {
-        $path = $this->writeTempYaml("
+        $path = $this->writeTempYaml('
 smtp:
   from_name: Test
 evidence:
@@ -54,7 +56,7 @@ evidence:
     to: rz@example.com
   admin_devices:
     to: admin@example.com
-");
+');
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('smtp.from_address');
         try {
@@ -66,14 +68,14 @@ evidence:
 
     public function testFromYamlFileThrowsOnMissingEvidenceRecipients(): void
     {
-        $path = $this->writeTempYaml("
+        $path = $this->writeTempYaml('
 smtp:
   from_address: test@example.com
   from_name: Test
 evidence:
   rz_assets:
     to: rz@example.com
-");
+');
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('evidence.admin_devices.to');
         try {
@@ -85,10 +87,10 @@ evidence:
 
     public function testFromYamlFileReportsAllMissingKeys(): void
     {
-        $path = $this->writeTempYaml("
+        $path = $this->writeTempYaml('
 netbox:
   enabled: false
-");
+');
         try {
             EvidenceConfig::fromYamlFile($path);
             $this->fail('Expected RuntimeException');
@@ -103,7 +105,7 @@ netbox:
 
     public function testGetReturnsDefaultForMissingKey(): void
     {
-        $path = $this->writeTempYaml("
+        $path = $this->writeTempYaml('
 smtp:
   from_address: test@example.com
   from_name: Test
@@ -112,7 +114,7 @@ evidence:
     to: rz@example.com
   admin_devices:
     to: admin@example.com
-");
+');
         $config = EvidenceConfig::fromYamlFile($path);
         unlink($path);
 
@@ -121,7 +123,7 @@ evidence:
 
     public function testHasReturnsFalseForMissingKey(): void
     {
-        $path = $this->writeTempYaml("
+        $path = $this->writeTempYaml('
 smtp:
   from_address: test@example.com
   from_name: Test
@@ -130,7 +132,7 @@ evidence:
     to: rz@example.com
   admin_devices:
     to: admin@example.com
-");
+');
         $config = EvidenceConfig::fromYamlFile($path);
         unlink($path);
 
@@ -140,7 +142,7 @@ evidence:
 
     public function testJiraRuleReturnsNoneWhenJiraDisabled(): void
     {
-        $path = $this->writeTempYaml("
+        $path = $this->writeTempYaml('
 smtp:
   from_address: test@example.com
   from_name: Test
@@ -153,16 +155,16 @@ jira:
   enabled: false
 jira_rules:
   rz_retire: optional
-");
+');
         $config = EvidenceConfig::fromYamlFile($path);
         unlink($path);
 
-        $this->assertSame('none', $config->getJiraRule('rz_retire'));
+        $this->assertSame(JiraRule::None, $config->getJiraRule('rz_retire'));
     }
 
     public function testNetBoxSyncRuleReturnsNoneWhenDisabled(): void
     {
-        $path = $this->writeTempYaml("
+        $path = $this->writeTempYaml('
 smtp:
   from_address: test@example.com
   from_name: Test
@@ -175,10 +177,10 @@ netbox:
   enabled: false
   sync_rules:
     rz_provision: update_status
-");
+');
         $config = EvidenceConfig::fromYamlFile($path);
         unlink($path);
 
-        $this->assertSame('none', $config->getNetBoxSyncRule('rz_provision'));
+        $this->assertSame(NetBoxSyncRule::None, $config->getNetBoxSyncRule('rz_provision'));
     }
 }

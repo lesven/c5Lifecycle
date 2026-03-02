@@ -37,16 +37,6 @@ final class DeviceTypesController
         try {
             $deviceTypes = $this->netBoxClient->getDeviceTypes($tag, $requestId);
 
-            // Fallback: if tag filter yields no results, load all device types.
-            // This ensures the dropdown works even before NetBox tags are assigned.
-            if ($tag !== '' && $deviceTypes === []) {
-                $this->netboxLogger->info('Device types tag filter returned empty, retrying without tag', [
-                    'request_id' => $requestId,
-                    'tag' => $tag,
-                ]);
-                $deviceTypes = $this->netBoxClient->getDeviceTypes('', $requestId);
-            }
-
             $result = array_map(
                 fn (array $dt) => ['id' => $dt['id'], 'model' => $dt['model']],
                 $deviceTypes,

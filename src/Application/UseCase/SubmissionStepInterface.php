@@ -25,4 +25,13 @@ interface SubmissionStepInterface
      * @throws \Throwable if the step fails critically (e.g., mail delivery failure)
      */
     public function execute(EvidenceSubmission $submission, SubmissionResult $result, array &$context): void;
+
+    /** Human-readable step name used in log messages. */
+    public function getStepName(): string;
+
+    /**
+     * Called when execute() throws an exception.
+     * Implementations populate $result with the appropriate error message and HTTP status.
+     */
+    public function handleFailure(SubmissionResult $result, \Throwable $e): void;
 }
