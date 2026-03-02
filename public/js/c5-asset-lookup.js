@@ -18,7 +18,7 @@
   };
 
   var NETBOX_CUSTOM_FIELD_MAP = {
-    asset_owner: '#asset_owner',
+    asset_owner: '#asset_owner, #owner_approval',
     service: '#service',
     criticality: '#criticality',
     admin_user: '#admin_user',
@@ -313,6 +313,7 @@
               }
             }
           });
+          C5.syncContactId(form);
         }
 
         showNetBoxBadge(form, data.status);
