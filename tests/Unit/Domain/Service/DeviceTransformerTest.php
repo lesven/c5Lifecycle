@@ -87,7 +87,7 @@ class DeviceTransformerTest extends TestCase
     public function testTransformReturnsDeviceType(): void
     {
         $result = $this->transformer->transform($this->sampleDevice());
-        $this->assertEquals('Server', $result['device_type']);
+        $this->assertEquals('PowerEdge R750', $result['device_type']);
     }
 
     public function testTransformReturnsStatus(): void

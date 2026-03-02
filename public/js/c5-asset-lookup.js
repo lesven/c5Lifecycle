@@ -246,7 +246,7 @@
     sel.innerHTML = '<option value="">– Wird geladen … –</option>';
     sel.disabled = true;
 
-    fetch(C5.apiBase + '/device-types' + (tag ? '?tag=' + encodeURIComponent(tag) : ''))
+    var promise = fetch(C5.apiBase + '/device-types' + (tag ? '?tag=' + encodeURIComponent(tag) : ''))
       .then(C5.checkAuth)
       .then(function (r) { return r.json(); })
       .then(function (data) {
@@ -267,6 +267,8 @@
         sel.innerHTML = '<option value="">– Gerätetypen nicht verfügbar –</option>';
         sel.disabled = false;
       });
+
+    form._deviceTypesPromise = promise;
   };
 
   // ── Asset Lookup ──
@@ -284,6 +286,7 @@
         if (!data.found) return;
 
         Object.keys(NETBOX_FIELD_MAP).forEach(function (key) {
+          if (key === 'device_type') return; // wird nach dem Laden der Gerätetypen gesetzt
           var el = form.querySelector(NETBOX_FIELD_MAP[key]);
           if (el && !el.value && data[key]) {
             if (el.tagName === 'SELECT') {
@@ -293,6 +296,16 @@
             }
           }
         });
+
+        // Gerätetyp erst setzen, nachdem das Dropdown vollständig geladen ist
+        if (data['device_type']) {
+          (form._deviceTypesPromise || Promise.resolve()).then(function () {
+            var el = form.querySelector(NETBOX_FIELD_MAP['device_type']);
+            if (el && !el.value) {
+              setSelectValue(el, data['device_type']);
+            }
+          });
+        }
 
         C5.syncTenantName(form);
 

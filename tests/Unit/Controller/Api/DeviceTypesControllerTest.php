@@ -79,19 +79,14 @@ class DeviceTypesControllerTest extends TestCase
         $this->assertSame(200, $response->getStatusCode());
     }
 
-    public function testFallsBackToAllDeviceTypesWhenTagFilterReturnsEmpty(): void
+    public function testNoFallbackWhenTagFilterReturnsEmpty(): void
     {
-        $allDeviceTypes = [
-            ['id' => 1, 'model' => 'server'],
-        ];
-
         $netBoxClient = $this->createMock(NetBoxClientInterface::class);
         $netBoxClient
-            ->expects($this->exactly(2))
+            ->expects($this->once())
             ->method('getDeviceTypes')
-            ->willReturnCallback(function (string $tag) use ($allDeviceTypes): array {
-                return $tag === '' ? $allDeviceTypes : [];
-            });
+            ->with('rz', $this->isType('string'))
+            ->willReturn([]);
 
         $controller = $this->createController(true, $netBoxClient);
         $request = new Request(['tag' => 'rz']);
@@ -100,8 +95,7 @@ class DeviceTypesControllerTest extends TestCase
 
         $this->assertSame(200, $response->getStatusCode());
         $data = json_decode((string) $response->getContent(), true);
-        $this->assertCount(1, $data);
-        $this->assertEquals('server', $data[0]['model']);
+        $this->assertCount(0, $data);
     }
 
     public function testPassesEmptyTagWhenNoQueryParameterGiven(): void
