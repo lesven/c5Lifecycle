@@ -345,6 +345,13 @@
 
   // ── Device Types ──
 
+  function syncDeviceTypeId(form, sel) {
+    var idInput = form.querySelector('#device_type_id');
+    if (!idInput) return;
+    var opt = sel.options[sel.selectedIndex];
+    idInput.value = (opt && opt.value) ? (opt.getAttribute('data-device-type-id') || '') : '';
+  }
+
   C5.loadDeviceTypes = function (form) {
     var sel = form.querySelector('#device_type');
     if (!sel) return;
@@ -377,6 +384,10 @@
           o.setAttribute('data-device-type-id', String(dt.id));
           sel.appendChild(o);
         });
+        sel.addEventListener('change', function () {
+          syncDeviceTypeId(form, sel);
+        });
+        syncDeviceTypeId(form, sel);
         sel.disabled = false;
         C5.hideSpinner(sel);
         C5.endLoad(form);
@@ -442,6 +453,7 @@
             var el = form.querySelector(NETBOX_FIELD_MAP['device_type']);
             if (el && !el.value) {
               setSelectValue(el, data['device_type']);
+              syncDeviceTypeId(form, el);
             }
           });
         }
