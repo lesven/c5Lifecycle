@@ -55,6 +55,10 @@
 
   var _locationData = null;
 
+  // Hält den AbortController des zuletzt gestarteten Asset-Lookups.
+  // Bei einem neuen Aufruf wird der vorherige Request abgebrochen (3-B).
+  var _pendingLookupAbort = null;
+
   // ── Location cascading dropdowns ──
 
   C5.loadLocations = function (form) {
@@ -357,6 +361,15 @@
   C5.performAssetLookup = function (assetId, form) {
     if (!assetId || assetId.trim() === '') return;
 
+    // Vorherigen Request abbrechen, falls noch aktiv (3-B)
+    if (_pendingLookupAbort) {
+      _pendingLookupAbort.abort();
+      _pendingLookupAbort = null;
+    }
+
+    var controller = new AbortController();
+    _pendingLookupAbort = controller;
+
     var existingBadge = form.querySelector('.netbox-badge');
     if (existingBadge) existingBadge.remove();
 
@@ -366,10 +379,11 @@
       C5.showSpinner(assetField, 'Asset wird gesucht …');
     }
 
-    fetch(C5.apiBase + '/asset-lookup?asset_id=' + encodeURIComponent(assetId))
+    fetch(C5.apiBase + '/asset-lookup?asset_id=' + encodeURIComponent(assetId), { signal: controller.signal })
       .then(C5.checkAuth)
       .then(function (res) { return res.json(); })
       .then(function (data) {
+        _pendingLookupAbort = null;
         if (!data.found) return;
 
         // Einfache Felder direkt setzen (Standortfelder werden kaskadiert nach dem Location-Load gesetzt)
@@ -442,7 +456,11 @@
 
         showNetBoxBadge(form, data.status);
       })
-      .catch(function () { /* silently ignore lookup errors */ })
+      .catch(function (err) {
+        // AbortError ist erwartet (neuer Request hat den alten abgebrochen) – kein Nutzer-Feedback (3-B)
+        if (err && err.name === 'AbortError') return;
+        /* andere Fehler still ignorieren */
+      })
       .finally(function () {
         if (assetField) {
           assetField.readOnly = false;

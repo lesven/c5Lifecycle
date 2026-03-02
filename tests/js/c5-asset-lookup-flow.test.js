@@ -1,9 +1,9 @@
 /**
  * c5-asset-lookup-flow.test.js
  *
- * Phase 2 + 3-A Baseline- und Regressions-Tests mit geladenen Standortdaten
+ * Phase 2 + 3-A + 3-B Baseline- und Regressions-Tests
  *
- * Abgedeckte Pfade (Tasks 2.3a, 2.3b, 2.3d, 2.3e, 3-A.1, 3-A.2, 3-A.3):
+ * Abgedeckte Pfade (Tasks 2.3a, 2.3b, 2.3d, 2.3e, 3-A.1, 3-A.2, 3-A.3, 3-B):
  *   - loadLocations: Erfolg → Dropdowns befüllt, Spinner weg
  *   - loadLocations: Fehler → Dropdowns disabled, Submit-Button disabled
  *   - filterSiteGroups: Region ausgewählt → nur passende Site-Groups sichtbar
@@ -14,6 +14,7 @@
  *   - performAssetLookup: data.found === true → Felder vorausgefüllt
  *   - performAssetLookup: custom_fields via querySelectorAll (3-A.2)
  *   - loadContacts: querySelectorAll befüllt alle Kontakt-Dropdowns (3-A.3)
+ *   - performAssetLookup: AbortController bricht vorherigen Request ab (3-B)
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
@@ -476,6 +477,83 @@ describe('loadContacts – 3-A.3: querySelectorAll', () => {
       const sel = form.querySelector('#asset_owner')
       expect(sel.options[0].value).toBe('')
       expect(sel.disabled).toBe(false)
+    })
+  })
+})
+
+// ── 3-B: AbortController – Race-Condition-Schutz ─────────────────────────────────
+
+describe('performAssetLookup – 3-B: AbortController', () => {
+  it('ruft fetch mit einem AbortSignal auf', () => {
+    const form = makeAssetLookupForm()
+    // fetch nie auflösen lassen – wir prüfen nur den Aufruf
+    global.fetch = vi.fn().mockReturnValue(new Promise(() => {}))
+
+    C5.performAssetLookup('SRV-0001', form)
+
+    expect(global.fetch).toHaveBeenCalledOnce()
+    const callArg = global.fetch.mock.calls[0][1]
+    expect(callArg).toBeDefined()
+    expect(callArg.signal).toBeInstanceOf(AbortSignal)
+  })
+
+  it('bricht den ersten Request ab wenn ein zweiter gestartet wird', () => {
+    const form = makeAssetLookupForm()
+    let firstSignal = null
+    global.fetch = vi.fn().mockImplementation((_url, opts) => {
+      if (!firstSignal) firstSignal = opts && opts.signal
+      return new Promise(() => {})  // nie auflösen
+    })
+
+    C5.performAssetLookup('SRV-FIRST', form)
+    expect(firstSignal).not.toBeNull()
+    expect(firstSignal.aborted).toBe(false)
+
+    // Zweiter Aufruf soll den ersten abbrechen
+    C5.performAssetLookup('SRV-SECOND', form)
+    expect(firstSignal.aborted).toBe(true)
+  })
+
+  it('führt zwei fetch-Aufrufe aus bei zwei Aufrufen', () => {
+    const form = makeAssetLookupForm()
+    global.fetch = vi.fn().mockReturnValue(new Promise(() => {}))
+
+    C5.performAssetLookup('SRV-FIRST', form)
+    C5.performAssetLookup('SRV-SECOND', form)
+
+    expect(global.fetch).toHaveBeenCalledTimes(2)
+  })
+
+  it('kein Absturz und kein Badge wenn der Request per AbortError abbricht', async () => {
+    const form = makeAssetLookupForm()
+    // Simuliert einen AbortError (wie er von fetch bei Abort geworfen wird)
+    const abortErr = new DOMException('The operation was aborted.', 'AbortError')
+    global.fetch = vi.fn().mockRejectedValue(abortErr)
+
+    C5.performAssetLookup('SRV-0001', form)
+    await vi.waitFor(() => expect(global.fetch).toHaveBeenCalledOnce())
+    await new Promise(r => setTimeout(r, 0))
+
+    // Kein Badge, kein Crash
+    expect(form.querySelector('.netbox-badge')).toBeNull()
+  })
+
+  it('befüllt Felder nur aus dem zweiten Response bei schnell aufeinanderfolgenden Aufrufen', async () => {
+    const form = makeAssetLookupForm(`
+      <div class="field-group"><input id="serial_number" type="text" /></div>
+    `)
+
+    // Erster Aufruf: nie auflösen (wird abgebrochen)
+    // Zweiter Aufruf: gibt Daten zurück
+    global.fetch = vi.fn()
+      .mockReturnValueOnce(new Promise(() => {}))  // erster: ewig pending
+      .mockResolvedValueOnce(makeJsonResponse({ found: true, serial_number: 'SN-SECOND', status: 'active' }))
+
+    C5.performAssetLookup('SRV-FIRST', form)
+    C5.performAssetLookup('SRV-SECOND', form)
+
+    await vi.waitFor(() => {
+      expect(form.querySelector('#serial_number').value).toBe('SN-SECOND')
     })
   })
 })
