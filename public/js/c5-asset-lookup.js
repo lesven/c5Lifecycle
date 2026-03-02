@@ -229,6 +229,46 @@
     inp.value = (opt && opt.getAttribute('data-contact-id')) || '';
   };
 
+  // ── Device Types ──
+
+  C5.loadDeviceTypes = function (form) {
+    var sel = form.querySelector('#device_type');
+    if (!sel) return;
+
+    var eventType = form.getAttribute('data-event') || '';
+    var tag = '';
+    if (eventType.indexOf('rz_') === 0) {
+      tag = 'rz';
+    } else if (eventType.indexOf('admin_') === 0) {
+      tag = 'admin';
+    }
+
+    sel.innerHTML = '<option value="">– Wird geladen … –</option>';
+    sel.disabled = true;
+
+    fetch(C5.apiBase + '/device-types' + (tag ? '?tag=' + encodeURIComponent(tag) : ''))
+      .then(C5.checkAuth)
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.error) {
+          throw new Error(data.error);
+        }
+        sel.innerHTML = '<option value="">– Bitte wählen –</option>';
+        data.forEach(function (dt) {
+          var o = document.createElement('option');
+          o.value = dt.model;
+          o.textContent = dt.model;
+          o.setAttribute('data-device-type-id', String(dt.id));
+          sel.appendChild(o);
+        });
+        sel.disabled = false;
+      })
+      .catch(function () {
+        sel.innerHTML = '<option value="">– Gerätetypen nicht verfügbar –</option>';
+        sel.disabled = false;
+      });
+  };
+
   // ── Asset Lookup ──
 
   C5.performAssetLookup = function (assetId, form) {

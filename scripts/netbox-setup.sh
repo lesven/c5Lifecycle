@@ -157,6 +157,27 @@ nb_post "/dcim/device-roles/" '{
   "vm_role": false
 }' "Device Role: Break-Glass"
 
+# ----- 4. Tags fuer Geraetetyp-Filterung -----
+echo "--- Tags fuer Geraetetyp-Filterung anlegen ---"
+
+nb_post "/extras/tags/" '{
+  "name": "RZ-Hardware",
+  "slug": "rz",
+  "description": "RZ-Geraetetypen (Server, Storage, Switch, Firewall)",
+  "color": "0052cc"
+}' "Tag: rz"
+
+nb_post "/extras/tags/" '{
+  "name": "Admin-Endgeraet",
+  "slug": "admin",
+  "description": "Admin-Endgeraetetypen (Laptop, Jump Host, Break-Glass)",
+  "color": "00875a"
+}' "Tag: admin"
+
+echo ""
+echo "HINWEIS: Geraetetypen in NetBox mit den Tags 'rz' bzw. 'admin' versehen,"
+echo "damit die Dropdown-Filterung im C5-Formular greift (DCIM > Geraetetypen > Bearbeiten)."
+echo "Solange kein Geraetetyp einen Tag hat, zeigt das Dropdown alle Geraetetypen (Fallback)."
 echo ""
 echo "=== Setup abgeschlossen ==="
 echo "Bitte pruefen Sie die Ausgabe auf Fehler."

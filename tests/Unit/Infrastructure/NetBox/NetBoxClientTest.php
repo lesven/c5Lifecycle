@@ -171,6 +171,46 @@ class NetBoxClientTest extends TestCase
         $this->assertNull($result);
     }
 
+    public function testGetDeviceTypesReturnsList(): void
+    {
+        $deviceTypes = [
+            ['id' => 1, 'model' => 'PowerEdge R750', 'manufacturer' => ['id' => 1, 'name' => 'Dell']],
+            ['id' => 2, 'model' => 'ProLiant DL380', 'manufacturer' => ['id' => 2, 'name' => 'HPE']],
+        ];
+        $client = $this->createClient([
+            new MockResponse(json_encode(['results' => $deviceTypes]), ['http_code' => 200]),
+        ]);
+
+        $result = $client->getDeviceTypes('rz', 'req-123');
+        $this->assertCount(2, $result);
+        $this->assertEquals('PowerEdge R750', $result[0]['model']);
+        $this->assertEquals('ProLiant DL380', $result[1]['model']);
+    }
+
+    public function testGetDeviceTypesReturnsEmptyArrayWhenNoResults(): void
+    {
+        $client = $this->createClient([
+            new MockResponse(json_encode(['results' => []]), ['http_code' => 200]),
+        ]);
+
+        $result = $client->getDeviceTypes('admin', 'req-123');
+        $this->assertCount(0, $result);
+    }
+
+    public function testGetDeviceTypesWithEmptyTagOmitsTagParam(): void
+    {
+        $deviceTypes = [
+            ['id' => 3, 'model' => 'ThinkPad X1', 'manufacturer' => ['id' => 3, 'name' => 'Lenovo']],
+        ];
+        $client = $this->createClient([
+            new MockResponse(json_encode(['results' => $deviceTypes]), ['http_code' => 200]),
+        ]);
+
+        $result = $client->getDeviceTypes('', 'req-123');
+        $this->assertCount(1, $result);
+        $this->assertEquals('ThinkPad X1', $result[0]['model']);
+    }
+
     public function testApiErrorThrowsRuntimeException(): void
     {
         $client = $this->createClient([

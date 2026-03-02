@@ -62,6 +62,7 @@
     C5.loadTenants(form);
     C5.loadContacts(form);
     C5.loadLocations(form);
+    C5.loadDeviceTypes(form);
 
     // Cascade: Region → Standortgruppe → Standort
     var regionSel = form.querySelector('#region_id');

@@ -88,6 +88,16 @@ final class NetBoxClient implements NetBoxClientInterface
         return $response['results'] ?? [];
     }
 
+    public function getDeviceTypes(string $tag, string $requestId): array
+    {
+        $params = ['ordering' => 'model', 'limit' => 1000];
+        if ($tag !== '') {
+            $params['tag'] = $tag;
+        }
+        $response = $this->get('/api/dcim/device-types/', $params, $requestId);
+        return $response['results'] ?? [];
+    }
+
     public function findContactAssignment(int $deviceId, int $contactId, int $roleId, string $requestId): ?array
     {
         $params = [

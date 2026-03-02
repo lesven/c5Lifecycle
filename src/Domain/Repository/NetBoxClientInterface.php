@@ -99,4 +99,11 @@ interface NetBoxClientInterface
      * @return array<int, array<string, mixed>>
      */
     public function getSites(string $requestId): array;
+
+    /**
+     * Get device types, optionally filtered by a NetBox tag slug.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getDeviceTypes(string $tag, string $requestId): array;
 }
