@@ -55,6 +55,14 @@
 
   var _locationData = null;
 
+  // Modul-Promise (3-C.1): wird genau einmal aufgelöst sobald loadLocations erfolgreich war.
+  // performAssetLookup wartet auf diesen Promise statt auf form._locationsPromise.
+  var _locationsResolve = null;
+  var _locationsPromise = new Promise(function (resolve) { _locationsResolve = resolve; });
+
+  // WeakMap (3-C.3): speichert den device-types-Promise formspezifisch ohne DOM-Mutation.
+  var _deviceTypesPromises = new WeakMap();
+
   // Hält den AbortController des zuletzt gestarteten Asset-Lookups.
   // Bei einem neuen Aufruf wird der vorherige Request abgebrochen (3-B).
   var _pendingLookupAbort = null;
@@ -80,7 +88,8 @@
     });
     C5.beginLoad(form);
 
-    form._locationsPromise = Promise.all([
+    // Lokale Variable – kein DOM-Property mehr (3-C.4)
+    Promise.all([
       fetch(C5.apiBase + '/locations/regions').then(C5.checkAuth).then(function (r) { return r.json(); }),
       fetch(C5.apiBase + '/locations/site-groups').then(C5.checkAuth).then(function (r) { return r.json(); }),
       fetch(C5.apiBase + '/locations/sites').then(C5.checkAuth).then(function (r) { return r.json(); }),
@@ -114,6 +123,12 @@
 
         C5.filterSiteGroups(form);
         C5.filterSites(form);
+
+        // Modul-Promise auflösen (3-C.1) – performAssetLookup kann jetzt location-Kaskade starten
+        if (_locationsResolve) {
+          _locationsResolve();
+          _locationsResolve = null;
+        }
       })
       .catch(function () {
         if (loadingHint) loadingHint.classList.add('hidden');
@@ -353,7 +368,7 @@
         C5.endLoad(form);
       });
 
-    form._deviceTypesPromise = promise;
+    _deviceTypesPromises.set(form, promise);  // WeakMap statt form._deviceTypesPromise (3-C.3)
   };
 
   // ── Asset Lookup ──
@@ -403,7 +418,7 @@
 
         // Gerätetyp erst setzen, nachdem das Dropdown vollständig geladen ist
         if (data['device_type']) {
-          (form._deviceTypesPromise || Promise.resolve()).then(function () {
+          (_deviceTypesPromises.get(form) || Promise.resolve()).then(function () {  // WeakMap statt DOM-Property (3-C.3)
             var el = form.querySelector(NETBOX_FIELD_MAP['device_type']);
             if (el && !el.value) {
               setSelectValue(el, data['device_type']);
@@ -415,7 +430,7 @@
 
         // Region, Standortgruppe und Standort kaskadiert setzen, sobald Standortdaten geladen sind
         if ((data.region_id || data.site_group_id || data.site_id) && form.querySelector('#region_id')) {
-          (form._locationsPromise || Promise.resolve()).then(function () {
+          _locationsPromise.then(function () {  // Modul-Promise statt DOM-Property (3-C.2)
             // 1. Region setzen
             if (data.region_id) {
               var regionSel = form.querySelector('#region_id');

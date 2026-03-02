@@ -55,7 +55,10 @@ function mockFetchForLocations(regions = REGIONS, siteGroups = SITE_GROUPS, site
 async function loadLocations(form) {
   mockFetchForLocations()
   C5.loadLocations(form)
-  await form._locationsPromise
+  // Wartet auf beobachtbares Ergebnis statt form._locationsPromise (3-C.4)
+  await vi.waitFor(() => {
+    expect(form.querySelector('#region_id').options.length).toBeGreaterThan(1)
+  })
 }
 
 afterEach(() => {
@@ -101,8 +104,7 @@ describe('loadLocations – Fehler', () => {
     global.fetch = vi.fn().mockRejectedValue(new Error('Netz weg'))
     const form = makeLocationForm()
     C5.loadLocations(form)
-    // Wir können form._locationsPromise nicht verwenden (wird nicht gesetzt bei Fehler)
-    // also kurz warten bis die rejected Promise verarbeitet ist
+    // form._locationsPromise existiert nicht mehr (3-C.4) – über Fehler-Hint warten
     await vi.waitFor(() => {
       expect(form.querySelector('#location-error').classList.contains('hidden')).toBe(false)
     })
@@ -355,7 +357,9 @@ describe('filterSites – 3-A.1: keine unerreichbare Doppelbedingung', () => {
       .mockResolvedValueOnce(makeJsonResponse(SITE_GROUPS))
       .mockResolvedValueOnce(makeJsonResponse(SITES))
     C5.loadLocations(form)
-    await form._locationsPromise
+    await vi.waitFor(() => {
+      expect(form.querySelector('#region_id').options.length).toBeGreaterThan(1)
+    })
     form.querySelector('#region_id').value = '1'
     C5.filterSiteGroups(form)
   })
