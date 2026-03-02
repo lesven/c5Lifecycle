@@ -57,6 +57,7 @@ create-admin: ## Admin-Benutzer interaktiv anlegen
 
 test: ## PHPUnit-Tests ausfuehren
 	$(PHP) vendor/bin/phpunit --colors=always
+	make test-js
 
 test-unit: ## Nur Unit-Tests
 	$(PHP) vendor/bin/phpunit tests/Unit --colors=always
