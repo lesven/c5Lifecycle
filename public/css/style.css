@@ -435,6 +435,30 @@ input:focus, select:focus, textarea:focus {
   border: 1px solid #e6c619;
 }
 
+/* ── Field-level loading spinner ── */
+@keyframes c5-spin {
+  to { transform: rotate(360deg); }
+}
+.field-spinner {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-xs);
+  font-size: var(--fs-sm);
+  color: var(--c-text-secondary);
+  margin-top: var(--s-xs);
+}
+.field-spinner::before {
+  content: '';
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--c-border);
+  border-top-color: var(--c-primary);
+  border-radius: 50%;
+  animation: c5-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
 /* Location loading / error hints */
 .location-loading-hint .loading-text {
   font-size: var(--fs-sm);

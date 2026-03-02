@@ -33,6 +33,46 @@
       .replace(/'/g, '&#39;');
   };
 
+  // ── Spinner helpers ──
+  // Shows a spinner inside the .field-group of the given element.
+  C5.showSpinner = function (el, label) {
+    if (!el) return;
+    var group = el.closest('.field-group');
+    if (!group) return;
+    C5.hideSpinner(el);
+    var span = document.createElement('span');
+    span.className = 'field-spinner';
+    span.setAttribute('role', 'status');
+    span.setAttribute('aria-label', label || 'Wird geladen');
+    span.textContent = label || 'Wird geladen …';
+    group.appendChild(span);
+  };
+
+  // Removes the spinner from the .field-group of the given element.
+  C5.hideSpinner = function (el) {
+    if (!el) return;
+    var group = el.closest('.field-group');
+    if (!group) return;
+    var existing = group.querySelector('.field-spinner');
+    if (existing) existing.remove();
+  };
+
+  // ── Submit-button load tracking ──
+  // Disables the submit button while at least one async load is pending.
+  C5.beginLoad = function (form) {
+    form._pendingLoads = (form._pendingLoads || 0) + 1;
+    var btn = form.querySelector('.btn-submit');
+    if (btn) btn.disabled = true;
+  };
+
+  C5.endLoad = function (form) {
+    form._pendingLoads = Math.max(0, (form._pendingLoads || 0) - 1);
+    if (form._pendingLoads === 0) {
+      var btn = form.querySelector('.btn-submit');
+      if (btn) btn.disabled = false;
+    }
+  };
+
   // ── Init ──
   document.addEventListener('DOMContentLoaded', function () {
     var form = document.getElementById('evidence-form');

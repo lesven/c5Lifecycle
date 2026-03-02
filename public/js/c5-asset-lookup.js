@@ -38,13 +38,28 @@
 
     if (loadingHint) loadingHint.classList.remove('hidden');
 
-    Promise.all([
+    var locationSelectors = ['#region_id', '#site_group_id', '#site_id'];
+    locationSelectors.forEach(function (s) {
+      var el = form.querySelector(s);
+      if (el) {
+        el.disabled = true;
+        C5.showSpinner(el);
+      }
+    });
+    C5.beginLoad(form);
+
+    form._locationsPromise = Promise.all([
       fetch(C5.apiBase + '/locations/regions').then(C5.checkAuth).then(function (r) { return r.json(); }),
       fetch(C5.apiBase + '/locations/site-groups').then(C5.checkAuth).then(function (r) { return r.json(); }),
       fetch(C5.apiBase + '/locations/sites').then(C5.checkAuth).then(function (r) { return r.json(); }),
     ])
       .then(function (results) {
         if (loadingHint) loadingHint.classList.add('hidden');
+        locationSelectors.forEach(function (s) {
+          var el = form.querySelector(s);
+          if (el) { el.disabled = false; C5.hideSpinner(el); }
+        });
+        C5.endLoad(form);
 
         if (!Array.isArray(results[0]) || !Array.isArray(results[1]) || !Array.isArray(results[2])) {
           throw new Error('Ungültige Antwort von NetBox');
@@ -70,10 +85,15 @@
       })
       .catch(function () {
         if (loadingHint) loadingHint.classList.add('hidden');
+        locationSelectors.forEach(function (s) {
+          var el = form.querySelector(s);
+          if (el) { C5.hideSpinner(el); }
+        });
+        C5.endLoad(form);
         if (errorHint) errorHint.classList.remove('hidden');
         if (submitBtn) submitBtn.disabled = true;
-        ['#region_id', '#site_group_id', '#site_id'].forEach(function (sel) {
-          var el = form.querySelector(sel);
+        locationSelectors.forEach(function (s) {
+          var el = form.querySelector(s);
           if (el) {
             el.innerHTML = '<option value="">– Nicht verfügbar –</option>';
             el.disabled = true;
@@ -171,6 +191,9 @@
   C5.loadTenants = function (form) {
     var sel = form.querySelector('#tenant_id');
     if (!sel) return;
+    sel.disabled = true;
+    C5.showSpinner(sel);
+    C5.beginLoad(form);
     fetch(C5.apiBase + '/tenants')
       .then(C5.checkAuth)
       .then(function (r) { return r.json(); })
@@ -183,9 +206,15 @@
           sel.appendChild(o);
         });
         C5.syncTenantName(form);
+        sel.disabled = false;
+        C5.hideSpinner(sel);
+        C5.endLoad(form);
       })
       .catch(function () {
         sel.innerHTML = '<option value="">– Nicht verfügbar –</option>';
+        sel.disabled = false;
+        C5.hideSpinner(sel);
+        C5.endLoad(form);
       });
   };
 
@@ -202,6 +231,9 @@
   C5.loadContacts = function (form) {
     var sel = form.querySelector('#asset_owner, #owner_approval, #owner');
     if (!sel) return;
+    sel.disabled = true;
+    C5.showSpinner(sel);
+    C5.beginLoad(form);
     fetch(C5.apiBase + '/contacts')
       .then(C5.checkAuth)
       .then(function (r) { return r.json(); })
@@ -215,9 +247,15 @@
           sel.appendChild(o);
         });
         C5.syncContactId(form);
+        sel.disabled = false;
+        C5.hideSpinner(sel);
+        C5.endLoad(form);
       })
       .catch(function () {
         sel.innerHTML = '<option value="">– Nicht verfügbar –</option>';
+        sel.disabled = false;
+        C5.hideSpinner(sel);
+        C5.endLoad(form);
       });
   };
 
@@ -245,6 +283,8 @@
 
     sel.innerHTML = '<option value="">– Wird geladen … –</option>';
     sel.disabled = true;
+    C5.showSpinner(sel);
+    C5.beginLoad(form);
 
     var promise = fetch(C5.apiBase + '/device-types' + (tag ? '?tag=' + encodeURIComponent(tag) : ''))
       .then(C5.checkAuth)
@@ -262,10 +302,14 @@
           sel.appendChild(o);
         });
         sel.disabled = false;
+        C5.hideSpinner(sel);
+        C5.endLoad(form);
       })
       .catch(function () {
         sel.innerHTML = '<option value="">– Gerätetypen nicht verfügbar –</option>';
         sel.disabled = false;
+        C5.hideSpinner(sel);
+        C5.endLoad(form);
       });
 
     form._deviceTypesPromise = promise;
@@ -279,14 +323,23 @@
     var existingBadge = form.querySelector('.netbox-badge');
     if (existingBadge) existingBadge.remove();
 
+    var assetField = form.querySelector('[name="asset_id"]');
+    if (assetField) {
+      assetField.readOnly = true;
+      C5.showSpinner(assetField, 'Asset wird gesucht …');
+    }
+
     fetch(C5.apiBase + '/asset-lookup?asset_id=' + encodeURIComponent(assetId))
       .then(C5.checkAuth)
       .then(function (res) { return res.json(); })
       .then(function (data) {
         if (!data.found) return;
 
+        // Einfache Felder direkt setzen (Standortfelder werden kaskadiert nach dem Location-Load gesetzt)
+        var LOCATION_KEYS = { region_id: true, site_group_id: true, site_id: true };
         Object.keys(NETBOX_FIELD_MAP).forEach(function (key) {
           if (key === 'device_type') return; // wird nach dem Laden der Gerätetypen gesetzt
+          if (LOCATION_KEYS[key]) return;    // wird kaskadiert nach _locationsPromise gesetzt
           var el = form.querySelector(NETBOX_FIELD_MAP[key]);
           if (el && !el.value && data[key]) {
             if (el.tagName === 'SELECT') {
@@ -309,11 +362,29 @@
 
         C5.syncTenantName(form);
 
-        if (_locationData && form.querySelector('#region_id')) {
-          C5.filterSiteGroups(form);
-          C5.filterSites(form);
+        // Region, Standortgruppe und Standort kaskadiert setzen, sobald Standortdaten geladen sind
+        if ((data.region_id || data.site_group_id || data.site_id) && form.querySelector('#region_id')) {
+          (form._locationsPromise || Promise.resolve()).then(function () {
+            // 1. Region setzen
+            if (data.region_id) {
+              var regionSel = form.querySelector('#region_id');
+              if (regionSel && !regionSel.value) setSelectValue(regionSel, data.region_id);
+            }
+            // 2. Standortgruppe-Dropdown auf Region filtern, dann Wert setzen
+            C5.filterSiteGroups(form);
+            if (data.site_group_id) {
+              var groupSel = form.querySelector('#site_group_id');
+              if (groupSel && !groupSel.value) setSelectValue(groupSel, data.site_group_id);
+            }
+            // 3. Standort-Dropdown auf Gruppe filtern, dann Wert setzen
+            C5.filterSites(form);
+            if (data.site_id) {
+              var siteSel = form.querySelector('#site_id');
+              if (siteSel && !siteSel.value) setSelectValue(siteSel, data.site_id);
+            }
+            syncLocationNames(form);
+          });
         }
-        syncLocationNames(form);
 
         if (data.custom_fields) {
           Object.keys(NETBOX_CUSTOM_FIELD_MAP).forEach(function (key) {
@@ -331,7 +402,13 @@
 
         showNetBoxBadge(form, data.status);
       })
-      .catch(function () { /* silently ignore lookup errors */ });
+      .catch(function () { /* silently ignore lookup errors */ })
+      .finally(function () {
+        if (assetField) {
+          assetField.readOnly = false;
+          C5.hideSpinner(assetField);
+        }
+      });
   };
 
   function setSelectValue(selectEl, value) {
