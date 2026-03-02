@@ -1,0 +1,16 @@
+{
+  "name": "c5-lifecycle-js-tests",
+  "description": "Dev-only: Vitest JS-Tests für public/js/ (kein Browser-Build, kein Produktions-Toolchain)",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:js": "vitest run",
+    "test:js:watch": "vitest",
+    "test:js:coverage": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^2.1.0",
+    "jsdom": "^25.0.0",
+    "vitest": "^2.1.0"
+  }
+}

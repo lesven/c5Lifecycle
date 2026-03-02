@@ -1,4 +1,4 @@
-.PHONY: help setup build up down restart logs status clean test stan lint lint-fix coverage migrate deploy create-admin
+.PHONY: help setup build up down restart logs status clean test test-unit test-integration test-js stan lint lint-fix coverage migrate deploy create-admin
 
 COMPOSE = docker compose
 # compute absolute path once (avoid tricky escaping of $$(pwd))
@@ -63,6 +63,12 @@ test-unit: ## Nur Unit-Tests
 
 test-integration: ## Nur Integration-Tests
 	$(PHP) vendor/bin/phpunit tests/Integration --colors=always
+
+test-js: ## JavaScript-Tests (Vitest + jsdom), setzt node_modules voraus
+	node_modules/.bin/vitest run
+
+test-js-coverage: ## JavaScript-Tests mit Coverage-Report
+	node_modules/.bin/vitest run --coverage
 
 stan: ## PHPStan statische Analyse (Level 6)
 	$(PHP) vendor/bin/phpstan analyse --memory-limit=256M
