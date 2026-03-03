@@ -11,6 +11,7 @@ fixture('E2E rz_retire').page(`${baseUrl}/forms/rz-retire`);
 
 test('submits rz_retire happy path when data handling is not relevant', async (t) => {
   await t.useRole(authenticatedUserRole);
+  await t.navigateTo(`${baseUrl}/forms/rz-retire`);
 
   await t
     .typeText('#asset_id', fixtureData.happyPath.asset_id, { replace: true })
@@ -29,6 +30,7 @@ test('submits rz_retire happy path when data handling is not relevant', async (t
 
 test('requires data_handling_ref when data_handling is not "Nicht relevant"', async (t) => {
   await t.useRole(authenticatedUserRole);
+  await t.navigateTo(`${baseUrl}/forms/rz-retire`);
 
   await t
     .typeText('#asset_id', fixtureData.negativeMissingDataHandlingRef.asset_id, { replace: true })

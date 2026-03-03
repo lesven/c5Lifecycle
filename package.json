@@ -7,8 +7,8 @@
     "test:js": "vitest run",
     "test:js:watch": "vitest",
     "test:js:coverage": "vitest run --coverage",
-    "test:e2e": "testcafe chrome:headless tests/e2e --config-file .testcaferc.json",
-    "test:e2e:headed": "testcafe chrome tests/e2e --config-file .testcaferc.json"
+    "test:e2e": "testcafe chromium:headless tests/e2e --config-file .testcaferc.json",
+    "test:e2e:headed": "testcafe chromium tests/e2e --config-file .testcaferc.json"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^2.1.0",

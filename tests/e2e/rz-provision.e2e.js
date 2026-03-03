@@ -11,6 +11,7 @@ fixture('E2E rz_provision').page(`${baseUrl}/forms/rz-provision`);
 
 test('submits rz_provision successfully with integration-backed fields', async (t) => {
   await t.useRole(authenticatedUserRole);
+  await t.navigateTo(`${baseUrl}/forms/rz-provision`);
 
   await t
     .typeText('#asset_id', fixtureData.asset_id, { replace: true })
