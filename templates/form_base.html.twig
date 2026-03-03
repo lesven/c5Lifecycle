@@ -39,11 +39,14 @@
     6. app.js             – C5.apiBase, C5.checkAuth, C5.show/hideSpinner,
                             C5.begin/endLoad; DOMContentLoaded-Init
   ACHTUNG: Reihenfolge nicht ändern ohne c5-asset-lookup.js-Header zu aktualisieren!
+
+  Im DEV-Modus hängen wir einen Cache-Buster an, damit Browser-JS nicht gecached wird.
 #}
-<script src="{{ asset('js/c5-labels.js') }}"></script>
-<script src="{{ asset('js/c5-validation.js') }}"></script>
-<script src="{{ asset('js/c5-asset-lookup.js') }}"></script>
-<script src="{{ asset('js/c5-submit.js') }}"></script>
-<script src="{{ asset('js/c5-summary.js') }}"></script>
-<script src="{{ asset('js/app.js') }}"></script>
+{% set js_cache_bust = app.environment == 'dev' ? ('?v=' ~ 'now'|date('U')) : '' %}
+<script src="{{ asset('js/c5-labels.js') ~ js_cache_bust }}"></script>
+<script src="{{ asset('js/c5-validation.js') ~ js_cache_bust }}"></script>
+<script src="{{ asset('js/c5-asset-lookup.js') ~ js_cache_bust }}"></script>
+<script src="{{ asset('js/c5-submit.js') ~ js_cache_bust }}"></script>
+<script src="{{ asset('js/c5-summary.js') ~ js_cache_bust }}"></script>
+<script src="{{ asset('js/app.js') ~ js_cache_bust }}"></script>
 {% endblock %}
