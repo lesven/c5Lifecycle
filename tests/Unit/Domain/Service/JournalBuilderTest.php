@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Domain\Service;
 
+use App\Domain\Service\FieldLabelRegistry;
 use App\Domain\Service\JournalBuilder;
 use App\Domain\ValueObject\EventDefinition;
 use PHPUnit\Framework\TestCase;
@@ -15,7 +16,7 @@ class JournalBuilderTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->builder = new JournalBuilder();
+        $this->builder = new JournalBuilder(new FieldLabelRegistry());
         $this->eventMeta = new EventDefinition(
             track: 'rz_assets',
             label: 'Inbetriebnahme RZ-Asset',
@@ -148,5 +149,86 @@ class JournalBuilderTest extends TestCase
         $data = ['asset_id' => 'SRV-001'];
         $result = $this->builder->build('rz_provision', $this->eventMeta, $data, 'req-123', 'test@example.com');
         $this->assertStringNotContainsString('Re-Provision', $result);
+    }
+
+    public function testBuildRzOwnerConfirmIncludesCheckboxConfirmations(): void
+    {
+        $ownerConfirmMeta = new EventDefinition(
+            track: 'rz_assets',
+            label: 'Owner-Betriebsbestätigung',
+            category: 'RZ',
+            subjectType: 'Betriebsbestätigung',
+            requiredFields: [],
+        );
+        $data = [
+            'asset_id' => 'SRV-001',
+            'owner' => 'Team Infrastructure',
+            'purpose_bound' => true,
+            'admin_access_controlled' => true,
+            'maintenance_window_ok' => false,
+        ];
+        $result = $this->builder->build('rz_owner_confirm', $ownerConfirmMeta, $data, 'req-999', 'test@example.com');
+        
+        // Should include confirmations section
+        $this->assertStringContainsString('Bestätigungen:', $result);
+        $this->assertStringContainsString('Zweckgebundener Betrieb: Ja', $result);
+        $this->assertStringContainsString('Admin-Zugriffe kontrolliert: Ja', $result);
+        $this->assertStringContainsString('Wartungsfenster okay: Nein', $result);
+    }
+
+    public function testBuildRzOwnerConfirmAllCheckboxesFalse(): void
+    {
+        $ownerConfirmMeta = new EventDefinition(
+            track: 'rz_assets',
+            label: 'Owner-Betriebsbestätigung',
+            category: 'RZ',
+            subjectType: 'Betriebsbestätigung',
+            requiredFields: [],
+        );
+        $data = [
+            'asset_id' => 'SRV-002',
+            'owner' => 'Team X',
+            'purpose_bound' => false,
+            'admin_access_controlled' => false,
+            'maintenance_window_ok' => false,
+        ];
+        $result = $this->builder->build('rz_owner_confirm', $ownerConfirmMeta, $data, 'req-888', 'test@example.com');
+        
+        $this->assertStringContainsString('Zweckgebundener Betrieb: Nein', $result);
+        $this->assertStringContainsString('Admin-Zugriffe kontrolliert: Nein', $result);
+        $this->assertStringContainsString('Wartungsfenster okay: Nein', $result);
+    }
+
+    public function testBuildRzOwnerConfirmMissingCheckboxesTreatedAsNein(): void
+    {
+        $ownerConfirmMeta = new EventDefinition(
+            track: 'rz_assets',
+            label: 'Owner-Betriebsbestätigung',
+            category: 'RZ',
+            subjectType: 'Betriebsbestätigung',
+            requiredFields: [],
+        );
+        $data = [
+            'asset_id' => 'SRV-003',
+            'owner' => 'Team Y',
+            // Missing checkbox fields
+        ];
+        $result = $this->builder->build('rz_owner_confirm', $ownerConfirmMeta, $data, 'req-777', 'test@example.com');
+        
+        // All should be Nein if missing
+        $this->assertStringContainsString('Zweckgebundener Betrieb: Nein', $result);
+        $this->assertStringContainsString('Admin-Zugriffe kontrolliert: Nein', $result);
+        $this->assertStringContainsString('Wartungsfenster okay: Nein', $result);
+    }
+
+    public function testBuildNonOwnerConfirmEventDoesNotIncludeCheckboxes(): void
+    {
+        $data = [
+            'asset_id' => 'SRV-004',
+            'purpose_bound' => true,
+            'admin_access_controlled' => true,
+        ];
+        $result = $this->builder->build('rz_provision', $this->eventMeta, $data, 'req-666', 'test@example.com');
+        $this->assertStringNotContainsString('Bestätigungen:', $result);
     }
 }

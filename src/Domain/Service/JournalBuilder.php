@@ -8,6 +8,11 @@ use App\Domain\ValueObject\EventDefinition;
 
 final class JournalBuilder
 {
+    public function __construct(
+        private readonly FieldLabelRegistry $fieldLabelRegistry,
+    ) {
+    }
+
     public function build(string $eventType, EventDefinition $eventMeta, array $data, string $requestId, string $evidenceTo, ?string $submittedBy = null, array $context = []): string
     {
         $label = $eventMeta->label;
@@ -50,6 +55,18 @@ final class JournalBuilder
             }
             if (!empty($data['data_handling_ref'])) {
                 $lines[] = "Nachweisreferenz: {$data['data_handling_ref']}";
+            }
+        }
+
+        // Confirmation checkboxes for owner confirmation events
+        if ($eventType === 'rz_owner_confirm') {
+            $checkboxFields = ['purpose_bound', 'admin_access_controlled', 'maintenance_window_ok'];
+            $lines[] = '';
+            $lines[] = 'Bestätigungen:';
+            foreach ($checkboxFields as $field) {
+                $label = $this->fieldLabelRegistry->get($field);
+                $value = isset($data[$field]) && $data[$field] ? 'Ja' : 'Nein';
+                $lines[] = "  - {$label}: {$value}";
             }
         }
 
