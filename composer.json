@@ -10,6 +10,7 @@
         "doctrine/doctrine-migrations-bundle": "^3.3",
         "doctrine/orm": "^3.3",
         "nelmio/cors-bundle": "^2.5",
+        "phpoffice/phpspreadsheet": "^5.5",
         "symfony/asset": "^8.0",
         "symfony/dotenv": "^7.2",
         "symfony/framework-bundle": "^7.2",

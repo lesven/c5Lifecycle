@@ -155,4 +155,14 @@ final readonly class EvidenceConfig implements EvidenceConfigInterface
     {
         return $this->get('jira.issue_type', 'Task');
     }
+
+    public function getAppBaseUrl(): string
+    {
+        return rtrim((string) $this->get('app.base_url', ''), '/');
+    }
+
+    public function getNetBoxBaseUrl(): string
+    {
+        return rtrim((string) $this->get('netbox.base_url', ''), '/');
+    }
 }

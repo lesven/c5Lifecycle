@@ -29,6 +29,12 @@ final class NetBoxClient implements NetBoxClientInterface
         return count($results) > 0 ? $results[0] : null;
     }
 
+    public function findDeviceById(int $deviceId, string $requestId): ?array
+    {
+        $response = $this->get("/api/dcim/devices/{$deviceId}/", [], $requestId);
+        return $response;
+    }
+
     public function updateDevice(int $deviceId, array $data, string $requestId): ?array
     {
         return $this->patch("/api/dcim/devices/{$deviceId}/", $data, $requestId);
@@ -96,6 +102,19 @@ final class NetBoxClient implements NetBoxClientInterface
             $params['tag'] = $tag;
         }
         $response = $this->get('/api/dcim/device-types/', $params, $requestId);
+        return $response['results'] ?? [];
+    }
+
+    public function getOwnerContactAssignments(int $roleId, string $requestId): array
+    {
+        $params = [
+            'object_type' => 'dcim.device',
+            'limit' => 1000,
+        ];
+        if ($roleId > 0) {
+            $params['role_id'] = (string) $roleId;
+        }
+        $response = $this->get('/api/tenancy/contact-assignments/', $params, $requestId);
         return $response['results'] ?? [];
     }
 

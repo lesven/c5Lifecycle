@@ -19,6 +19,13 @@ interface NetBoxClientInterface
     public function findDeviceByAssetTag(string $assetTag, string $requestId): ?array;
 
     /**
+     * Find a device by its NetBox ID.
+     *
+     * @return array<string, mixed>|null Device data or null if not found
+     */
+    public function findDeviceById(int $deviceId, string $requestId): ?array;
+
+    /**
      * Update a device by its ID.
      *
      * @param array<string, mixed> $data
@@ -61,9 +68,20 @@ interface NetBoxClientInterface
     /**
      * Get all contacts.
      *
+     * Each entry contains at least: id, name, email (string, may be empty).
+     *
      * @return array<int, array<string, mixed>>
      */
     public function getContacts(string $requestId): array;
+
+    /**
+     * Get all contact assignments with the given role for dcim.device objects.
+     *
+     * Each entry contains: contact (id, name, email), object (id, name, asset_tag, url).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getOwnerContactAssignments(int $roleId, string $requestId): array;
 
     /**
      * Find an existing contact assignment for a device.

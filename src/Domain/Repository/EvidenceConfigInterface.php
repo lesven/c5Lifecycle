@@ -47,4 +47,10 @@ interface EvidenceConfigInterface
     public function getJiraProjectKey(): string;
 
     public function getJiraIssueType(): string;
+
+    /** Base URL of this application, e.g. https://c5.example.com (no trailing slash) */
+    public function getAppBaseUrl(): string;
+
+    /** Base URL of the NetBox instance, e.g. https://netbox.example.com (no trailing slash) */
+    public function getNetBoxBaseUrl(): string;
 }
