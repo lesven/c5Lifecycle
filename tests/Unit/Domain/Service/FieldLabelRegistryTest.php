@@ -72,7 +72,7 @@ class FieldLabelRegistryTest extends TestCase
     {
         // These fields were removed from FieldLabelRegistry
         $labels = $this->registry->all();
-        $this->assertFalse(isset($labels['change_process']), "change_process should be removed from registry");
-        $this->assertFalse(isset($labels['lifecycle_managed']), "lifecycle_managed should be removed from registry");
+        $this->assertFalse(isset($labels['change_process']), 'change_process should be removed from registry');
+        $this->assertFalse(isset($labels['lifecycle_managed']), 'lifecycle_managed should be removed from registry');
     }
 }

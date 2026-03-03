@@ -146,6 +146,125 @@ final class NetBoxClient implements NetBoxClientInterface
         return $this->post('/api/tenancy/contact-assignments/', $data, $requestId);
     }
 
+    /**
+     * Retrieve human-readable name for a contact by ID.
+     * Returns null if contact not found, with fallback to ID string.
+     * @return string|null The contact name or null if not found
+     */
+    public function getContactNameById(int $contactId, string $requestId): ?string
+    {
+        try {
+            $response = $this->get("/api/tenancy/contacts/{$contactId}/", [], $requestId);
+            if ($response === null) {
+                $this->netboxLogger->warning('Contact not found', ['contact_id' => $contactId, 'request_id' => $requestId]);
+                return null;
+            }
+            return $response['name'] ?? null;
+        } catch (RuntimeException $e) {
+            $this->netboxLogger->warning('Error fetching contact name', ['contact_id' => $contactId, 'error' => $e->getMessage(), 'request_id' => $requestId]);
+            return null;
+        }
+    }
+
+    /**
+     * Retrieve human-readable name for a device type by ID.
+     * Returns null if device type not found.
+     */
+    public function getDeviceTypeNameById(int $deviceTypeId, string $requestId): ?string
+    {
+        try {
+            $response = $this->get("/api/dcim/device-types/{$deviceTypeId}/", [], $requestId);
+            if ($response === null) {
+                $this->netboxLogger->warning('Device type not found', ['device_type_id' => $deviceTypeId, 'request_id' => $requestId]);
+                return null;
+            }
+            // NetBox device types return 'model', sometimes with 'manufacturer' nested
+            $model = $response['model'] ?? null;
+            if ($model === null) {
+                return null;
+            }
+            if (!empty($response['manufacturer']['name'])) {
+                return $response['manufacturer']['name'] . ' ' . $model;
+            }
+            return $model;
+        } catch (RuntimeException $e) {
+            $this->netboxLogger->warning('Error fetching device type name', ['device_type_id' => $deviceTypeId, 'error' => $e->getMessage(), 'request_id' => $requestId]);
+            return null;
+        }
+    }
+
+    /**
+     * Retrieve human-readable name for a site by ID.
+     */
+    public function getSiteNameById(int $siteId, string $requestId): ?string
+    {
+        try {
+            $response = $this->get("/api/dcim/sites/{$siteId}/", [], $requestId);
+            if ($response === null) {
+                $this->netboxLogger->warning('Site not found', ['site_id' => $siteId, 'request_id' => $requestId]);
+                return null;
+            }
+            return $response['name'] ?? null;
+        } catch (RuntimeException $e) {
+            $this->netboxLogger->warning('Error fetching site name', ['site_id' => $siteId, 'error' => $e->getMessage(), 'request_id' => $requestId]);
+            return null;
+        }
+    }
+
+    /**
+     * Retrieve human-readable name for a site group by ID.
+     */
+    public function getSiteGroupNameById(int $siteGroupId, string $requestId): ?string
+    {
+        try {
+            $response = $this->get("/api/dcim/site-groups/{$siteGroupId}/", [], $requestId);
+            if ($response === null) {
+                $this->netboxLogger->warning('Site group not found', ['site_group_id' => $siteGroupId, 'request_id' => $requestId]);
+                return null;
+            }
+            return $response['name'] ?? null;
+        } catch (RuntimeException $e) {
+            $this->netboxLogger->warning('Error fetching site group name', ['site_group_id' => $siteGroupId, 'error' => $e->getMessage(), 'request_id' => $requestId]);
+            return null;
+        }
+    }
+
+    /**
+     * Retrieve human-readable name for a region by ID.
+     */
+    public function getRegionNameById(int $regionId, string $requestId): ?string
+    {
+        try {
+            $response = $this->get("/api/dcim/regions/{$regionId}/", [], $requestId);
+            if ($response === null) {
+                $this->netboxLogger->warning('Region not found', ['region_id' => $regionId, 'request_id' => $requestId]);
+                return null;
+            }
+            return $response['name'] ?? null;
+        } catch (RuntimeException $e) {
+            $this->netboxLogger->warning('Error fetching region name', ['region_id' => $regionId, 'error' => $e->getMessage(), 'request_id' => $requestId]);
+            return null;
+        }
+    }
+
+    /**
+     * Retrieve human-readable name for a tenant by ID.
+     */
+    public function getTenantNameById(int $tenantId, string $requestId): ?string
+    {
+        try {
+            $response = $this->get("/api/tenancy/tenants/{$tenantId}/", [], $requestId);
+            if ($response === null) {
+                $this->netboxLogger->warning('Tenant not found', ['tenant_id' => $tenantId, 'request_id' => $requestId]);
+                return null;
+            }
+            return $response['name'] ?? null;
+        } catch (RuntimeException $e) {
+            $this->netboxLogger->warning('Error fetching tenant name', ['tenant_id' => $tenantId, 'error' => $e->getMessage(), 'request_id' => $requestId]);
+            return null;
+        }
+    }
+
     private function get(string $path, array $params, string $requestId): ?array
     {
         $this->netboxLogger->info('NetBox API GET', ['request_id' => $requestId, 'path' => $path]);

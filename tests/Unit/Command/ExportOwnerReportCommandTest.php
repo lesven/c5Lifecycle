@@ -148,9 +148,9 @@ class ExportOwnerReportCommandTest extends TestCase
         $sheet = $this->command->buildSpreadsheet($rows)->getActiveSheet();
 
         // Zeile 1: Header
-        $this->assertSame('Owner Name',    $sheet->getCell('A1')->getValue());
-        $this->assertSame('E-Mail',        $sheet->getCell('B1')->getValue());
-        $this->assertSame('NetBox Link',   $sheet->getCell('C1')->getValue());
+        $this->assertSame('Owner Name', $sheet->getCell('A1')->getValue());
+        $this->assertSame('E-Mail', $sheet->getCell('B1')->getValue());
+        $this->assertSame('NetBox Link', $sheet->getCell('C1')->getValue());
         $this->assertSame('Formular Link', $sheet->getCell('D1')->getValue());
 
         // Zeile 2: Daten

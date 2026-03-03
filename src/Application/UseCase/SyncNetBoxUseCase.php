@@ -146,7 +146,22 @@ class SyncNetBoxUseCase
 
         // Journal entry
         $kind = $this->statusMapper->getJournalKind($eventType);
-        $comments = $this->journalBuilder->build($eventType, $submission->eventMeta, $data, $requestId, $evidenceTo, $submission->submittedBy, ['is_re_provision' => !$isNewDevice]);
+
+        // Load NetBox names for form field summary (for rz_provision and rz_retire)
+        $netboxLookups = [];
+        if (in_array($eventType, ['rz_provision', 'rz_retire'])) {
+            $netboxLookups = $this->loadFormFieldsNetBoxLookups($data, $requestId);
+        }
+
+        $comments = $this->journalBuilder->build(
+            $eventType,
+            $submission->eventMeta,
+            $data,
+            $requestId,
+            $evidenceTo,
+            $submission->submittedBy,
+            ['is_re_provision' => !$isNewDevice, 'netbox_lookups' => $netboxLookups]
+        );
 
         $this->netBoxClient->createJournalEntry([
             'assigned_object_type' => 'dcim.device',
@@ -238,5 +253,65 @@ class SyncNetBoxUseCase
             return (int) $m[1];
         }
         return 0;
+    }
+
+    /**
+     * Load NetBox names for form field IDs to be used in journal comments summary.
+     * Returns an associative array where keys are form field names (e.g., 'contact_id')
+     * and values are human-readable names from NetBox (with fallback to ID if not found).
+     *
+     * Supports lookups for: region_id, site_group_id, site_id, contact_id, tenant_id, device_type_id
+     *
+     * @param array $data Form submission data
+     * @param string $requestId Request ID for logging
+     * @return array<string, string|int> NetBox lookup results
+     */
+    private function loadFormFieldsNetBoxLookups(array $data, string $requestId): array
+    {
+        $lookups = [];
+
+        // Region
+        if (!empty($data['region_id'])) {
+            $regionId = (int) $data['region_id'];
+            $name = $this->netBoxClient->getRegionNameById($regionId, $requestId);
+            $lookups['region_id'] = $name ?? $regionId;
+        }
+
+        // Site Group
+        if (!empty($data['site_group_id'])) {
+            $siteGroupId = (int) $data['site_group_id'];
+            $name = $this->netBoxClient->getSiteGroupNameById($siteGroupId, $requestId);
+            $lookups['site_group_id'] = $name ?? $siteGroupId;
+        }
+
+        // Site
+        if (!empty($data['site_id'])) {
+            $siteId = (int) $data['site_id'];
+            $name = $this->netBoxClient->getSiteNameById($siteId, $requestId);
+            $lookups['site_id'] = $name ?? $siteId;
+        }
+
+        // Device Type
+        if (!empty($data['device_type_id'])) {
+            $deviceTypeId = (int) $data['device_type_id'];
+            $name = $this->netBoxClient->getDeviceTypeNameById($deviceTypeId, $requestId);
+            $lookups['device_type_id'] = $name ?? $deviceTypeId;
+        }
+
+        // Contact (Asset Owner / Owner Approval)
+        if (!empty($data['contact_id'])) {
+            $contactId = (int) $data['contact_id'];
+            $name = $this->netBoxClient->getContactNameById($contactId, $requestId);
+            $lookups['contact_id'] = $name ?? $contactId;
+        }
+
+        // Tenant
+        if (!empty($data['tenant_id'])) {
+            $tenantId = (int) $data['tenant_id'];
+            $name = $this->netBoxClient->getTenantNameById($tenantId, $requestId);
+            $lookups['tenant_id'] = $name ?? $tenantId;
+        }
+
+        return $lookups;
     }
 }

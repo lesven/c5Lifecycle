@@ -124,4 +124,48 @@ interface NetBoxClientInterface
      * @return array<int, array<string, mixed>>
      */
     public function getDeviceTypes(string $tag, string $requestId): array;
+
+    /**
+     * Get the name of a contact by its ID.
+     *
+     * @return string|null The contact name, or null if not found or on error
+     */
+    public function getContactNameById(int $contactId, string $requestId): ?string;
+
+    /**
+     * Get the name of a device type by its ID.
+     *
+     * Returns formatted name as "Manufacturer Model" if manufacturer present, otherwise just model.
+     *
+     * @return string|null The device type name, or null if not found or on error
+     */
+    public function getDeviceTypeNameById(int $deviceTypeId, string $requestId): ?string;
+
+    /**
+     * Get the name of a site by its ID.
+     *
+     * @return string|null The site name, or null if not found or on error
+     */
+    public function getSiteNameById(int $siteId, string $requestId): ?string;
+
+    /**
+     * Get the name of a site group by its ID.
+     *
+     * @return string|null The site group name, or null if not found or on error
+     */
+    public function getSiteGroupNameById(int $siteGroupId, string $requestId): ?string;
+
+    /**
+     * Get the name of a region by its ID.
+     *
+     * @return string|null The region name, or null if not found or on error
+     */
+    public function getRegionNameById(int $regionId, string $requestId): ?string;
+
+    /**
+     * Get the name of a tenant by its ID.
+     *
+     * @return string|null The tenant name, or null if not found or on error
+     */
+    public function getTenantNameById(int $tenantId, string $requestId): ?string;
 }

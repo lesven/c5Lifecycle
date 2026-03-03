@@ -168,7 +168,7 @@ class JournalBuilderTest extends TestCase
             'maintenance_window_ok' => false,
         ];
         $result = $this->builder->build('rz_owner_confirm', $ownerConfirmMeta, $data, 'req-999', 'test@example.com');
-        
+
         // Should include confirmations section
         $this->assertStringContainsString('Bestätigungen:', $result);
         $this->assertStringContainsString('Zweckgebundener Betrieb: Ja', $result);
@@ -193,7 +193,7 @@ class JournalBuilderTest extends TestCase
             'maintenance_window_ok' => false,
         ];
         $result = $this->builder->build('rz_owner_confirm', $ownerConfirmMeta, $data, 'req-888', 'test@example.com');
-        
+
         $this->assertStringContainsString('Zweckgebundener Betrieb: Nein', $result);
         $this->assertStringContainsString('Admin-Zugriffe kontrolliert: Nein', $result);
         $this->assertStringContainsString('Wartungsfenster okay: Nein', $result);
@@ -214,7 +214,7 @@ class JournalBuilderTest extends TestCase
             // Missing checkbox fields
         ];
         $result = $this->builder->build('rz_owner_confirm', $ownerConfirmMeta, $data, 'req-777', 'test@example.com');
-        
+
         // All should be Nein if missing
         $this->assertStringContainsString('Zweckgebundener Betrieb: Nein', $result);
         $this->assertStringContainsString('Admin-Zugriffe kontrolliert: Nein', $result);
@@ -230,5 +230,177 @@ class JournalBuilderTest extends TestCase
         ];
         $result = $this->builder->build('rz_provision', $this->eventMeta, $data, 'req-666', 'test@example.com');
         $this->assertStringNotContainsString('Bestätigungen:', $result);
+    }
+
+    // ============ FormFieldsSummary Tests ============
+
+    public function testBuildRzProvisionWithFormFieldsSummaryIfNetBoxLookupsProvided(): void
+    {
+        $data = [
+            'asset_id' => 'SRV-042',
+            'device_type_id' => 1,
+            'region_id' => 5,
+            'site_group_id' => 10,
+            'site_id' => 20,
+            'commission_date' => '2026-03-03',
+            'contact_id' => 42,
+            'criticality' => 'hoch',
+            'change_ref' => 'CHG-001',
+        ];
+        $netboxLookups = [
+            'device_type_id' => 'Cisco ASR9000',
+            'region_id' => 'Europe',
+            'site_group_id' => 'DC-Frankfurt',
+            'site_id' => 'FRA1-RZ1',
+            'contact_id' => 'John Doe',
+        ];
+        $result = $this->builder->build(
+            'rz_provision',
+            $this->eventMeta,
+            $data,
+            'req-123',
+            'test@example.com',
+            null,
+            ['netbox_lookups' => $netboxLookups]
+        );
+
+        // Verify NetBox names appear instead of IDs
+        $this->assertStringContainsString('ASSET-STAMMDATEN:', $result);
+        $this->assertStringContainsString('Cisco ASR9000', $result);
+        $this->assertStringContainsString('STANDORT & ZUORDNUNG:', $result);
+        $this->assertStringContainsString('Europe', $result);
+        $this->assertStringContainsString('DC-Frankfurt', $result);
+        $this->assertStringContainsString('FRA1-RZ1', $result);
+        $this->assertStringContainsString('John Doe', $result);
+    }
+
+    public function testBuildRzProvisionWithEmptyFieldsShowsNichtAngegeben(): void
+    {
+        $data = [
+            'asset_id' => 'SRV-043',
+            'device_type_id' => 1,
+            'region_id' => 5,
+            'site_group_id' => 10,
+            'site_id' => 20,
+            'commission_date' => '',
+            'contact_id' => 42,
+            'criticality' => '',
+            'change_ref' => 'CHG-002',
+        ];
+        $netboxLookups = [
+            'device_type_id' => 'Cisco ASR9000',
+            'region_id' => 'Europe',
+            'site_group_id' => 'DC-Frankfurt',
+            'site_id' => 'FRA1-RZ1',
+            'contact_id' => 'John Doe',
+        ];
+        $result = $this->builder->build(
+            'rz_provision',
+            $this->eventMeta,
+            $data,
+            'req-124',
+            'test@example.com',
+            null,
+            ['netbox_lookups' => $netboxLookups]
+        );
+
+        // Empty fields should show "(nicht angegeben)"
+        $this->assertStringContainsString('(nicht angegeben)', $result);
+    }
+
+    public function testBuildRzProvisionWithoutLookupsDoesNotIncludeSummary(): void
+    {
+        $data = [
+            'asset_id' => 'SRV-044',
+            'device_type_id' => 1,
+        ];
+        // No context with netbox_lookups
+        $result = $this->builder->build('rz_provision', $this->eventMeta, $data, 'req-125', 'test@example.com');
+
+        // Summary should NOT be included if no lookups provided
+        $this->assertStringNotContainsString('ASSET-STAMMDATEN:', $result);
+        $this->assertStringNotContainsString('STANDORT & ZUORDNUNG:', $result);
+    }
+
+    public function testBuildRzRetireWithFormFieldsSummary(): void
+    {
+        $data = [
+            'asset_id' => 'SRV-045',
+            'retire_date' => '2026-03-03',
+            'reason' => 'EOL',
+            'contact_id' => 42,
+            'followup' => 'Entsorgung',
+            'tenant_id' => 1,
+            'data_handling' => 'Secure Wipe',
+            'data_handling_ref' => 'WIPE-123',
+        ];
+        $retireMeta = new EventDefinition(
+            track: 'rz_assets',
+            label: 'Außerbetriebnahme RZ-Asset',
+            category: 'RZ',
+            subjectType: 'Außerbetriebnahme',
+            requiredFields: [],
+        );
+        $netboxLookups = [
+            'contact_id' => 'Jane Smith',
+            'tenant_id' => 'Company B',
+        ];
+        $result = $this->builder->build(
+            'rz_retire',
+            $retireMeta,
+            $data,
+            'req-126',
+            'test@example.com',
+            null,
+            ['netbox_lookups' => $netboxLookups]
+        );
+
+        // Verify structure
+        $this->assertStringContainsString('ASSET-DATEN:', $result);
+        $this->assertStringContainsString('Jane Smith', $result);
+        $this->assertStringContainsString('Company B', $result);
+        $this->assertStringContainsString('DATA HANDLING:', $result);
+        $this->assertStringContainsString('Secure Wipe', $result);
+        $this->assertStringContainsString('WIPE-123', $result);
+    }
+
+    public function testBuildCheckboxFieldsDisplayJaNein(): void
+    {
+        $data = [
+            'asset_id' => 'SRV-046',
+            'device_type_id' => 1,
+            'region_id' => 5,
+            'site_group_id' => 10,
+            'site_id' => 20,
+            'commission_date' => '2026-03-03',
+            'contact_id' => 42,
+            'criticality' => 'hoch',
+            'change_ref' => 'CHG-003',
+            'monitoring_active' => true,
+            'patch_process' => false,
+            'access_controlled' => true,
+        ];
+        $netboxLookups = [
+            'device_type_id' => 'Dell',
+            'region_id' => 'Europe',
+            'site_group_id' => 'DC',
+            'site_id' => 'Site1',
+            'contact_id' => 'Owner1',
+        ];
+        $result = $this->builder->build(
+            'rz_provision',
+            $this->eventMeta,
+            $data,
+            'req-127',
+            'test@example.com',
+            null,
+            ['netbox_lookups' => $netboxLookups]
+        );
+
+        // Checkboxes should display Ja/Nein
+        $this->assertStringContainsString('BETRIEBSBEREITSCHAFT:', $result);
+        $this->assertStringContainsString('Monitoring aktiv: Ja', $result);
+        $this->assertStringContainsString('Patch/Firmware-Prozess definiert: Nein', $result);
+        $this->assertStringContainsString('Zugriff über berechtigte Admin-Gruppen: Ja', $result);
     }
 }

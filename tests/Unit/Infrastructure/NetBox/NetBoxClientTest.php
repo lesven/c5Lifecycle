@@ -232,4 +232,177 @@ class NetBoxClientTest extends TestCase
         $this->expectExceptionMessage('NetBox API error (HTTP 500)');
         $client->getTenants('req-123');
     }
+
+    // ============ NetBox Lookup Methods Tests ============
+
+    public function testGetContactNameByIdReturnsName(): void
+    {
+        $contact = ['id' => 42, 'name' => 'John Doe', 'email' => 'john@example.com'];
+        $client = $this->createClient([
+            new MockResponse(json_encode($contact), ['http_code' => 200]),
+        ]);
+
+        $result = $client->getContactNameById(42, 'req-123');
+        $this->assertEquals('John Doe', $result);
+    }
+
+    public function testGetContactNameByIdReturnsNullWhenNotFound(): void
+    {
+        $client = $this->createClient([
+            new MockResponse('{"detail": "Not found."}', ['http_code' => 404]),
+        ]);
+
+        $result = $client->getContactNameById(999, 'req-123');
+        $this->assertNull($result);
+    }
+
+    public function testGetContactNameByIdReturnsNullOnApiError(): void
+    {
+        $client = $this->createClient([
+            new MockResponse('Internal error', ['http_code' => 500]),
+        ]);
+
+        $result = $client->getContactNameById(42, 'req-123');
+        $this->assertNull($result);
+    }
+
+    public function testGetDeviceTypeNameByIdReturnsFormattedName(): void
+    {
+        $deviceType = [
+            'id' => 10,
+            'model' => 'ASR9000',
+            'manufacturer' => ['id' => 1, 'name' => 'Cisco'],
+        ];
+        $client = $this->createClient([
+            new MockResponse(json_encode($deviceType), ['http_code' => 200]),
+        ]);
+
+        $result = $client->getDeviceTypeNameById(10, 'req-123');
+        $this->assertEquals('Cisco ASR9000', $result);
+    }
+
+    public function testGetDeviceTypeNameByIdReturnModelOnlyIfNoManufacturer(): void
+    {
+        $deviceType = ['id' => 11, 'model' => 'Unknown Model'];
+        $client = $this->createClient([
+            new MockResponse(json_encode($deviceType), ['http_code' => 200]),
+        ]);
+
+        $result = $client->getDeviceTypeNameById(11, 'req-123');
+        $this->assertEquals('Unknown Model', $result);
+    }
+
+    public function testGetDeviceTypeNameByIdReturnsNullWhenNotFound(): void
+    {
+        $client = $this->createClient([
+            new MockResponse('{}', ['http_code' => 404]),
+        ]);
+
+        $result = $client->getDeviceTypeNameById(999, 'req-123');
+        $this->assertNull($result);
+    }
+
+    public function testGetSiteNameByIdReturnsName(): void
+    {
+        $site = ['id' => 20, 'name' => 'FRA1-RZ1', 'region' => ['id' => 1, 'name' => 'Europe']];
+        $client = $this->createClient([
+            new MockResponse(json_encode($site), ['http_code' => 200]),
+        ]);
+
+        $result = $client->getSiteNameById(20, 'req-123');
+        $this->assertEquals('FRA1-RZ1', $result);
+    }
+
+    public function testGetSiteNameByIdReturnsNullWhenNotFound(): void
+    {
+        $client = $this->createClient([
+            new MockResponse('{}', ['http_code' => 404]),
+        ]);
+
+        $result = $client->getSiteNameById(999, 'req-123');
+        $this->assertNull($result);
+    }
+
+    public function testGetSiteGroupNameByIdReturnsName(): void
+    {
+        $siteGroup = ['id' => 10, 'name' => 'DC-Frankfurt'];
+        $client = $this->createClient([
+            new MockResponse(json_encode($siteGroup), ['http_code' => 200]),
+        ]);
+
+        $result = $client->getSiteGroupNameById(10, 'req-123');
+        $this->assertEquals('DC-Frankfurt', $result);
+    }
+
+    public function testGetSiteGroupNameByIdReturnsNullWhenNotFound(): void
+    {
+        $client = $this->createClient([
+            new MockResponse('{}', ['http_code' => 404]),
+        ]);
+
+        $result = $client->getSiteGroupNameById(999, 'req-123');
+        $this->assertNull($result);
+    }
+
+    public function testGetRegionNameByIdReturnsName(): void
+    {
+        $region = ['id' => 5, 'name' => 'Europe'];
+        $client = $this->createClient([
+            new MockResponse(json_encode($region), ['http_code' => 200]),
+        ]);
+
+        $result = $client->getRegionNameById(5, 'req-123');
+        $this->assertEquals('Europe', $result);
+    }
+
+    public function testGetRegionNameByIdReturnsNullWhenNotFound(): void
+    {
+        $client = $this->createClient([
+            new MockResponse('{}', ['http_code' => 404]),
+        ]);
+
+        $result = $client->getRegionNameById(999, 'req-123');
+        $this->assertNull($result);
+    }
+
+    public function testGetTenantNameByIdReturnsName(): void
+    {
+        $tenant = ['id' => 1, 'name' => 'Company A'];
+        $client = $this->createClient([
+            new MockResponse(json_encode($tenant), ['http_code' => 200]),
+        ]);
+
+        $result = $client->getTenantNameById(1, 'req-123');
+        $this->assertEquals('Company A', $result);
+    }
+
+    public function testGetTenantNameByIdReturnsNullWhenNotFound(): void
+    {
+        $client = $this->createClient([
+            new MockResponse('{}', ['http_code' => 404]),
+        ]);
+
+        $result = $client->getTenantNameById(999, 'req-123');
+        $this->assertNull($result);
+    }
+
+    public function testLookupMethodsReturnNullOnException(): void
+    {
+        $client = $this->createClient([
+            new MockResponse('Server error', ['http_code' => 500]),
+            new MockResponse('Server error', ['http_code' => 500]),
+            new MockResponse('Server error', ['http_code' => 500]),
+            new MockResponse('Server error', ['http_code' => 500]),
+            new MockResponse('Server error', ['http_code' => 500]),
+            new MockResponse('Server error', ['http_code' => 500]),
+        ]);
+
+        // All should return null on error (non-blocking)
+        $this->assertNull($client->getContactNameById(1, 'req-123'));
+        $this->assertNull($client->getDeviceTypeNameById(1, 'req-123'));
+        $this->assertNull($client->getSiteNameById(1, 'req-123'));
+        $this->assertNull($client->getSiteGroupNameById(1, 'req-123'));
+        $this->assertNull($client->getRegionNameById(1, 'req-123'));
+        $this->assertNull($client->getTenantNameById(1, 'req-123'));
+    }
 }
