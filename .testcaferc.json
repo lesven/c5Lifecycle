@@ -1,0 +1,14 @@
+{
+  "src": ["tests/e2e/**/*.e2e.js"],
+  "hostname": "localhost",
+  "selectorTimeout": 15000,
+  "assertionTimeout": 15000,
+  "pageLoadTimeout": 30000,
+  "skipJsErrors": true,
+  "reporter": ["spec"],
+  "screenshots": {
+    "path": "tests/e2e/artifacts/screenshots",
+    "takeOnFails": false,
+    "fullPage": true
+  }
+}

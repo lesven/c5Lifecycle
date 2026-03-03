@@ -1,6 +1,9 @@
 # Prototype backup
 _prototype/
 
+# E2E-Konfiguration (enthält Credentials)
+.env.e2e
+
 # Old backend
 backend/vendor/
 backend/.phpunit.cache/

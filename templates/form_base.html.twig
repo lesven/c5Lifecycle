@@ -15,13 +15,13 @@
     </div>
   </div>
 
-  <form id="evidence-form" data-event="{{ event_type }}" data-event-type="{{ event_type }}" novalidate>
+  <form id="evidence-form" data-event="{{ event_type }}" data-event-type="{{ event_type }}" data-testid="evidence-form" novalidate>
     {% block form_fields %}{% endblock %}
 
     <div class="form-actions">
-      <button type="submit" class="btn-submit">Evidence senden</button>
+      <button type="submit" class="btn-submit" data-testid="submit-evidence">Evidence senden</button>
     </div>
-    <div id="form-status" class="submit-status hidden"></div>
+    <div id="form-status" class="submit-status hidden" data-testid="form-status"></div>
   </form>
 </main>
 {% endblock %}
