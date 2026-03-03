@@ -34,7 +34,19 @@ test('submits rz_provision successfully with integration-backed fields', async (
   await checkCheckbox(t, 'input[name="access_controlled"]');
 
   await t
-    .click('.btn-submit')
-    .expect(Selector('#form-status').innerText)
+    .click('[data-testid="submit-evidence"]')
+    .expect(Selector('[data-testid="form-status"]').innerText)
     .contains('Evidence-Mail versendet.', { timeout: 30000 });
+});
+
+test('blockiert Submit wenn Pflichtfelder leer sind', async (t) => {
+  await t.useRole(authenticatedUserRole);
+  await t.navigateTo(`${baseUrl}/forms/rz-provision`);
+
+  // Kein Feld ausf\u00fcllen, direkt Submit klicken
+  await t.click('[data-testid="submit-evidence"]');
+
+  await t
+    .expect(Selector('.field-error-msg').exists).ok('Pflichtfeld-Fehlermeldung soll angezeigt werden')
+    .expect(Selector('[data-testid="form-status"]').hasClass('hidden')).ok('form-status soll hidden bleiben');
 });

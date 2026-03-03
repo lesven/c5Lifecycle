@@ -6,11 +6,16 @@
     "followup": "Entsorgung",
     "data_handling": "Nicht relevant"
   },
-  "negativeMissingDataHandlingRef": {
+  "negativeEmptyRequired": {
+    "description": "Kein Pflichtfeld ausgef\u00fcllt – Frontend-Validierung soll Submit blockieren",
+    "emptyField": "asset_id"
+  },
+  "negativeConditionalRef": {
     "asset_id": "E2E-RZ-RETIRE-NEG-001",
     "retire_date": "2026-01-22",
     "reason": "EOL",
-    "followup": "Leasing-Rückgabe",
-    "data_handling": "Secure Wipe"
+    "followup": "Leasing-R\u00fcckgabe",
+    "data_handling": "Secure Wipe",
+    "description": "data_handling_ref fehlt bei data_handling \u2260 Nicht relevant – Validierung soll Submit blockieren"
   }
 }

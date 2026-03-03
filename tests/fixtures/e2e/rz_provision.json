@@ -11,5 +11,9 @@
     "monitoring_active": true,
     "patch_process": true,
     "access_controlled": true
+  },
+  "negativeEmptyRequired": {
+    "description": "Kein Pflichtfeld ausgef\u00fcllt – Frontend-Validierung soll Submit blockieren",
+    "emptyField": "asset_id"
   }
 }
