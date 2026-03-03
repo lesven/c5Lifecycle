@@ -1,0 +1,12 @@
+{
+  "name": "c5-evidence-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "E2E-Tests fuer C5 Evidence Tool",
+  "scripts": {
+    "test": "testcafe"
+  },
+  "dependencies": {
+    "testcafe": "^3.7.2"
+  }
+}

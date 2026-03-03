@@ -1,0 +1,15 @@
+{
+  "slug": "admin-user-commitment",
+  "eventType": "admin_user_commitment",
+  "title": "Verpflichtung Admin-User",
+  "fields": {
+    "asset_id": { "type": "text", "value": "ADM-E2E-002" },
+    "admin_user": { "type": "text", "value": "m.mustermann@company.de" },
+    "commitment_date": { "type": "date", "value": "2026-03-03" },
+    "admin_tasks_only": { "type": "checkbox" },
+    "no_mail_office": { "type": "checkbox" },
+    "no_credential_sharing": { "type": "checkbox" },
+    "report_loss": { "type": "checkbox" },
+    "return_on_change": { "type": "checkbox" }
+  }
+}

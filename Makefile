@@ -1,6 +1,7 @@
-.PHONY: help setup build up down restart logs status clean test stan lint lint-fix coverage migrate
+.PHONY: help setup build up down restart logs status clean test stan lint lint-fix coverage migrate test-e2e
 
 COMPOSE = docker compose
+COMPOSE_E2E = $(COMPOSE) -f docker-compose.yml -f docker-compose.e2e.yml
 # compute absolute path once (avoid tricky escaping of $$(pwd))
 PWD := $(shell pwd)
 # helper image for running arbitrary PHP commands on the host tree
@@ -75,6 +76,12 @@ phpmd: ## PHP Mess Detector (phpmd) ausfuehren
 
 coverage: ## PHPUnit mit Coverage-Report
 	$(PHP) php -dpcov.enabled=1 vendor/bin/phpunit --coverage-html=var/coverage --colors=always
+
+test-e2e: ## E2E-Tests mit TestCafe ausfuehren (startet App + Mailpit automatisch)
+	$(COMPOSE_E2E) build testcafe
+	$(COMPOSE_E2E) run --rm testcafe
+	@echo ""
+	@echo "E2E-Tests abgeschlossen."
 
 clean: ## Container, Images und Volumes entfernen
 	$(COMPOSE) down -v --rmi local

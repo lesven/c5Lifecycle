@@ -29,3 +29,7 @@ Thumbs.db
 
 # Docker
 docker-compose.override.yml
+
+# E2E Tests
+tests/e2e/node_modules/
+tests/e2e/package-lock.json
