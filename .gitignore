@@ -38,3 +38,4 @@ docker-compose.override.yml
 node_modules/
 package-lock.json
 .coverage-js/
+owner-report.xlsx

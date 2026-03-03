@@ -1,4 +1,8 @@
 # C5 Evidence Tool – Konfiguration
+
+app:
+  base_url: "https://c5.example.com"   # Basis-URL dieser Anwendung (für generierte Links, kein Slash am Ende)
+
 # Kopieren als config.yaml und anpassen.
 
 smtp:

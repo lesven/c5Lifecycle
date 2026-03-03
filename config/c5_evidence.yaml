@@ -1,6 +1,9 @@
 # C5 Evidence Tool – Konfiguration
 # Kopieren als config.yaml und anpassen.
 
+app:
+  base_url: "http://localhost:8080"   # Basis-URL dieser Anwendung (für generierte Links, kein Slash am Ende)
+
 smtp:
   host: "mailpit"
   port: 1025

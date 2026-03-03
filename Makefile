@@ -1,4 +1,4 @@
-.PHONY: help setup build up down restart logs status clean test test-unit test-integration test-js stan lint lint-fix coverage migrate deploy create-admin
+.PHONY: help setup build up down restart logs status clean test test-unit test-integration test-js stan lint lint-fix coverage migrate deploy create-admin owner-report
 
 COMPOSE = docker compose
 # compute absolute path once (avoid tricky escaping of $$(pwd))
@@ -34,7 +34,7 @@ restart: ## Container neu starten
 	$(COMPOSE) restart
 
 composer-install: ## Composer-Abhängigkeiten installieren (setzt composer.json voraus)
-	$(COMPOSER) install --no-interaction --prefer-dist
+	$(COMPOSER) install --no-interaction --prefer-dist --ignore-platform-req=ext-gd
 
 composer-update: ## Composer-Abhängigkeiten aktualisieren (setzt composer.json voraus)	
 	$(COMPOSER) update
@@ -54,6 +54,11 @@ migrate: ## Doctrine-Migrationen ausfuehren
 
 create-admin: ## Admin-Benutzer interaktiv anlegen
 	$(COMPOSE) exec app php bin/console app:create-admin
+
+owner-report: ## Owner-Report als Excel exportieren (owner-report.xlsx im Projektverzeichnis)
+	$(COMPOSE) exec app php bin/console app:export-owner-report --output=/tmp/owner-report.xlsx
+	docker cp c5lifecycle-app-1:/tmp/owner-report.xlsx ./owner-report.xlsx
+	@echo "Gespeichert: $(PWD)/owner-report.xlsx"
 
 test: ## PHPUnit-Tests ausfuehren
 	$(PHP) vendor/bin/phpunit --colors=always
