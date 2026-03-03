@@ -29,7 +29,7 @@ jobs:
           KERNEL_CLASS: App\Kernel
           APP_ENV: test
           APP_SECRET: test_secret_not_for_production
-          DATABASE_URL: sqlite:///:memory:
+          DATABASE_URL: 'sqlite:///:memory:'
           MESSENGER_TRANSPORT_DSN: in-memory://
           MAILER_DSN: null://null
           NETBOX_URL: https://netbox.test
@@ -59,7 +59,7 @@ jobs:
         run: php bin/console cache:warmup --env=dev
         env:
           APP_ENV: dev
-          DATABASE_URL: sqlite:///:memory:
+          DATABASE_URL: 'sqlite:///:memory:'
           MESSENGER_TRANSPORT_DSN: in-memory://
           MAILER_DSN: null://null
           NETBOX_URL: https://netbox.test
