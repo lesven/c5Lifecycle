@@ -61,6 +61,18 @@ class FormControllerTest extends AuthenticatedWebTestCase
         $form = $crawler->filter('#evidence-form');
         $this->assertCount(1, $form);
         $this->assertEquals('rz_provision', $form->attr('data-event'));
+        $this->assertEquals('rz_provision', $form->attr('data-event-type'));
+    }
+
+
+
+    public function testOwnerConfirmFormRendersWithAssetIdQueryParameter(): void
+    {
+        $client = static::createAuthenticatedClient();
+        $crawler = $client->request('GET', '/forms/rz-owner-confirm?asset_id=SRV-001');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertCount(1, $crawler->filter('#evidence-form'));
     }
 
     public function testFormPageHasFormStatusDiv(): void

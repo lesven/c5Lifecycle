@@ -561,3 +561,48 @@ describe('performAssetLookup – 3-B: AbortController', () => {
     })
   })
 })
+
+
+describe('performAssetLookup – rz_owner_confirm prefill', () => {
+  it('befüllt #owner über custom_fields.asset_owner', async () => {
+    const form = makeAssetLookupForm(`
+      <div class="field-group"><select id="owner"><option value=""></option><option value="Alice">Alice</option></select></div>
+      <input id="contact_id" type="hidden" />
+    `)
+    global.fetch = vi.fn().mockResolvedValue(makeJsonResponse({
+      found: true,
+      status: 'active',
+      custom_fields: { asset_owner: 'Alice' },
+    }))
+
+    C5.performAssetLookup('SRV-001', form)
+    await vi.waitFor(() => {
+      expect(form.querySelector('#owner').value).toBe('Alice')
+    })
+  })
+
+  it('überschreibt Werte bei forceOverride=true', async () => {
+    const form = makeAssetLookupForm(`
+      <div class="field-group"><input id="serial_number" type="text" value="ALT" /></div>
+      <div class="field-group"><select id="owner"><option value=""></option><option value="Alice">Alice</option><option value="Bob" selected>Bob</option></select></div>
+      <div class="field-group"><select id="tenant_id"><option value=""></option><option value="55">Tenant A</option></select></div>
+      <input id="tenant_name" type="hidden" />
+      <input id="contact_id" type="hidden" />
+    `)
+    global.fetch = vi.fn().mockResolvedValue(makeJsonResponse({
+      found: true,
+      status: 'active',
+      serial_number: 'NEU',
+      tenant_id: '55',
+      custom_fields: { asset_owner: 'Alice' },
+    }))
+
+    C5.performAssetLookup('SRV-001', form, { forceOverride: true })
+    await vi.waitFor(() => {
+      expect(form.querySelector('#serial_number').value).toBe('NEU')
+    })
+
+    expect(form.querySelector('#owner').value).toBe('Alice')
+    expect(form.querySelector('#tenant_id').value).toBe('55')
+  })
+})

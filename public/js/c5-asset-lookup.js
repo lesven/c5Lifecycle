@@ -66,7 +66,7 @@
    * befüllt werden (Fixes 3-A.2).
    */
   var NETBOX_CUSTOM_FIELD_MAP = {
-    asset_owner:    '#asset_owner, #owner_approval',
+    asset_owner:    '#asset_owner, #owner_approval, #owner',
     service:        '#service',
     criticality:    '#criticality',
     admin_user:     '#admin_user',
@@ -86,6 +86,11 @@
   // Hält den AbortController des zuletzt gestarteten Asset-Lookups.
   // Bei einem neuen Aufruf wird der vorherige Request abgebrochen (3-B).
   var _pendingLookupAbort = null;
+
+  // Modul-Promises für initiale Dropdown-Loads. performAssetLookup kann darauf warten,
+  // damit programmatische Aufrufe (ohne blur-User-Flow) keine Rennbedingungen erzeugen.
+  var _tenantsPromise = Promise.resolve();
+  var _contactsPromise = Promise.resolve();
 
   // ── Location cascading dropdowns ──
 
@@ -258,11 +263,11 @@
 
   C5.loadTenants = function (form) {
     var sel = form.querySelector('#tenant_id');
-    if (!sel) return;
+    if (!sel) return Promise.resolve();
     sel.disabled = true;
     C5.showSpinner(sel);
     C5.beginLoad(form);
-    fetch(C5.apiBase + '/tenants')
+    _tenantsPromise = fetch(C5.apiBase + '/tenants')
       .then(C5.checkAuth)
       .then(function (r) { return r.json(); })
       .then(function (list) {
@@ -284,6 +289,8 @@
         C5.hideSpinner(sel);
         C5.endLoad(form);
       });
+
+    return _tenantsPromise;
   };
 
   C5.syncTenantName = function (form) {
@@ -300,13 +307,13 @@
     // querySelectorAll statt querySelector: alle passenden Kontakt-Dropdowns befüllen,
     // nicht nur das erste im DOM (3-A.3)
     var sels = form.querySelectorAll('#asset_owner, #owner_approval, #owner');
-    if (!sels.length) return;
+    if (!sels.length) return Promise.resolve();
     sels.forEach(function (sel) {
       sel.disabled = true;
       C5.showSpinner(sel);
     });
     C5.beginLoad(form);
-    fetch(C5.apiBase + '/contacts')
+    _contactsPromise = fetch(C5.apiBase + '/contacts')
       .then(C5.checkAuth)
       .then(function (r) { return r.json(); })
       .then(function (list) {
@@ -333,6 +340,8 @@
         });
         C5.endLoad(form);
       });
+
+    return _contactsPromise;
   };
 
   C5.syncContactId = function (form) {
@@ -404,7 +413,10 @@
 
   // ── Asset Lookup ──
 
-  C5.performAssetLookup = function (assetId, form) {
+  C5.performAssetLookup = function (assetId, form, options) {
+    options = options || {};
+    var forceOverride = options.forceOverride === true;
+
     if (!assetId || assetId.trim() === '') return;
 
     // Vorherigen Request abbrechen, falls noch aktiv (3-B)
@@ -438,68 +450,58 @@
           if (key === 'device_type') return; // wird nach dem Laden der Gerätetypen gesetzt
           if (LOCATION_KEYS[key]) return;    // wird kaskadiert nach _locationsPromise gesetzt
           var el = form.querySelector(NETBOX_FIELD_MAP[key]);
-          if (el && !el.value && data[key]) {
-            if (el.tagName === 'SELECT') {
-              setSelectValue(el, data[key]);
-            } else {
-              el.value = data[key];
-            }
-          }
+          setElementValue(el, data[key], forceOverride);
         });
 
         // Gerätetyp erst setzen, nachdem das Dropdown vollständig geladen ist
         if (data['device_type']) {
           (_deviceTypesPromises.get(form) || Promise.resolve()).then(function () {  // WeakMap statt DOM-Property (3-C.3)
             var el = form.querySelector(NETBOX_FIELD_MAP['device_type']);
-            if (el && !el.value) {
+            if (el && (forceOverride || !el.value)) {
               setSelectValue(el, data['device_type']);
               syncDeviceTypeId(form, el);
             }
           });
         }
 
-        C5.syncTenantName(form);
+        Promise.all([_tenantsPromise, _contactsPromise]).then(function () {
+          C5.syncTenantName(form);
 
-        // Region, Standortgruppe und Standort kaskadiert setzen, sobald Standortdaten geladen sind
-        if ((data.region_id || data.site_group_id || data.site_id) && form.querySelector('#region_id')) {
-          _locationsPromise.then(function () {  // Modul-Promise statt DOM-Property (3-C.2)
-            // 1. Region setzen
-            if (data.region_id) {
-              var regionSel = form.querySelector('#region_id');
-              if (regionSel && !regionSel.value) setSelectValue(regionSel, data.region_id);
-            }
-            // 2. Standortgruppe-Dropdown auf Region filtern, dann Wert setzen
-            C5.filterSiteGroups(form);
-            if (data.site_group_id) {
-              var groupSel = form.querySelector('#site_group_id');
-              if (groupSel && !groupSel.value) setSelectValue(groupSel, data.site_group_id);
-            }
-            // 3. Standort-Dropdown auf Gruppe filtern, dann Wert setzen
-            C5.filterSites(form);
-            if (data.site_id) {
-              var siteSel = form.querySelector('#site_id');
-              if (siteSel && !siteSel.value) setSelectValue(siteSel, data.site_id);
-            }
-            syncLocationNames(form);
-          });
-        }
-
-        if (data.custom_fields) {
-          // querySelectorAll statt querySelector: Comma-Selektoren in der Map können mehrere
-          // Elemente treffen (z. B. '#asset_owner, #owner_approval') – alle befüllen (3-A.2)
-          Object.keys(NETBOX_CUSTOM_FIELD_MAP).forEach(function (key) {
-            form.querySelectorAll(NETBOX_CUSTOM_FIELD_MAP[key]).forEach(function (el) {
-              if (!el.value && data.custom_fields[key]) {
-                if (el.tagName === 'SELECT') {
-                  setSelectValue(el, data.custom_fields[key]);
-                } else {
-                  el.value = data.custom_fields[key];
-                }
+          // Region, Standortgruppe und Standort kaskadiert setzen, sobald Standortdaten geladen sind
+          if ((data.region_id || data.site_group_id || data.site_id) && form.querySelector('#region_id')) {
+            _locationsPromise.then(function () {  // Modul-Promise statt DOM-Property (3-C.2)
+              // 1. Region setzen
+              if (data.region_id) {
+                var regionSel = form.querySelector('#region_id');
+                if (regionSel && (forceOverride || !regionSel.value)) setSelectValue(regionSel, data.region_id);
               }
+              // 2. Standortgruppe-Dropdown auf Region filtern, dann Wert setzen
+              C5.filterSiteGroups(form);
+              if (data.site_group_id) {
+                var groupSel = form.querySelector('#site_group_id');
+                if (groupSel && (forceOverride || !groupSel.value)) setSelectValue(groupSel, data.site_group_id);
+              }
+              // 3. Standort-Dropdown auf Gruppe filtern, dann Wert setzen
+              C5.filterSites(form);
+              if (data.site_id) {
+                var siteSel = form.querySelector('#site_id');
+                if (siteSel && (forceOverride || !siteSel.value)) setSelectValue(siteSel, data.site_id);
+              }
+              syncLocationNames(form);
             });
-          });
-          C5.syncContactId(form);
-        }
+          }
+
+          if (data.custom_fields) {
+            // querySelectorAll statt querySelector: Comma-Selektoren in der Map können mehrere
+            // Elemente treffen (z. B. '#asset_owner, #owner_approval') – alle befüllen (3-A.2)
+            Object.keys(NETBOX_CUSTOM_FIELD_MAP).forEach(function (key) {
+              form.querySelectorAll(NETBOX_CUSTOM_FIELD_MAP[key]).forEach(function (el) {
+                setElementValue(el, data.custom_fields[key], forceOverride);
+              });
+            });
+            C5.syncContactId(form);
+          }
+        });
 
         showNetBoxBadge(form, data.status);
       })
@@ -524,6 +526,16 @@
         return;
       }
     }
+  }
+
+  function setElementValue(el, value, forceOverride) {
+    if (!el || !value) return;
+    if (!forceOverride && el.value) return;
+    if (el.tagName === 'SELECT') {
+      setSelectValue(el, value);
+      return;
+    }
+    el.value = value;
   }
 
   function showNetBoxBadge(form, status) {
