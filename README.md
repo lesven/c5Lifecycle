@@ -531,3 +531,31 @@ UI bleibt rein HTML/CSS/JS.
 - Logs werden täglich rotiert: `logs/YYYY-MM-DD.log`.
 - Jeder Eintrag enthält: Zeitstempel, Log-Level (INFO/WARNING/ERROR), Nachricht, JSON-Context mit Request-ID.
 - Alle relevanten Ereignisse werden geloggt: Submit, Mailversand, Jira-Ticket, NetBox-API-Aufrufe, Fehler mit vollständigem Trace.
+
+
+## E2E-Tests (TestCafe)
+
+Für den manuellen E2E-Lauf stehen TestCafe-Suiten für Login, `rz_provision` und `rz_retire` bereit.
+
+### Vorbereitung
+1. Docker-Stack starten (`make up`).
+2. Node-Dependencies installieren (`npm install`).
+3. E2E-Umgebungsvariablen setzen:
+
+```bash
+export E2E_BASE_URL="http://localhost:8080"
+export E2E_USER_EMAIL="user@example.org"
+export E2E_USER_PASSWORD="super-secret"
+```
+
+### Ausführung
+```bash
+make test-e2e
+```
+
+Für interaktives Debugging:
+```bash
+make test-e2e-headed
+```
+
+Details zu Vorbedingungen, Datenkonventionen und DoD: `docs/testing/e2e-runbook.md`.

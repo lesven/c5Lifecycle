@@ -1,21 +1,21 @@
 {% macro text_field(name, label, required, placeholder) %}
 <div class="field-group">
   <label for="{{ name }}">{{ label }}{% if required %} <span class="required-marker">*</span>{% endif %}</label>
-  <input type="text" id="{{ name }}" name="{{ name }}"{% if required %} required{% endif %}{% if placeholder %} placeholder="{{ placeholder }}"{% endif %}>
+  <input type="text" id="{{ name }}" name="{{ name }}" data-testid="field-{{ name }}"{% if required %} required{% endif %}{% if placeholder %} placeholder="{{ placeholder }}"{% endif %}>
 </div>
 {% endmacro %}
 
 {% macro date_field(name, label, required) %}
 <div class="field-group">
   <label for="{{ name }}">{{ label }}{% if required %} <span class="required-marker">*</span>{% endif %}</label>
-  <input type="date" id="{{ name }}" name="{{ name }}"{% if required %} required{% endif %}>
+  <input type="date" id="{{ name }}" name="{{ name }}" data-testid="field-{{ name }}"{% if required %} required{% endif %}>
 </div>
 {% endmacro %}
 
 {% macro select_field(name, label, options, required, placeholder) %}
 <div class="field-group">
   <label for="{{ name }}">{{ label }}{% if required %} <span class="required-marker">*</span>{% endif %}</label>
-  <select id="{{ name }}" name="{{ name }}"{% if required %} required{% endif %}>
+  <select id="{{ name }}" name="{{ name }}" data-testid="field-{{ name }}"{% if required %} required{% endif %}>
     <option value="">{{ placeholder|default('– Bitte wählen –') }}</option>
     {% for option in options %}
     <option{% if option.value is defined %} value="{{ option.value }}"{% endif %}>{{ option.label|default(option) }}</option>
@@ -27,7 +27,7 @@
 {% macro checkbox_field(name, label, required) %}
 <div class="field-checkbox">
   <label class="checkbox-label">
-    <input type="checkbox" name="{{ name }}" value="1"{% if required %} required{% endif %}>
+    <input type="checkbox" name="{{ name }}" value="1" data-testid="field-{{ name }}"{% if required %} required{% endif %}>
     <span>{{ label }}</span>
     {% if required %}<span class="required-marker">*</span>{% endif %}
   </label>
@@ -39,7 +39,7 @@
   {% for option in options %}
   <div class="field-checkbox">
     <label class="checkbox-label">
-      <input type="radio" name="{{ name }}" value="{{ option }}"{% if required and loop.first %} required{% endif %}>
+      <input type="radio" name="{{ name }}" value="{{ option }}" data-testid="field-{{ name }}-{{ loop.index }}"{% if required and loop.first %} required{% endif %}>
       <span>{{ option }}</span>
     </label>
   </div>
@@ -50,7 +50,7 @@
 {% macro contact_select(name, label, required) %}
 <div class="field-group">
   <label for="{{ name }}">{{ label }}{% if required %} <span class="required-marker">*</span>{% endif %}</label>
-  <select id="{{ name }}" name="{{ name }}"{% if required %} required{% endif %}>
+  <select id="{{ name }}" name="{{ name }}" data-testid="field-{{ name }}"{% if required %} required{% endif %}>
     <option value="">– Wird geladen … –</option>
   </select>
   <input type="hidden" id="contact_id" name="contact_id">
@@ -60,7 +60,7 @@
 {% macro tenant_select() %}
 <div class="field-group">
   <label for="tenant_id">Mandant</label>
-  <select id="tenant_id" name="tenant_id">
+  <select id="tenant_id" name="tenant_id" data-testid="field-tenant_id">
     <option value="">– Wird geladen … –</option>
   </select>
   <input type="hidden" id="tenant_name" name="tenant_name">
@@ -70,7 +70,7 @@
 {% macro conditional_text_field(name, label, condition, placeholder) %}
 <div class="field-group" id="{{ name }}_group">
   <label for="{{ name }}">{{ label }} <span class="required-marker">*</span></label>
-  <input type="text" id="{{ name }}" name="{{ name }}" data-conditional-required="{{ condition }}"{% if placeholder %} placeholder="{{ placeholder }}"{% endif %}>
+  <input type="text" id="{{ name }}" name="{{ name }}" data-testid="field-{{ name }}" data-conditional-required="{{ condition }}"{% if placeholder %} placeholder="{{ placeholder }}"{% endif %}>
 </div>
 {% endmacro %}
 
@@ -78,7 +78,7 @@
 {% macro dynamic_select(name, label, required, withIdField) %}
 <div class="field-group">
   <label for="{{ name }}">{{ label }}{% if required %} <span class="required-marker">*</span>{% endif %}</label>
-  <select id="{{ name }}" name="{{ name }}"{% if required %} required{% endif %}>
+  <select id="{{ name }}" name="{{ name }}" data-testid="field-{{ name }}"{% if required %} required{% endif %}>
     <option value="">– Wird geladen … –</option>
   </select>
   {% if withIdField %}
@@ -97,7 +97,7 @@
 {% macro named_select(prefix, label, required, placeholder) %}
 <div class="field-group">
   <label for="{{ prefix }}_id">{{ label }}{% if required %} <span class="required-marker">*</span>{% endif %}</label>
-  <select id="{{ prefix }}_id" name="{{ prefix }}_id"{% if required %} required{% endif %}>
+  <select id="{{ prefix }}_id" name="{{ prefix }}_id" data-testid="field-{{ prefix }}_id"{% if required %} required{% endif %}>
     <option value="">{{ placeholder|default('– Wird geladen … –') }}</option>
   </select>
   <input type="hidden" id="{{ prefix }}_name" name="{{ prefix }}_name">

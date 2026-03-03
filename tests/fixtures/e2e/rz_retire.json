@@ -1,0 +1,16 @@
+{
+  "happyPath": {
+    "asset_id": "E2E-RZ-RETIRE-001",
+    "retire_date": "2026-01-20",
+    "reason": "Migration",
+    "followup": "Entsorgung",
+    "data_handling": "Nicht relevant"
+  },
+  "negativeMissingDataHandlingRef": {
+    "asset_id": "E2E-RZ-RETIRE-NEG-001",
+    "retire_date": "2026-01-22",
+    "reason": "EOL",
+    "followup": "Leasing-Rückgabe",
+    "data_handling": "Secure Wipe"
+  }
+}

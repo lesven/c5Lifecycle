@@ -16,23 +16,23 @@
       </div>
     {% endif %}
 
-    <form method="post" action="{{ path('app_login') }}" class="login-form">
+    <form method="post" action="{{ path('app_login') }}" class="login-form" data-testid="login-form">
       <div class="login-field">
         <label for="input-email">E-Mail-Adresse</label>
-        <input type="email" id="input-email" name="_email"
+        <input type="email" id="input-email" name="_email" data-testid="login-email"
                value="{{ last_email }}" required autofocus
                autocomplete="email" placeholder="name@unternehmen.de">
       </div>
 
       <div class="login-field">
         <label for="input-password">Passwort</label>
-        <input type="password" id="input-password" name="_password"
+        <input type="password" id="input-password" name="_password" data-testid="login-password"
                required autocomplete="current-password">
       </div>
 
       <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
 
-      <button type="submit" class="btn-login">Anmelden</button>
+      <button type="submit" class="btn-login" data-testid="login-submit">Anmelden</button>
     </form>
   </div>
 </div>

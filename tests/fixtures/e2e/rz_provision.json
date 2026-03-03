@@ -1,0 +1,15 @@
+{
+  "happyPath": {
+    "asset_id": "E2E-RZ-PROVISION-001",
+    "manufacturer": "Dell",
+    "model": "PowerEdge R760",
+    "serial_number": "SN-E2E-PROVISION-001",
+    "commission_date": "2026-01-15",
+    "service": "Core Platform",
+    "criticality": "mittel",
+    "change_ref": "CHG-E2E-1001",
+    "monitoring_active": true,
+    "patch_process": true,
+    "access_controlled": true
+  }
+}

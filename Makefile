@@ -1,4 +1,4 @@
-.PHONY: help setup build up down restart logs status clean test test-unit test-integration test-js stan lint lint-fix coverage migrate deploy create-admin
+.PHONY: help setup build up down restart logs status clean test test-unit test-integration test-js test-e2e test-e2e-headed stan lint lint-fix coverage migrate deploy create-admin
 
 COMPOSE = docker compose
 # compute absolute path once (avoid tricky escaping of $$(pwd))
@@ -70,6 +70,12 @@ test-js: ## JavaScript-Tests (Vitest + jsdom), setzt node_modules voraus
 
 test-js-coverage: ## JavaScript-Tests mit Coverage-Report
 	node_modules/.bin/vitest run --coverage
+
+test-e2e: ## End-to-End-Tests (TestCafe, headless)
+	node_modules/.bin/testcafe chrome:headless tests/e2e --config-file .testcaferc.json
+
+test-e2e-headed: ## End-to-End-Tests (TestCafe, headed für Debugging)
+	node_modules/.bin/testcafe chrome tests/e2e --config-file .testcaferc.json
 
 stan: ## PHPStan statische Analyse (Level 6)
 	$(PHP) vendor/bin/phpstan analyse --memory-limit=256M
