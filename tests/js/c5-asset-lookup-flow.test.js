@@ -561,3 +561,265 @@ describe('performAssetLookup – 3-B: AbortController', () => {
     })
   })
 })
+
+
+describe('performAssetLookup – rz_owner_confirm prefill', () => {
+  it('befüllt #owner über custom_fields.asset_owner', async () => {
+    const form = makeAssetLookupForm(`
+      <div class="field-group"><select id="owner"><option value=""></option><option value="Alice">Alice</option></select></div>
+      <input id="contact_id" type="hidden" />
+    `)
+    global.fetch = vi.fn().mockResolvedValue(makeJsonResponse({
+      found: true,
+      status: 'active',
+      custom_fields: { asset_owner: 'Alice' },
+    }))
+
+    C5.performAssetLookup('SRV-001', form)
+    await vi.waitFor(() => {
+      expect(form.querySelector('#owner').value).toBe('Alice')
+    })
+  })
+
+  it('überschreibt Werte bei forceOverride=true', async () => {
+    const form = makeAssetLookupForm(`
+      <div class="field-group"><input id="serial_number" type="text" value="ALT" /></div>
+      <div class="field-group"><select id="owner"><option value=""></option><option value="Alice">Alice</option><option value="Bob" selected>Bob</option></select></div>
+      <div class="field-group"><select id="tenant_id"><option value=""></option><option value="55">Tenant A</option></select></div>
+      <input id="tenant_name" type="hidden" />
+      <input id="contact_id" type="hidden" />
+    `)
+    global.fetch = vi.fn().mockResolvedValue(makeJsonResponse({
+      found: true,
+      status: 'active',
+      serial_number: 'NEU',
+      tenant_id: '55',
+      custom_fields: { asset_owner: 'Alice' },
+    }))
+
+    C5.performAssetLookup('SRV-001', form, { forceOverride: true })
+    await vi.waitFor(() => {
+      expect(form.querySelector('#serial_number').value).toBe('NEU')
+    })
+
+    expect(form.querySelector('#owner').value).toBe('Alice')
+    expect(form.querySelector('#tenant_id').value).toBe('55')
+  })
+
+  it('setzt tenant_id korrekt wenn loadTenants noch nicht abgeschlossen war (Race-Condition)', async () => {
+    // Regressionstest: performAssetLookup wurde vor loadTenants gestartet (wie in app.js),
+    // das Tenant-Dropdown war beim NetBox-Response noch leer.
+    const form = makeAssetLookupForm(`
+      <div class="field-group"><select id="tenant_id"><option value=""></option></select></div>
+      <input id="tenant_name" type="hidden" />
+      <input id="contact_id" type="hidden" />
+    `)
+
+    // fetch-Mock: /tenants → Option 55, /asset-lookup → found mit tenant_id: '55'
+    global.fetch = vi.fn().mockImplementation((url) => {
+      if (url.includes('/tenants')) {
+        return Promise.resolve(makeJsonResponse([{ id: 55, name: 'Tenant A' }]))
+      }
+      return Promise.resolve(makeJsonResponse({
+        found: true,
+        status: 'active',
+        tenant_id: '55',
+      }))
+    })
+
+    // Reihenfolge wie in app.js: erst performAssetLookup, dann loadTenants
+    C5.performAssetLookup('SRV-001', form, { forceOverride: true })
+    C5.loadTenants(form)
+
+    await vi.waitFor(() => {
+      expect(form.querySelector('#tenant_id').value).toBe('55')
+    })
+    expect(form.querySelector('#tenant_name').value).toBe('Tenant A')
+  })
+
+  it('setzt #owner korrekt wenn loadContacts noch nicht abgeschlossen war (Race-Condition)', async () => {
+    // Regressionstest: performAssetLookup wurde vor loadContacts gestartet (analog zum
+    // Tenants-Race-Condition-Test). Das Owner-Dropdown war beim NetBox-Response noch leer.
+    const form = makeAssetLookupForm(`
+      <div class="field-group"><select id="owner"><option value=""></option></select></div>
+      <input id="contact_id" type="hidden" />
+    `)
+
+    // fetch-Mock: /contacts → Alice, /asset-lookup → found mit asset_owner: 'Alice'
+    global.fetch = vi.fn().mockImplementation((url) => {
+      if (url.includes('/contacts')) {
+        return Promise.resolve(makeJsonResponse([{ id: 1, name: 'Alice' }]))
+      }
+      return Promise.resolve(makeJsonResponse({
+        found: true,
+        status: 'active',
+        custom_fields: { asset_owner: 'Alice' },
+      }))
+    })
+
+    // Reihenfolge wie in app.js: erst performAssetLookup, dann loadContacts
+    C5.performAssetLookup('SRV-001', form, { forceOverride: true })
+    C5.loadContacts(form)
+
+    await vi.waitFor(() => {
+      expect(form.querySelector('#owner').value).toBe('Alice')
+    })
+  })
+})
+
+
+describe('performAssetLookup – forceOverride für Location-Felder', () => {
+  afterEach(() => {
+    document.body.innerHTML = ''
+  })
+
+  it('überschreibt region_id, site_group_id und site_id bei forceOverride=true', async () => {
+    const form = makeForm(`
+      <div class="field-group"><input name="asset_id" type="text" /></div>
+      <div class="field-group">
+        <select id="region_id">
+          <option value=""></option>
+          <option value="1" selected>Region Nord</option>
+          <option value="2">Region Süd</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <select id="site_group_id">
+          <option value=""></option>
+          <option value="10" selected>Gruppe A</option>
+          <option value="11">Gruppe B</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <select id="site_id">
+          <option value=""></option>
+          <option value="100" selected>Site Alpha</option>
+          <option value="101">Site Beta</option>
+        </select>
+      </div>
+      <input id="region_name"     type="hidden" />
+      <input id="site_group_name" type="hidden" />
+      <input id="site_name"       type="hidden" />
+      <input id="contact_id"      type="hidden" />
+    `)
+
+    global.fetch = vi.fn().mockResolvedValue(makeJsonResponse({
+      found: true,
+      status: 'active',
+      region_id: '2',
+      site_group_id: '11',
+      site_id: '101',
+    }))
+
+    C5.performAssetLookup('SRV-001', form, { forceOverride: true })
+
+    await vi.waitFor(() => {
+      expect(form.querySelector('#region_id').value).toBe('2')
+    })
+    expect(form.querySelector('#site_group_id').value).toBe('11')
+    expect(form.querySelector('#site_id').value).toBe('101')
+  })
+
+  it('behält region_id, site_group_id und site_id ohne forceOverride', async () => {
+    const form = makeForm(`
+      <div class="field-group"><input name="asset_id" type="text" /></div>
+      <div class="field-group">
+        <select id="region_id">
+          <option value=""></option>
+          <option value="1" selected>Region Nord</option>
+          <option value="2">Region Süd</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <select id="site_group_id">
+          <option value=""></option>
+          <option value="10" selected>Gruppe A</option>
+          <option value="11">Gruppe B</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <select id="site_id">
+          <option value=""></option>
+          <option value="100" selected>Site Alpha</option>
+          <option value="101">Site Beta</option>
+        </select>
+      </div>
+      <input id="region_name"     type="hidden" />
+      <input id="site_group_name" type="hidden" />
+      <input id="site_name"       type="hidden" />
+      <input id="contact_id"      type="hidden" />
+    `)
+
+    global.fetch = vi.fn().mockResolvedValue(makeJsonResponse({
+      found: true,
+      status: 'active',
+      region_id: '2',
+      site_group_id: '11',
+      site_id: '101',
+    }))
+
+    // Warte auf das Ende des asset-lookup-Requests (Fetch wurde aufgerufen)
+    C5.performAssetLookup('SRV-001', form)
+
+    await vi.waitFor(() => {
+      expect(global.fetch).toHaveBeenCalled()
+    })
+    // Ein Tick abwarten, damit der Promise-Handler laufen kann
+    await new Promise((r) => setTimeout(r, 0))
+
+    // Bestehende Werte müssen unverändert bleiben
+    expect(form.querySelector('#region_id').value).toBe('1')
+    expect(form.querySelector('#site_group_id').value).toBe('10')
+    expect(form.querySelector('#site_id').value).toBe('100')
+  })
+})
+
+
+describe('loadTenants / loadContacts – Promise-Rückgabe', () => {
+  afterEach(() => {
+    document.body.innerHTML = ''
+    vi.restoreAllMocks()
+  })
+
+  it('loadTenants gibt ein Promise zurück wenn #tenant_id vorhanden ist', () => {
+    const form = makeForm(`
+      <div class="field-group"><select id="tenant_id"><option value=""></option></select></div>
+      <input id="tenant_name" type="hidden" />
+    `)
+    global.fetch = vi.fn().mockResolvedValue(makeJsonResponse([]))
+
+    const result = C5.loadTenants(form)
+
+    expect(result).toBeInstanceOf(Promise)
+  })
+
+  it('loadTenants gibt einen aufgelösten Promise zurück wenn kein #tenant_id vorhanden ist', async () => {
+    const form = makeForm('')
+
+    const result = C5.loadTenants(form)
+
+    expect(result).toBeInstanceOf(Promise)
+    await expect(result).resolves.toBeUndefined()
+  })
+
+  it('loadContacts gibt ein Promise zurück wenn #owner vorhanden ist', () => {
+    const form = makeForm(`
+      <div class="field-group"><select id="owner"><option value=""></option></select></div>
+      <input id="contact_id" type="hidden" />
+    `)
+    global.fetch = vi.fn().mockResolvedValue(makeJsonResponse([]))
+
+    const result = C5.loadContacts(form)
+
+    expect(result).toBeInstanceOf(Promise)
+  })
+
+  it('loadContacts gibt einen aufgelösten Promise zurück wenn keine Kontakt-Selects vorhanden sind', async () => {
+    const form = makeForm('')
+
+    const result = C5.loadContacts(form)
+
+    expect(result).toBeInstanceOf(Promise)
+    await expect(result).resolves.toBeUndefined()
+  })
+})

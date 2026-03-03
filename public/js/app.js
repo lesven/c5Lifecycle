@@ -52,6 +52,13 @@
       .replace(/'/g, '&#39;');
   };
 
+
+  C5.getUrlParam = function (name) {
+    var value = new URLSearchParams(window.location.search).get(name);
+    if (value === null || value === '') return null;
+    return value;
+  };
+
   // ── Spinner helpers ──
   // Shows a spinner inside the .field-group of the given element.
   C5.showSpinner = function (el, label) {
@@ -110,6 +117,14 @@
     form.querySelectorAll('input[type="date"]').forEach(function (input) {
       if (!input.value) input.value = todayStr;
     });
+
+    var eventType = form.getAttribute('data-event-type') || form.getAttribute('data-event') || '';
+    var assetIdParam = C5.getUrlParam('asset_id');
+    if (eventType === 'rz_owner_confirm' && assetIdParam) {
+      var assetIdInput = form.querySelector('[name="asset_id"]');
+      if (assetIdInput) assetIdInput.value = assetIdParam;
+      C5.performAssetLookup(assetIdParam, form, { forceOverride: true });
+    }
 
     // Update conditional required on change
     form.addEventListener('change', function () {

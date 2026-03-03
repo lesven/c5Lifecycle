@@ -61,6 +61,37 @@ class FormControllerTest extends AuthenticatedWebTestCase
         $form = $crawler->filter('#evidence-form');
         $this->assertCount(1, $form);
         $this->assertEquals('rz_provision', $form->attr('data-event'));
+        $this->assertEquals('rz_provision', $form->attr('data-event-type'));
+    }
+
+
+
+    public function testOwnerConfirmFormRendersWithAssetIdQueryParameter(): void
+    {
+        $client = static::createAuthenticatedClient();
+        $crawler = $client->request('GET', '/forms/rz-owner-confirm?asset_id=SRV-001');
+
+        $this->assertResponseIsSuccessful();
+        $form = $crawler->filter('#evidence-form');
+        $this->assertCount(1, $form);
+        $this->assertEquals('rz_owner_confirm', $form->attr('data-event-type'));
+    }
+
+    /**
+     * @dataProvider formSlugProvider
+     */
+    public function testAllFormsHaveDataEventTypeAttribute(string $slug, string $expectedTitle): void
+    {
+        $client = static::createAuthenticatedClient();
+        $crawler = $client->request('GET', '/forms/' . $slug);
+
+        $this->assertResponseIsSuccessful();
+        $form = $crawler->filter('#evidence-form');
+        $this->assertCount(1, $form);
+        $this->assertNotEmpty(
+            $form->attr('data-event-type'),
+            sprintf('data-event-type sollte für Formular "%s" gesetzt sein', $slug)
+        );
     }
 
     public function testFormPageHasFormStatusDiv(): void
