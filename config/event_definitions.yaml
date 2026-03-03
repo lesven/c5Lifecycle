@@ -52,9 +52,8 @@ events:
       - owner
       - confirm_date
       - purpose_bound
-      - change_process
       - admin_access_controlled
-      - lifecycle_managed
+      - maintenance_window_ok
 
   admin_provision:
     track: admin_devices

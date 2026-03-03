@@ -279,9 +279,8 @@ class EventDataValidatorTest extends TestCase
             'owner' => 'Team Infrastructure',
             'confirm_date' => '2024-06-01',
             'purpose_bound' => true,
-            'change_process' => true,
             'admin_access_controlled' => true,
-            'lifecycle_managed' => true,
+            'maintenance_window_ok' => true,
         ];
         $errors = $this->validator->validate('rz_owner_confirm', $event, $data);
         $this->assertEmpty($errors);
@@ -308,6 +307,21 @@ class EventDataValidatorTest extends TestCase
         ];
         $errors = $this->validator->validate('admin_provision', $event, $data);
         $this->assertEmpty($errors);
+    }
+
+    public function testValidateRzOwnerConfirmMissingMaintenanceWindowOk(): void
+    {
+        $event = $this->registry->get('rz_owner_confirm');
+        $data = [
+            'asset_id' => 'SRV-001',
+            'owner' => 'Team Infrastructure',
+            'confirm_date' => '2024-06-01',
+            'purpose_bound' => true,
+            'admin_access_controlled' => true,
+            // 'maintenance_window_ok' is missing
+        ];
+        $errors = $this->validator->validate('rz_owner_confirm', $event, $data);
+        $this->assertArrayHasKey('maintenance_window_ok', $errors);
     }
 
     public function testValidateAdminUserCommitmentAllFieldsPresent(): void

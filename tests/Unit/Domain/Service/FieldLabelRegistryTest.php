@@ -59,4 +59,20 @@ class FieldLabelRegistryTest extends TestCase
             $this->assertNotEmpty($value, "Label for {$key} should not be empty");
         }
     }
+
+    public function testRzOwnerConfirmFieldLabels(): void
+    {
+        // Test updated labels for rz_owner_confirm
+        $this->assertSame('Admin-Zugriffe kontrolliert', $this->registry->get('admin_access_controlled'));
+        $this->assertSame('Wartungsfenster okay', $this->registry->get('maintenance_window_ok'));
+        $this->assertSame('Zweckgebundener Betrieb', $this->registry->get('purpose_bound'));
+    }
+
+    public function testRemovedFieldsNotInRegistry(): void
+    {
+        // These fields were removed from FieldLabelRegistry
+        $labels = $this->registry->all();
+        $this->assertFalse(isset($labels['change_process']), "change_process should be removed from registry");
+        $this->assertFalse(isset($labels['lifecycle_managed']), "lifecycle_managed should be removed from registry");
+    }
 }

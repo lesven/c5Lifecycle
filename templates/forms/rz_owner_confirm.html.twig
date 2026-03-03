@@ -22,8 +22,7 @@
     <fieldset class="form-section">
       <legend>Bestätigungen</legend>
       {{ f.checkbox_field('purpose_bound', 'Zweckgebundener Betrieb', true) }}
-      {{ f.checkbox_field('change_process', 'Changes nur via Change-Prozess', true) }}
-      {{ f.checkbox_field('admin_access_controlled', 'Admin-Zugriff kontrolliert', true) }}
-      {{ f.checkbox_field('lifecycle_managed', 'Lifecycle aktiv gemanagt', true) }}
+      {{ f.checkbox_field('admin_access_controlled', 'Admin-Zugriffe kontrolliert', true) }}
+      {{ f.checkbox_field('maintenance_window_ok', 'Wartungsfenster okay', true) }}
     </fieldset>
 {% endblock %}

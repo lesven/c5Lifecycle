@@ -57,7 +57,7 @@ final class EventRegistryFixture
                 subjectType: 'Betriebsbestätigung',
                 requiredFields: [
                     'asset_id', 'owner', 'confirm_date',
-                    'purpose_bound', 'change_process', 'admin_access_controlled', 'lifecycle_managed',
+                    'purpose_bound', 'admin_access_controlled', 'maintenance_window_ok',
                 ],
             ),
             'admin_provision' => new EventDefinition(
