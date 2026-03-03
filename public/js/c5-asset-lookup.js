@@ -446,9 +446,12 @@
 
         // Einfache Felder direkt setzen (Standortfelder werden kaskadiert nach dem Location-Load gesetzt)
         var LOCATION_KEYS = { region_id: true, site_group_id: true, site_id: true };
+        // tenant_id muss auf _tenantsPromise warten, da das Dropdown async befüllt wird
+        var ASYNC_DROPDOWN_KEYS = { tenant_id: true };
         Object.keys(NETBOX_FIELD_MAP).forEach(function (key) {
           if (key === 'device_type') return; // wird nach dem Laden der Gerätetypen gesetzt
           if (LOCATION_KEYS[key]) return;    // wird kaskadiert nach _locationsPromise gesetzt
+          if (ASYNC_DROPDOWN_KEYS[key]) return; // wird nach _tenantsPromise gesetzt
           var el = form.querySelector(NETBOX_FIELD_MAP[key]);
           setElementValue(el, data[key], forceOverride);
         });
@@ -465,6 +468,11 @@
         }
 
         Promise.all([_tenantsPromise, _contactsPromise]).then(function () {
+          // tenant_id erst hier setzen, nachdem das Tenant-Dropdown geladen ist
+          if (data.tenant_id !== undefined) {
+            var tenantEl = form.querySelector(NETBOX_FIELD_MAP['tenant_id']);
+            setElementValue(tenantEl, data.tenant_id, forceOverride);
+          }
           C5.syncTenantName(form);
 
           // Region, Standortgruppe und Standort kaskadiert setzen, sobald Standortdaten geladen sind

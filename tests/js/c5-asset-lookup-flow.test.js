@@ -605,4 +605,35 @@ describe('performAssetLookup – rz_owner_confirm prefill', () => {
     expect(form.querySelector('#owner').value).toBe('Alice')
     expect(form.querySelector('#tenant_id').value).toBe('55')
   })
+
+  it('setzt tenant_id korrekt wenn loadTenants noch nicht abgeschlossen war (Race-Condition)', async () => {
+    // Regressionstest: performAssetLookup wurde vor loadTenants gestartet (wie in app.js),
+    // das Tenant-Dropdown war beim NetBox-Response noch leer.
+    const form = makeAssetLookupForm(`
+      <div class="field-group"><select id="tenant_id"><option value=""></option></select></div>
+      <input id="tenant_name" type="hidden" />
+      <input id="contact_id" type="hidden" />
+    `)
+
+    // fetch-Mock: /tenants → Option 55, /asset-lookup → found mit tenant_id: '55'
+    global.fetch = vi.fn().mockImplementation((url) => {
+      if (url.includes('/tenants')) {
+        return Promise.resolve(makeJsonResponse([{ id: 55, name: 'Tenant A' }]))
+      }
+      return Promise.resolve(makeJsonResponse({
+        found: true,
+        status: 'active',
+        tenant_id: '55',
+      }))
+    })
+
+    // Reihenfolge wie in app.js: erst performAssetLookup, dann loadTenants
+    C5.performAssetLookup('SRV-001', form, { forceOverride: true })
+    C5.loadTenants(form)
+
+    await vi.waitFor(() => {
+      expect(form.querySelector('#tenant_id').value).toBe('55')
+    })
+    expect(form.querySelector('#tenant_name').value).toBe('Tenant A')
+  })
 })
