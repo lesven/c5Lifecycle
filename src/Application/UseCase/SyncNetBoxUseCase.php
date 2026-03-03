@@ -136,11 +136,11 @@ class SyncNetBoxUseCase
         $netboxLookups = [];
         if (in_array($eventType, ['rz_provision', 'rz_retire'])) {
             $netboxLookups = $this->loadFormFieldsNetBoxLookups($data, $requestId);
-            // Store form fields summary in custom field
-            $fieldsSummary = $this->journalBuilder->formatFormFieldsSummary($eventType, $data, $netboxLookups);
+            // Store form fields summary in custom field (HTML formatted for better NetBox rendering)
+            $fieldsSummaryHtml = $this->journalBuilder->formatFormFieldsSummaryAsHtml($eventType, $data, $netboxLookups);
             $patchData['custom_fields'] = array_merge(
                 $patchData['custom_fields'] ?? [],
-                ['cf_zusammenfassung_evidence_tool' => $fieldsSummary]
+                ['cf_zusammenfassung_evidence_tool' => $fieldsSummaryHtml]
             );
         }
 

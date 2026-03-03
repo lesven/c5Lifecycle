@@ -403,4 +403,151 @@ class JournalBuilderTest extends TestCase
         $this->assertStringContainsString('Patch/Firmware-Prozess definiert: Nein', $result);
         $this->assertStringContainsString('Zugriff über berechtigte Admin-Gruppen: Ja', $result);
     }
+
+    // ============ HTML FormFieldsSummary Tests ============
+
+    public function testFormatFormFieldsSummaryAsHtmlReturnsValidHtml(): void
+    {
+        $data = [
+            'asset_id' => 'SRV-050',
+            'device_type_id' => 1,
+            'region_id' => 5,
+            'site_group_id' => 10,
+            'site_id' => 20,
+            'commission_date' => '2026-03-03',
+            'contact_id' => 42,
+            'criticality' => 'hoch',
+            'change_ref' => 'CHG-005',
+        ];
+        $netboxLookups = [
+            'device_type_id' => 'Cisco ASR9000',
+            'region_id' => 'Europe',
+            'site_group_id' => 'DC-Frankfurt',
+            'site_id' => 'FRA1-RZ1',
+            'contact_id' => 'Alice Smith',
+        ];
+
+        $result = $this->builder->formatFormFieldsSummaryAsHtml('rz_provision', $data, $netboxLookups);
+
+        // Check basic HTML structure
+        $this->assertStringContainsString('<div', $result);
+        $this->assertStringContainsString('</div>', $result);
+        $this->assertStringContainsString('<h4', $result);
+        $this->assertStringContainsString('</h4>', $result);
+        $this->assertStringContainsString('<dl', $result);
+        $this->assertStringContainsString('</dl>', $result);
+        $this->assertStringContainsString('<dt', $result);
+        $this->assertStringContainsString('<dd', $result);
+    }
+
+    public function testFormatFormFieldsSummaryAsHtmlIncludesGroupTitles(): void
+    {
+        $data = [
+            'asset_id' => 'SRV-051',
+            'device_type_id' => 1,
+            'region_id' => 5,
+            'site_group_id' => 10,
+            'site_id' => 20,
+            'commission_date' => '2026-03-03',
+            'contact_id' => 42,
+            'criticality' => 'hoch',
+            'change_ref' => 'CHG-006',
+            'monitoring_active' => true,
+            'patch_process' => true,
+            'access_controlled' => false,
+        ];
+        $netboxLookups = [
+            'device_type_id' => 'Dell',
+            'region_id' => 'EU',
+            'site_group_id' => 'DC',
+            'site_id' => 'Site1',
+            'contact_id' => 'Bob Jones',
+        ];
+
+        $result = $this->builder->formatFormFieldsSummaryAsHtml('rz_provision', $data, $netboxLookups);
+
+        // Check for group titles
+        $this->assertStringContainsString('ASSET-STAMMDATEN', $result);
+        $this->assertStringContainsString('STANDORT &amp; ZUORDNUNG', $result);
+        $this->assertStringContainsString('BETRIEBSBEREITSCHAFT', $result);
+    }
+
+    public function testFormatFormFieldsSummaryAsHtmlEscapesHtmlChars(): void
+    {
+        $data = [
+            'asset_id' => 'SRV-052',
+            'device_type_id' => 1,
+            'region_id' => 5,
+            'site_group_id' => 10,
+            'site_id' => 20,
+            'commission_date' => '2026-03-03',
+            'contact_id' => 0,
+            'criticality' => '<script>alert("xss")</script>',
+            'change_ref' => 'CHG-007',
+        ];
+        $netboxLookups = [
+            'device_type_id' => 'Dell',
+            'region_id' => 'EU',
+            'site_group_id' => 'DC',
+            'site_id' => 'Site1',
+        ];
+
+        $result = $this->builder->formatFormFieldsSummaryAsHtml('rz_provision', $data, $netboxLookups);
+
+        // Dangerous chars should be escaped
+        $this->assertStringContainsString('&lt;script&gt;', $result);
+        $this->assertStringNotContainsString('<script>', $result);
+    }
+
+    public function testFormatFormFieldsSummaryAsHtmlRzRetire(): void
+    {
+        $data = [
+            'asset_id' => 'SRV-053',
+            'retire_date' => '2026-03-04',
+            'reason' => 'EOL',
+            'contact_id' => 42,
+            'followup' => 'Entsorgung',
+            'tenant_id' => 1,
+            'data_handling' => 'Secure Wipe',
+            'data_handling_ref' => 'WIPE-456',
+        ];
+        $netboxLookups = [
+            'contact_id' => 'Carol White',
+            'tenant_id' => 'Company C',
+        ];
+
+        $result = $this->builder->formatFormFieldsSummaryAsHtml('rz_retire', $data, $netboxLookups);
+
+        // Check for rz_retire specific groups
+        $this->assertStringContainsString('ASSET-DATEN', $result);
+        $this->assertStringContainsString('DATA HANDLING', $result);
+        $this->assertStringContainsString('Carol White', $result);
+        $this->assertStringContainsString('Company C', $result);
+    }
+
+    public function testFormatFormFieldsSummaryAsHtmlDisplaysEmptyValuesAsNichtAngegeben(): void
+    {
+        $data = [
+            'asset_id' => 'SRV-054',
+            'device_type_id' => 1,
+            'region_id' => 5,
+            'site_group_id' => 10,
+            'site_id' => 20,
+            'commission_date' => '',
+            'contact_id' => 0,
+            'criticality' => '',
+            'change_ref' => 'CHG-008',
+        ];
+        $netboxLookups = [
+            'device_type_id' => 'Dell',
+            'region_id' => 'EU',
+            'site_group_id' => 'DC',
+            'site_id' => 'Site1',
+        ];
+
+        $result = $this->builder->formatFormFieldsSummaryAsHtml('rz_provision', $data, $netboxLookups);
+
+        // Empty values should display (nicht angegeben)
+        $this->assertStringContainsString('(nicht angegeben)', $result);
+    }
 }

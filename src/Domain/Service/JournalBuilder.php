@@ -203,4 +203,120 @@ final class JournalBuilder
 
         return $lines;
     }
+
+    /**
+     * Format form fields summary as HTML for NetBox Custom Field display.
+     * Groups fields into collapsible sections with better visual presentation.
+     *
+     * @param string $eventType Event type (rz_provision or rz_retire)
+     * @param array $data Form submission data
+     * @param array $netboxLookups Associative array of ID->Name lookups from NetBox
+     * @return string HTML formatted summary
+     */
+    public function formatFormFieldsSummaryAsHtml(string $eventType, array $data, array $netboxLookups): string
+    {
+        $html = '<div style="font-family: Arial, sans-serif; padding: 10px; background-color: #f5f5f5; border-radius: 4px;">' . "\n";
+
+        if ($eventType === 'rz_provision') {
+            // Asset-Stammdaten
+            $assetStandardFields = [
+                'asset_id' => ['value' => 'asset_id'],
+                'device_type' => ['value' => 'device_type_id', 'lookup' => true],
+                'manufacturer' => ['value' => 'manufacturer'],
+                'model' => ['value' => 'model'],
+                'serial_number' => ['value' => 'serial_number'],
+            ];
+            $html .= $this->renderFieldGroupAsHtml('ASSET-STAMMDATEN', $assetStandardFields, $data, $netboxLookups);
+
+            // Standort & Zuordnung
+            $locationFields = [
+                'region_id' => ['value' => 'region_id', 'lookup' => true],
+                'site_group_id' => ['value' => 'site_group_id', 'lookup' => true],
+                'site_id' => ['value' => 'site_id', 'lookup' => true],
+                'commission_date' => ['value' => 'commission_date'],
+                'asset_owner' => ['value' => 'contact_id', 'lookup' => true],
+                'service' => ['value' => 'service'],
+                'criticality' => ['value' => 'criticality'],
+                'change_ref' => ['value' => 'change_ref'],
+                'tenant_id' => ['value' => 'tenant_id', 'lookup' => true],
+            ];
+            $html .= $this->renderFieldGroupAsHtml('STANDORT & ZUORDNUNG', $locationFields, $data, $netboxLookups);
+
+            // Betriebsbereitschaft
+            $operationalFields = [
+                'monitoring_active' => ['value' => 'monitoring_active', 'type' => 'checkbox'],
+                'patch_process' => ['value' => 'patch_process', 'type' => 'checkbox'],
+                'access_controlled' => ['value' => 'access_controlled', 'type' => 'checkbox'],
+            ];
+            $html .= $this->renderFieldGroupAsHtml('BETRIEBSBEREITSCHAFT', $operationalFields, $data, $netboxLookups);
+        } elseif ($eventType === 'rz_retire') {
+            // Asset-Daten
+            $assetRetireFields = [
+                'asset_id' => ['value' => 'asset_id'],
+                'retire_date' => ['value' => 'retire_date'],
+                'reason' => ['value' => 'reason'],
+                'owner_approval' => ['value' => 'contact_id', 'lookup' => true],
+                'followup' => ['value' => 'followup'],
+                'tenant_id' => ['value' => 'tenant_id', 'lookup' => true],
+            ];
+            $html .= $this->renderFieldGroupAsHtml('ASSET-DATEN', $assetRetireFields, $data, $netboxLookups);
+
+            // Data Handling
+            $dataHandlingFields = [
+                'data_handling' => ['value' => 'data_handling'],
+                'data_handling_ref' => ['value' => 'data_handling_ref'],
+            ];
+            $html .= $this->renderFieldGroupAsHtml('DATA HANDLING', $dataHandlingFields, $data, $netboxLookups);
+        }
+
+        $html .= '</div>' . "\n";
+        return $html;
+    }
+
+    /**
+     * Render a field group as an HTML section.
+     *
+     * @param string $groupTitle Title of the field group
+     * @param array $fieldDefinitions Field definitions
+     * @param array $data Form submission data
+     * @param array $netboxLookups NetBox lookup results
+     * @return string HTML section
+     */
+    private function renderFieldGroupAsHtml(string $groupTitle, array $fieldDefinitions, array $data, array $netboxLookups): string
+    {
+        $html = '<div style="margin-bottom: 15px;">' . "\n";
+        $html .= '<h4 style="margin: 0 0 10px 0; color: #333; border-bottom: 2px solid #0066cc; padding-bottom: 5px;">' . htmlspecialchars($groupTitle, ENT_QUOTES, 'UTF-8') . '</h4>' . "\n";
+        $html .= '<dl style="margin: 0; display: grid; grid-template-columns: 200px 1fr; gap: 10px;">' . "\n";
+
+        foreach ($fieldDefinitions as $fieldKey => $definition) {
+            $fieldLabel = $this->fieldLabelRegistry->get($fieldKey);
+            $dataKey = $definition['value'];
+            $isLookup = $definition['lookup'] ?? false;
+            $fieldType = $definition['type'] ?? 'text';
+
+            $value = $data[$dataKey] ?? null;
+
+            // Format the value
+            if ($fieldType === 'checkbox') {
+                $displayValue = (isset($data[$dataKey]) && $data[$dataKey]) ? 'Ja' : 'Nein';
+            } elseif ($isLookup && $value !== null && $value !== '') {
+                $lookupKey = $dataKey;
+                $displayValue = $netboxLookups[$lookupKey] ?? (string) $value;
+            } elseif ($value === null || $value === '') {
+                $displayValue = '(nicht angegeben)';
+            } else {
+                $displayValue = (string) $value;
+            }
+
+            // Sanitize & render HTML
+            $displayValue = htmlspecialchars($displayValue, ENT_QUOTES, 'UTF-8');
+            $html .= '<dt style="font-weight: bold; color: #444;">' . htmlspecialchars($fieldLabel, ENT_QUOTES, 'UTF-8') . ':</dt>' . "\n";
+            $html .= '<dd style="margin: 0; color: #666;">' . $displayValue . '</dd>' . "\n";
+        }
+
+        $html .= '</dl>' . "\n";
+        $html .= '</div>' . "\n";
+
+        return $html;
+    }
 }
