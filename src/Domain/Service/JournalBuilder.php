@@ -87,12 +87,14 @@ final class JournalBuilder
      * Format form fields summary for rz_provision and rz_retire events.
      * Groups fields and replaces IDs with human-readable names from NetBox.
      *
+     * Public method for use in Custom Fields and Journal comments.
+     *
      * @param string $eventType Event type (rz_provision or rz_retire)
      * @param array $data Form submission data
      * @param array $netboxLookups Associative array of ID->Name lookups from NetBox
      * @return string Formatted summary text
      */
-    private function formatFormFieldsSummary(string $eventType, array $data, array $netboxLookups): string
+    public function formatFormFieldsSummary(string $eventType, array $data, array $netboxLookups): string
     {
         $lines = [];
         $lines[] = '─────────────────────────────────────────────────────';

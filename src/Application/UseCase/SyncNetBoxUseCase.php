@@ -132,6 +132,18 @@ class SyncNetBoxUseCase
             );
         }
 
+        // Load NetBox names for form fields summary — used for both custom field and journal (rz_provision and rz_retire)
+        $netboxLookups = [];
+        if (in_array($eventType, ['rz_provision', 'rz_retire'])) {
+            $netboxLookups = $this->loadFormFieldsNetBoxLookups($data, $requestId);
+            // Store form fields summary in custom field
+            $fieldsSummary = $this->journalBuilder->formatFormFieldsSummary($eventType, $data, $netboxLookups);
+            $patchData['custom_fields'] = array_merge(
+                $patchData['custom_fields'] ?? [],
+                ['cf_zusammenfassung_evidence_tool' => $fieldsSummary]
+            );
+        }
+
         $this->netBoxClient->updateDevice($deviceId, $patchData, $requestId);
 
         // Contact assignment (idempotent: nur anlegen wenn noch nicht vorhanden)
@@ -146,12 +158,6 @@ class SyncNetBoxUseCase
 
         // Journal entry
         $kind = $this->statusMapper->getJournalKind($eventType);
-
-        // Load NetBox names for form field summary (for rz_provision and rz_retire)
-        $netboxLookups = [];
-        if (in_array($eventType, ['rz_provision', 'rz_retire'])) {
-            $netboxLookups = $this->loadFormFieldsNetBoxLookups($data, $requestId);
-        }
 
         $comments = $this->journalBuilder->build(
             $eventType,
