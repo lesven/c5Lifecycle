@@ -132,7 +132,7 @@ class SyncNetBoxUseCase
             );
         }
 
-        // Load NetBox names for form fields summary — used for both custom field and journal (rz_provision and rz_retire)
+        // Load NetBox names for form fields summary — used for custom field, comments, and journal (rz_provision and rz_retire)
         $netboxLookups = [];
         if (in_array($eventType, ['rz_provision', 'rz_retire'])) {
             $netboxLookups = $this->loadFormFieldsNetBoxLookups($data, $requestId);
@@ -142,6 +142,8 @@ class SyncNetBoxUseCase
                 $patchData['custom_fields'] ?? [],
                 ['cf_zusammenfassung_evidence_tool' => $fieldsSummaryHtml]
             );
+            // Also use HTML-formatted summary for device comments
+            $patchData['comments'] = $fieldsSummaryHtml;
         }
 
         $this->netBoxClient->updateDevice($deviceId, $patchData, $requestId);
