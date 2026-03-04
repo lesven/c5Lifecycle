@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # =============================================================================
 # NetBox Setup Script
-# Legt Custom Fields, Choice Sets und Device Roles in NetBox an.
+# Legt Custom Fields und Choice Sets in NetBox an.
 # Voraussetzung: NetBox v3.5+, API-Token mit Admin-Rechten
 # =============================================================================
 
@@ -76,7 +76,7 @@ echo ""
 echo "--- Custom Fields anlegen ---"
 
 # Text-Felder
-for field in cf_asset_owner cf_service cf_change_ref cf_data_handling_ref cf_admin_user cf_security_owner cf_purpose; do
+for field in cf_asset_owner cf_service cf_change_ref cf_data_handling_ref cf_admin_user cf_security_owner cf_purpose cf_last_modified_by cf_zusammenfassung_evidence_tool; do
   nb_post "/extras/custom-fields/" "{
     \"name\": \"${field}\",
     \"type\": \"text\",
@@ -112,52 +112,7 @@ echo "muessen manuell in der NetBox-UI mit den entsprechenden Choice Sets verknu
 echo "da die API die Choice-Set-Verknuepfung per ID erfordert."
 echo ""
 
-# ----- 3. Device Roles -----
-echo "--- Device Roles anlegen ---"
-
-nb_post "/dcim/device-roles/" '{
-  "name": "Server",
-  "slug": "server",
-  "vm_role": false
-}' "Device Role: Server"
-
-nb_post "/dcim/device-roles/" '{
-  "name": "Storage",
-  "slug": "storage",
-  "vm_role": false
-}' "Device Role: Storage"
-
-nb_post "/dcim/device-roles/" '{
-  "name": "Switch",
-  "slug": "switch",
-  "vm_role": false
-}' "Device Role: Switch"
-
-nb_post "/dcim/device-roles/" '{
-  "name": "Firewall",
-  "slug": "firewall",
-  "vm_role": false
-}' "Device Role: Firewall"
-
-nb_post "/dcim/device-roles/" '{
-  "name": "Admin Laptop",
-  "slug": "admin-laptop",
-  "vm_role": false
-}' "Device Role: Admin Laptop"
-
-nb_post "/dcim/device-roles/" '{
-  "name": "Jump Host",
-  "slug": "jump-host",
-  "vm_role": false
-}' "Device Role: Jump Host"
-
-nb_post "/dcim/device-roles/" '{
-  "name": "Break-Glass",
-  "slug": "break-glass",
-  "vm_role": false
-}' "Device Role: Break-Glass"
-
-# ----- 4. Tags fuer Geraetetyp-Filterung -----
+# ----- 3. Tags fuer Geraetetyp-Filterung -----
 echo "--- Tags fuer Geraetetyp-Filterung anlegen ---"
 
 nb_post "/extras/tags/" '{
