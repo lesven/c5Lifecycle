@@ -64,7 +64,7 @@ class FieldLabelRegistryTest extends TestCase
     {
         // Test updated labels for rz_owner_confirm
         $this->assertSame('Admin-Zugriffe kontrolliert', $this->registry->get('admin_access_controlled'));
-        $this->assertSame('Wartungsfenster okay', $this->registry->get('maintenance_window_ok'));
+        $this->assertSame('Wartungsfenster abgestimmt', $this->registry->get('maintenance_window_ok'));
         $this->assertSame('Zweckgebundener Betrieb', $this->registry->get('purpose_bound'));
     }
 

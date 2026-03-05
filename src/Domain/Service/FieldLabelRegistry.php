@@ -43,7 +43,7 @@ final class FieldLabelRegistry
         'confirm_date' => 'Datum',
         'purpose_bound' => 'Zweckgebundener Betrieb',
         'admin_access_controlled' => 'Admin-Zugriffe kontrolliert',
-        'maintenance_window_ok' => 'Wartungsfenster okay',
+        'maintenance_window_ok' => 'Wartungsfenster abgestimmt',
         'admin_user' => 'Admin-User',
         'security_owner' => 'Security Owner',
         'purpose' => 'Zweck / Privileged Role',

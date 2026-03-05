@@ -173,7 +173,7 @@ class JournalBuilderTest extends TestCase
         $this->assertStringContainsString('Bestätigungen:', $result);
         $this->assertStringContainsString('Zweckgebundener Betrieb: Ja', $result);
         $this->assertStringContainsString('Admin-Zugriffe kontrolliert: Ja', $result);
-        $this->assertStringContainsString('Wartungsfenster okay: Nein', $result);
+        $this->assertStringContainsString('Wartungsfenster abgestimmt: Nein', $result);
     }
 
     public function testBuildRzOwnerConfirmAllCheckboxesFalse(): void
@@ -196,7 +196,7 @@ class JournalBuilderTest extends TestCase
 
         $this->assertStringContainsString('Zweckgebundener Betrieb: Nein', $result);
         $this->assertStringContainsString('Admin-Zugriffe kontrolliert: Nein', $result);
-        $this->assertStringContainsString('Wartungsfenster okay: Nein', $result);
+        $this->assertStringContainsString('Wartungsfenster abgestimmt: Nein', $result);
     }
 
     public function testBuildRzOwnerConfirmMissingCheckboxesTreatedAsNein(): void
@@ -218,7 +218,7 @@ class JournalBuilderTest extends TestCase
         // All should be Nein if missing
         $this->assertStringContainsString('Zweckgebundener Betrieb: Nein', $result);
         $this->assertStringContainsString('Admin-Zugriffe kontrolliert: Nein', $result);
-        $this->assertStringContainsString('Wartungsfenster okay: Nein', $result);
+        $this->assertStringContainsString('Wartungsfenster abgestimmt: Nein', $result);
     }
 
     public function testBuildNonOwnerConfirmEventDoesNotIncludeCheckboxes(): void
