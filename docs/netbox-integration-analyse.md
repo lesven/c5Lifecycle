@@ -71,7 +71,7 @@ netbox:
 Die folgenden Custom Fields werden bei entsprechenden Events synchronisiert:
 
 ### rz_provision
-`cf_asset_owner`, `cf_service`, `cf_criticality`, `cf_commission_date`, `cf_monitoring_active`, `cf_patch_process`, `cf_access_controlled`, `cf_change_ref`
+`cf_asset_owner`, `cf_service`, `cf_criticality`, `cf_commission_date`, `cf_monitoring_active`, `cf_patch_process`, `cf_access_controlled`, `cf_change_ref`, `cf_nutzungstyp`
 
 ### rz_retire
 `cf_retire_date`, `cf_retire_reason`, `cf_data_handling`, `cf_data_handling_ref`, `cf_followup`

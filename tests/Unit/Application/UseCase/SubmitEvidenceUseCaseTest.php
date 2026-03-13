@@ -67,6 +67,7 @@ class SubmitEvidenceUseCaseTest extends TestCase
         $data = [
             'asset_id' => 'SRV-001',
             'device_type' => 'Server',
+            'nutzungstyp' => 'Produktiv',
             'manufacturer' => 'Dell',
             'model' => 'R740',
             'serial_number' => 'ABC',
@@ -123,6 +124,7 @@ class SubmitEvidenceUseCaseTest extends TestCase
         $data = [
             'asset_id' => 'SRV-001',
             'device_type' => 'Server',
+            'nutzungstyp' => 'Produktiv',
             'manufacturer' => 'Dell',
             'model' => 'R740',
             'serial_number' => 'ABC',
@@ -155,6 +157,7 @@ class SubmitEvidenceUseCaseTest extends TestCase
         $data = [
             'asset_id' => 'SRV-001',
             'device_type' => 'Server',
+            'nutzungstyp' => 'Produktiv',
             'manufacturer' => 'Dell',
             'model' => 'R740',
             'serial_number' => 'ABC',

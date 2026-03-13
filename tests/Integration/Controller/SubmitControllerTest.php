@@ -43,6 +43,7 @@ class SubmitControllerTest extends AuthenticatedWebTestCase
         $data = json_decode($client->getResponse()->getContent(), true);
         $this->assertArrayHasKey('fields', $data);
         $this->assertArrayHasKey('device_type', $data['fields']);
+        $this->assertArrayHasKey('nutzungstyp', $data['fields']);
     }
 
     public function testSubmitConvertsDashToUnderscore(): void

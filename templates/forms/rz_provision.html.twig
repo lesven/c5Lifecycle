@@ -15,6 +15,7 @@
       <legend>Asset-Stammdaten</legend>
       {{ f.text_field('asset_id', 'Asset-ID / Inventarnummer', true, 'z. B. SRV-042') }}
       {{ f.dynamic_select('device_type', 'Gerätetyp', true, true) }}
+      {{ f.dynamic_select('nutzungstyp', 'Nutzungstyp', true, false) }}
       {{ f.text_field('manufacturer', 'Hersteller', false) }}
       {{ f.text_field('model', 'Modell', false) }}
       {{ f.text_field('serial_number', 'Seriennummer', false) }}

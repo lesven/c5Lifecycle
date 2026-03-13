@@ -44,6 +44,7 @@ class DeviceTransformerTest extends TestCase
                 'cf_criticality' => 'hoch',
                 'cf_admin_user' => 'max.mustermann@company.de',
                 'cf_security_owner' => 'IT-Security Team',
+                'cf_nutzungstyp' => 'Backup',
             ],
         ];
     }
@@ -155,6 +156,7 @@ class DeviceTransformerTest extends TestCase
         $this->assertEquals('Team Platform', $result['custom_fields']['asset_owner']);
         $this->assertEquals('Kubernetes Cluster', $result['custom_fields']['service']);
         $this->assertEquals('hoch', $result['custom_fields']['criticality']);
+        $this->assertEquals('Backup', $result['custom_fields']['nutzungstyp']);
         $this->assertEquals('max.mustermann@company.de', $result['custom_fields']['admin_user']);
         $this->assertEquals('IT-Security Team', $result['custom_fields']['security_owner']);
     }

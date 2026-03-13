@@ -26,6 +26,7 @@ class EventDataValidatorTest extends TestCase
         $data = [
             'asset_id' => 'SRV-001',
             'device_type' => 'Server',
+            'nutzungstyp' => 'Produktiv',
             'manufacturer' => 'Dell',
             'model' => 'PowerEdge R740',
             'serial_number' => 'ABC123',
@@ -53,6 +54,7 @@ class EventDataValidatorTest extends TestCase
         $errors = $this->validator->validate('rz_provision', $event, $data);
         $this->assertNotEmpty($errors);
         $this->assertArrayHasKey('device_type', $errors);
+        $this->assertArrayHasKey('nutzungstyp', $errors);
         $this->assertEquals('Pflichtfeld', $errors['device_type']);
         // manufacturer, model, serial_number, service sind optional
         $this->assertArrayNotHasKey('manufacturer', $errors);
@@ -67,6 +69,7 @@ class EventDataValidatorTest extends TestCase
         $data = [
             'asset_id' => 'SRV-001',
             'device_type' => 'Server',
+            'nutzungstyp' => 'Produktiv',
             'region_id' => '1',
             'site_group_id' => '2',
             'site_id' => '3',
@@ -108,6 +111,7 @@ class EventDataValidatorTest extends TestCase
         $data = [
             'asset_id' => '',
             'device_type' => 'Server',
+            'nutzungstyp' => '',
             'manufacturer' => 'Dell',
             'model' => 'R740',
             'serial_number' => 'ABC',

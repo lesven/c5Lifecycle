@@ -421,6 +421,22 @@ describe('performAssetLookup – 3-A.2: custom_fields querySelectorAll', () => {
       expect(form.querySelector('#owner_approval').value).toBe('Bob')
     })
   })
+
+  it('setzt nutzungstyp-Feld wenn vorhanden', async () => {
+    const form = makeAssetLookupForm(`
+      <div class="field-group"><select id="nutzungstyp"><option value=""></option><option value="Test">Test</option></select></div>
+    `)
+    global.fetch = vi.fn().mockResolvedValue(makeJsonResponse({
+      found: true,
+      status: 'active',
+      custom_fields: { nutzungstyp: 'Test' },
+    }))
+
+    C5.performAssetLookup('SRV-0001', form)
+    await vi.waitFor(() => {
+      expect(form.querySelector('#nutzungstyp').value).toBe('Test')
+    })
+  })
 })
 
 // ── 3-A.3: loadContacts – querySelectorAll befüllt alle Dropdowns ─────────────────

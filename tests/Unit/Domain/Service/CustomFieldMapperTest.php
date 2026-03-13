@@ -28,6 +28,7 @@ class CustomFieldMapperTest extends TestCase
             'access_controlled' => true,
             'change_ref' => 'CHG-001',
             'location' => 'RZ-Berlin / Rack 12',
+            'nutzungstyp' => 'Produktiv',
         ];
         $result = $this->mapper->map('rz_provision', $data);
         $this->assertEquals('Team Platform', $result['cf_asset_owner']);
@@ -39,6 +40,7 @@ class CustomFieldMapperTest extends TestCase
         $this->assertTrue($result['cf_access_controlled']);
         $this->assertEquals('CHG-001', $result['cf_change_ref']);
         $this->assertEquals('RZ-Berlin / Rack 12', $result['cf_location']);
+        $this->assertEquals('Produktiv', $result['cf_nutzungstyp']);
     }
 
     public function testRzRetireMapsFields(): void
@@ -87,7 +89,7 @@ class CustomFieldMapperTest extends TestCase
 
     public function testOnlyMapsExistingDataFields(): void
     {
-        $data = ['asset_owner' => 'Team X'];
+        $data = ['asset_owner' => 'Team X', 'nutzungstyp' => 'Test'];
         $result = $this->mapper->map('rz_provision', $data);
         $this->assertEquals('Team X', $result['cf_asset_owner']);
         $this->assertArrayNotHasKey('cf_service', $result);

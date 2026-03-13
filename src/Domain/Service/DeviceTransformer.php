@@ -33,6 +33,7 @@ final class DeviceTransformer
                 'asset_owner' => $customFields['cf_asset_owner'] ?? $customFields['asset_owner'] ?? '',
                 'service' => $customFields['cf_service'] ?? $customFields['service'] ?? '',
                 'criticality' => $customFields['cf_criticality'] ?? $customFields['criticality'] ?? '',
+                'nutzungstyp' => $customFields['cf_nutzungstyp'] ?? $customFields['nutzungstyp'] ?? '',
                 'admin_user' => $customFields['cf_admin_user'] ?? $customFields['admin_user'] ?? '',
                 'security_owner' => $customFields['cf_security_owner'] ?? $customFields['security_owner'] ?? '',
             ],

@@ -17,6 +17,7 @@ final class CustomFieldMapper
             'access_controlled' => 'cf_access_controlled',
             'change_ref' => 'cf_change_ref',
             'location' => 'cf_location',
+            'nutzungstyp' => 'cf_nutzungstyp',
         ],
         'rz_retire' => [
             'retire_date' => 'cf_retire_date',

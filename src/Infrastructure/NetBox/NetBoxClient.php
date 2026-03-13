@@ -265,6 +265,43 @@ final class NetBoxClient implements NetBoxClientInterface
         }
     }
 
+    /**
+     * {@inheritdoc}
+     */
+    public function getCustomFieldChoices(string $fieldName, string $requestId): array
+    {
+        // search by name; the API returns a paginated list but name is unique
+        $response = $this->get('/api/extras/custom-fields/', ['name' => $fieldName], $requestId);
+        $results = $response['results'] ?? [];
+        if (count($results) === 0) {
+            return [];
+        }
+
+        // The custom-fields list endpoint only returns choice_set metadata (id, name,
+        // choices_count) – not the actual choices.  We need a second call to the
+        // choice-sets endpoint to fetch the real extra_choices array.
+        $choiceSetId = $results[0]['choice_set']['id'] ?? null;
+        if ($choiceSetId === null) {
+            return [];
+        }
+
+        $choiceSet = $this->get("/api/extras/custom-field-choice-sets/{$choiceSetId}/", [], $requestId);
+        if ($choiceSet === null) {
+            return [];
+        }
+
+        // extra_choices is an array of [value, label] tuples (both strings)
+        $extraChoices = $choiceSet['extra_choices'] ?? [];
+        $mapped = [];
+        foreach ($extraChoices as $i => $pair) {
+            $mapped[] = [
+                'id'    => $i,
+                'label' => $pair[1] ?? $pair[0] ?? '',
+            ];
+        }
+        return $mapped;
+    }
+
     private function get(string $path, array $params, string $requestId): ?array
     {
         $this->netboxLogger->info('NetBox API GET', ['request_id' => $requestId, 'path' => $path]);

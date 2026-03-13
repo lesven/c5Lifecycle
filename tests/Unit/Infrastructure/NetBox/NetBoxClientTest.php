@@ -187,6 +187,58 @@ class NetBoxClientTest extends TestCase
         $this->assertEquals('ProLiant DL380', $result[1]['model']);
     }
 
+    public function testGetCustomFieldChoicesReturnsList(): void
+    {
+        // First call: custom-fields list with choice_set metadata only (no choices)
+        $field = [
+            'id'   => 5,
+            'name' => 'cf_nutzungstyp',
+            'choice_set' => [
+                'id'           => 9,
+                'name'         => 'cf_nutzungstyp',
+                'choices_count' => 3,
+            ],
+        ];
+        // Second call: choice-set detail with extra_choices as [value, label] tuples
+        $choiceSet = [
+            'id'            => 9,
+            'extra_choices' => [
+                ['Prod', 'Prod'],
+                ['Test', 'Test'],
+            ],
+        ];
+        $client = $this->createClient([
+            new MockResponse(json_encode(['results' => [$field]]), ['http_code' => 200]),
+            new MockResponse(json_encode($choiceSet), ['http_code' => 200]),
+        ]);
+
+        $result = $client->getCustomFieldChoices('cf_nutzungstyp', 'req-123');
+        $this->assertCount(2, $result);
+        $this->assertEquals(['id' => 0, 'label' => 'Prod'], $result[0]);
+        $this->assertEquals(['id' => 1, 'label' => 'Test'], $result[1]);
+    }
+
+    public function testGetCustomFieldChoicesReturnsEmptyWhenNotFound(): void
+    {
+        $client = $this->createClient([
+            new MockResponse(json_encode(['results' => []]), ['http_code' => 200]),
+        ]);
+
+        $result = $client->getCustomFieldChoices('cf_unknown', 'req-123');
+        $this->assertEquals([], $result);
+    }
+
+    public function testGetCustomFieldChoicesReturnsEmptyWhenNoChoiceSet(): void
+    {
+        $field = ['id' => 7, 'name' => 'noset', 'choice_set' => null];
+        $client = $this->createClient([
+            new MockResponse(json_encode(['results' => [$field]]), ['http_code' => 200]),
+        ]);
+
+        $result = $client->getCustomFieldChoices('noset', 'req-123');
+        $this->assertEquals([], $result);
+    }
+
     public function testGetDeviceTypesReturnsEmptyArrayWhenNoResults(): void
     {
         $client = $this->createClient([
