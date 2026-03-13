@@ -7,9 +7,9 @@
 
 set -euo pipefail
 
-# Konfiguration
-NETBOX_URL="https://netbox.home.endeneu.de"
-NETBOX_TOKEN="FyjtY5gZ5gBl86fcbH3SXVel6t7SJO4mxqZmJObY"
+# Konfiguration (env-basiert, keine Secrets im Code)
+NETBOX_URL="${NETBOX_URL:-https://netbox.example.com}"
+NETBOX_TOKEN="${NETBOX_TOKEN:-}"
 
 if [ -z "$NETBOX_TOKEN" ]; then
   echo "Fehler: NETBOX_TOKEN nicht gesetzt."
