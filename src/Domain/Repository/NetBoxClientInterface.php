@@ -172,10 +172,12 @@ interface NetBoxClientInterface
     /**
      * Retrieve the choice list for a given NetBox custom field name.
      *
-     * The client will search the `/api/extras/custom-fields/` endpoint by name
-     * and return the `choices` array from the first match. Each choice is
-     * normalized to an array containing `id` and human-readable `label` so that
-     * callers can render a dropdown without knowing the NetBox response format.
+     * Der Client ermittelt zunächst das benannte Custom Field und lädt dann
+     * dessen zugeordnetes Choice-Set über die NetBox-API (custom-field-choice-sets).
+     * Aus dem dort bereitgestellten `extra_choices`-Array werden die Einträge
+     * in ein einheitliches Format mit `id` und menschenlesbarem `label`
+     * normalisiert, sodass Aufrufer eine Dropdown-Liste rendern können, ohne
+     * das konkrete NetBox-Response-Format kennen zu müssen.
      *
      * @return array<int,array{id:int,label:string}>
      */
