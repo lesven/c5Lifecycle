@@ -71,6 +71,7 @@
     criticality:    '#criticality',
     admin_user:     '#admin_user',
     security_owner: '#security_owner',
+    nutzungstyp:    '#nutzungstyp',
   };
 
   var _locationData = null;
@@ -82,6 +83,9 @@
 
   // WeakMap (3-C.3): speichert den device-types-Promise formspezifisch ohne DOM-Mutation.
   var _deviceTypesPromises = new WeakMap();
+
+  // Modul-Promises für beliebige Custom-Field-Abfragen (z. B. Nutzungstyp).
+  var _customFieldPromises = new Map();
 
   // Hält den AbortController des zuletzt gestarteten Asset-Lookups.
   // Bei einem neuen Aufruf wird der vorherige Request abgebrochen (3-B).
@@ -409,6 +413,48 @@
       });
 
     _deviceTypesPromises.set(form, promise);  // WeakMap statt form._deviceTypesPromise (3-C.3)
+  };
+
+  // ── Custom Field Choices ──
+  // Automatically loads a NetBox custom-field choice set and inserts the
+  // options into <select name="{fieldName}">.  The frontend only uses this
+  // for "cf_nutzungstyp" but the endpoint is generic for future reuse.
+  C5.loadCustomField = function (fieldName, form) {
+    var sel = form.querySelector('select[name="' + fieldName + '"]');
+    if (!sel) return;
+
+    sel.innerHTML = '<option value="">– Wird geladen … –</option>';
+    sel.disabled = true;
+    C5.showSpinner(sel);
+    C5.beginLoad(form);
+
+    var promise = fetch(C5.apiBase + '/custom-fields/' + encodeURIComponent(fieldName))
+      .then(C5.checkAuth)
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        sel.innerHTML = '<option value="">– Bitte wählen –</option>';
+        (data.choices || []).forEach(function (ch) {
+          var o = document.createElement('option');
+          o.value = ch.label;
+          o.textContent = ch.label;
+          sel.appendChild(o);
+        });
+        sel.disabled = false;
+        C5.hideSpinner(sel);
+        C5.endLoad(form);
+      })
+      .catch(function () {
+        sel.innerHTML = '<option value="">– Nicht verfügbar –</option>';
+        sel.disabled = false;
+        C5.hideSpinner(sel);
+        C5.endLoad(form);
+      });
+
+    // store promise in case callers want to await it (similar to deviceTypes)
+    _customFieldPromises = _customFieldPromises || new Map();
+    _customFieldPromises.set(fieldName, promise);
+
+    return promise;
   };
 
   // ── Asset Lookup ──

@@ -105,6 +105,7 @@ final class JournalBuilder
             $assetStandardFields = [
                 'asset_id' => ['value' => 'asset_id'],
                 'device_type' => ['value' => 'device_type_id', 'lookup' => true],
+                'nutzungstyp' => ['value' => 'nutzungstyp'],
                 'manufacturer' => ['value' => 'manufacturer'],
                 'model' => ['value' => 'model'],
                 'serial_number' => ['value' => 'serial_number'],
@@ -222,6 +223,7 @@ final class JournalBuilder
             $assetStandardFields = [
                 'asset_id' => ['value' => 'asset_id'],
                 'device_type' => ['value' => 'device_type_id', 'lookup' => true],
+                'nutzungstyp' => ['value' => 'nutzungstyp'],
                 'manufacturer' => ['value' => 'manufacturer'],
                 'model' => ['value' => 'model'],
                 'serial_number' => ['value' => 'serial_number'],

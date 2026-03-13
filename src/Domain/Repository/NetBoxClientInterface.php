@@ -168,4 +168,16 @@ interface NetBoxClientInterface
      * @return string|null The tenant name, or null if not found or on error
      */
     public function getTenantNameById(int $tenantId, string $requestId): ?string;
+
+    /**
+     * Retrieve the choice list for a given NetBox custom field name.
+     *
+     * The client will search the `/api/extras/custom-fields/` endpoint by name
+     * and return the `choices` array from the first match. Each choice is
+     * normalized to an array containing `id` and human-readable `label` so that
+     * callers can render a dropdown without knowing the NetBox response format.
+     *
+     * @return array<int,array{id:int,label:string}>
+     */
+    public function getCustomFieldChoices(string $fieldName, string $requestId): array;
 }

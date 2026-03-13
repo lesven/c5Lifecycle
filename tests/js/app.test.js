@@ -8,6 +8,7 @@ function setupBaseC5() {
     loadContacts: vi.fn(),
     loadLocations: vi.fn(),
     loadDeviceTypes: vi.fn(),
+    loadCustomField: vi.fn(),
     filterSiteGroups: vi.fn(),
     filterSites: vi.fn(),
     syncTenantName: vi.fn(),
@@ -83,6 +84,7 @@ describe('DOMContentLoaded prefill für rz_owner_confirm', () => {
 
     expect(form.querySelector('[name="asset_id"]').value).toBe('SRV-001')
     expect(window.C5.performAssetLookup).toHaveBeenCalledWith('SRV-001', form, { forceOverride: true })
+    expect(window.C5.loadCustomField).toHaveBeenCalledWith('nutzungstyp', form)
   })
 
   it('ruft performAssetLookup nicht für andere event types auf', async () => {

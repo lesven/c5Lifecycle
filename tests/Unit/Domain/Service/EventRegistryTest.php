@@ -99,7 +99,7 @@ class EventRegistryTest extends TestCase
     {
         $event = $this->registry->get('rz_provision');
         $expected = [
-            'asset_id', 'device_type',
+            'asset_id', 'device_type', 'nutzungstyp',
             'region_id', 'site_group_id', 'site_id',
             'commission_date', 'asset_owner', 'criticality',
             'change_ref', 'monitoring_active', 'patch_process', 'access_controlled',

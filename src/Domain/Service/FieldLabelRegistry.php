@@ -67,6 +67,7 @@ final class FieldLabelRegistry
         'device_wiped' => 'Gerät wiped oder reprovisioniert',
         'ticket_ref' => 'Ticket-Referenz',
         'tenant_name' => 'Mandant',
+        'nutzungstyp' => 'Nutzungstyp',
     ];
 
     /** @return array<string, string> All field labels */

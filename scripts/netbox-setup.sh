@@ -8,8 +8,8 @@
 set -euo pipefail
 
 # Konfiguration
-NETBOX_URL="${NETBOX_URL:-https://netbox.company.de}"
-NETBOX_TOKEN="${NETBOX_TOKEN:-}"
+NETBOX_URL="https://netbox.home.endeneu.de"
+NETBOX_TOKEN="FyjtY5gZ5gBl86fcbH3SXVel6t7SJO4mxqZmJObY"
 
 if [ -z "$NETBOX_TOKEN" ]; then
   echo "Fehler: NETBOX_TOKEN nicht gesetzt."
@@ -69,6 +69,11 @@ nb_post "/extras/custom-field-choice-sets/" '{
   "name": "Followup",
   "extra_choices": [["Entsorgung","Entsorgung"],["Leasing-Rueckgabe","Leasing-Rueckgabe"],["Ersatzteilspender","Ersatzteilspender"]]
 }' "Choice Set: Followup"
+
+nb_post "/extras/custom-field-choice-sets/" '{
+  "name": "Nutzungstyp",
+  "extra_choices": [["Produktiv","Produktiv"],["Test","Test"],["Backup","Backup"]]
+}' "Choice Set: Nutzungstyp"
 
 echo ""
 

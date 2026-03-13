@@ -470,6 +470,8 @@ class JournalBuilderTest extends TestCase
         $this->assertStringContainsString('ASSET-STAMMDATEN', $result);
         $this->assertStringContainsString('STANDORT &amp; ZUORDNUNG', $result);
         $this->assertStringContainsString('BETRIEBSBEREITSCHAFT', $result);
+        // new field should appear when provided
+        $this->assertStringContainsString('Nutzungstyp', $result);
     }
 
     public function testFormatFormFieldsSummaryAsHtmlEscapesHtmlChars(): void
